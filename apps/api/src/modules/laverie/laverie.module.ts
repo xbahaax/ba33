@@ -1,11 +1,11 @@
 import { Module } from '@nestjs/common';
-import { UlaverieController } from './laverie.controller';
-import { UlaverieService } from './laverie.service';
-import { UlaverieRepository } from './laverie.repository';
+import { LaverieController } from './laverie.controller';
+import { LaverieService } from './laverie.service';
+import { LaverieRepository } from './laverie.repository';
 
 @Module({
-  controllers: [UlaverieController],
-  providers: [UlaverieService, UlaverieRepository],
-  exports: [UlaverieService],
+  controllers: [LaverieController],
+  providers: [LaverieService, LaverieRepository],
+  exports: [LaverieService],
 })
-export class UlaverieModule {}
+export class LaverieModule {}

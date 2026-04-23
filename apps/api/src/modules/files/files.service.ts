@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
-import { UfilesRepository } from './files.repository';
+import { FilesRepository } from './files.repository';
 
 @Injectable()
-export class UfilesService {
-  constructor(private readonly filesRepository: UfilesRepository) {}
+export class FilesService {
+  constructor(private readonly filesRepository: FilesRepository) {}
 }

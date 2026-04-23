@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
-import { UnotificationsRepository } from './notifications.repository';
+import { NotificationsRepository } from './notifications.repository';
 
 @Injectable()
-export class UnotificationsService {
-  constructor(private readonly notificationsRepository: UnotificationsRepository) {}
+export class NotificationsService {
+  constructor(private readonly notificationsRepository: NotificationsRepository) {}
 }

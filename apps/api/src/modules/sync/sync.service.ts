@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
-import { UsyncRepository } from './sync.repository';
+import { SyncRepository } from './sync.repository';
 
 @Injectable()
-export class UsyncService {
-  constructor(private readonly syncRepository: UsyncRepository) {}
+export class SyncService {
+  constructor(private readonly syncRepository: SyncRepository) {}
 }

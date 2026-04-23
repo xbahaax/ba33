@@ -1,11 +1,11 @@
 import { Module } from '@nestjs/common';
-import { UinstitutionalController } from './institutional.controller';
-import { UinstitutionalService } from './institutional.service';
-import { UinstitutionalRepository } from './institutional.repository';
+import { InstitutionalController } from './institutional.controller';
+import { InstitutionalService } from './institutional.service';
+import { InstitutionalRepository } from './institutional.repository';
 
 @Module({
-  controllers: [UinstitutionalController],
-  providers: [UinstitutionalService, UinstitutionalRepository],
-  exports: [UinstitutionalService],
+  controllers: [InstitutionalController],
+  providers: [InstitutionalService, InstitutionalRepository],
+  exports: [InstitutionalService],
 })
-export class UinstitutionalModule {}
+export class InstitutionalModule {}

@@ -1,11 +1,11 @@
 import { Module } from '@nestjs/common';
-import { UsyncController } from './sync.controller';
-import { UsyncService } from './sync.service';
-import { UsyncRepository } from './sync.repository';
+import { SyncController } from './sync.controller';
+import { SyncService } from './sync.service';
+import { SyncRepository } from './sync.repository';
 
 @Module({
-  controllers: [UsyncController],
-  providers: [UsyncService, UsyncRepository],
-  exports: [UsyncService],
+  controllers: [SyncController],
+  providers: [SyncService, SyncRepository],
+  exports: [SyncService],
 })
-export class UsyncModule {}
+export class SyncModule {}

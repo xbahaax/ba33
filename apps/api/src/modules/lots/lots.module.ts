@@ -1,11 +1,11 @@
 import { Module } from '@nestjs/common';
-import { UlotsController } from './lots.controller';
-import { UlotsService } from './lots.service';
-import { UlotsRepository } from './lots.repository';
+import { LotsController } from './lots.controller';
+import { LotsService } from './lots.service';
+import { LotsRepository } from './lots.repository';
 
 @Module({
-  controllers: [UlotsController],
-  providers: [UlotsService, UlotsRepository],
-  exports: [UlotsService],
+  controllers: [LotsController],
+  providers: [LotsService, LotsRepository],
+  exports: [LotsService],
 })
-export class UlotsModule {}
+export class LotsModule {}

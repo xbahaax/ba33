@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
-import { UrulesRepository } from './rules.repository';
+import { RulesRepository } from './rules.repository';
 
 @Injectable()
-export class UrulesService {
-  constructor(private readonly rulesRepository: UrulesRepository) {}
+export class RulesService {
+  constructor(private readonly rulesRepository: RulesRepository) {}
 }

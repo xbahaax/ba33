@@ -1,11 +1,11 @@
 import { Module } from '@nestjs/common';
-import { UcertificationController } from './certification.controller';
-import { UcertificationService } from './certification.service';
-import { UcertificationRepository } from './certification.repository';
+import { CertificationController } from './certification.controller';
+import { CertificationService } from './certification.service';
+import { CertificationRepository } from './certification.repository';
 
 @Module({
-  controllers: [UcertificationController],
-  providers: [UcertificationService, UcertificationRepository],
-  exports: [UcertificationService],
+  controllers: [CertificationController],
+  providers: [CertificationService, CertificationRepository],
+  exports: [CertificationService],
 })
-export class UcertificationModule {}
+export class CertificationModule {}

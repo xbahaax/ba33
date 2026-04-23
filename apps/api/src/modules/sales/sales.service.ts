@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
-import { UsalesRepository } from './sales.repository';
+import { SalesRepository } from './sales.repository';
 
 @Injectable()
-export class UsalesService {
-  constructor(private readonly salesRepository: UsalesRepository) {}
+export class SalesService {
+  constructor(private readonly salesRepository: SalesRepository) {}
 }

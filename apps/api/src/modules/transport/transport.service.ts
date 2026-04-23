@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
-import { UtransportRepository } from './transport.repository';
+import { TransportRepository } from './transport.repository';
 
 @Injectable()
-export class UtransportService {
-  constructor(private readonly transportRepository: UtransportRepository) {}
+export class TransportService {
+  constructor(private readonly transportRepository: TransportRepository) {}
 }

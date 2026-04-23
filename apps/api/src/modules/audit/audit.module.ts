@@ -1,11 +1,11 @@
 import { Module } from '@nestjs/common';
-import { UauditController } from './audit.controller';
-import { UauditService } from './audit.service';
-import { UauditRepository } from './audit.repository';
+import { AuditController } from './audit.controller';
+import { AuditService } from './audit.service';
+import { AuditRepository } from './audit.repository';
 
 @Module({
-  controllers: [UauditController],
-  providers: [UauditService, UauditRepository],
-  exports: [UauditService],
+  controllers: [AuditController],
+  providers: [AuditService, AuditRepository],
+  exports: [AuditService],
 })
-export class UauditModule {}
+export class AuditModule {}

@@ -1,11 +1,11 @@
 import { Module } from '@nestjs/common';
-import { UcollectionController } from './collection.controller';
-import { UcollectionService } from './collection.service';
-import { UcollectionRepository } from './collection.repository';
+import { CollectionController } from './collection.controller';
+import { CollectionService } from './collection.service';
+import { CollectionRepository } from './collection.repository';
 
 @Module({
-  controllers: [UcollectionController],
-  providers: [UcollectionService, UcollectionRepository],
-  exports: [UcollectionService],
+  controllers: [CollectionController],
+  providers: [CollectionService, CollectionRepository],
+  exports: [CollectionService],
 })
-export class UcollectionModule {}
+export class CollectionModule {}

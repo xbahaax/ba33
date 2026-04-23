@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
-import { UregionsRepository } from './regions.repository';
+import { RegionsRepository } from './regions.repository';
 
 @Injectable()
-export class UregionsService {
-  constructor(private readonly regionsRepository: UregionsRepository) {}
+export class RegionsService {
+  constructor(private readonly regionsRepository: RegionsRepository) {}
 }

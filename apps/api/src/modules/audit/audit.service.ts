@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
-import { UauditRepository } from './audit.repository';
+import { AuditRepository } from './audit.repository';
 
 @Injectable()
-export class UauditService {
-  constructor(private readonly auditRepository: UauditRepository) {}
+export class AuditService {
+  constructor(private readonly auditRepository: AuditRepository) {}
 }

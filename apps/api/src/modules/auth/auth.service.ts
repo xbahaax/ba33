@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
-import { UauthRepository } from './auth.repository';
+import { AuthRepository } from './auth.repository';
 
 @Injectable()
-export class UauthService {
-  constructor(private readonly authRepository: UauthRepository) {}
+export class AuthService {
+  constructor(private readonly authRepository: AuthRepository) {}
 }

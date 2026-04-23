@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
-import { UdepotRepository } from './depot.repository';
+import { DepotRepository } from './depot.repository';
 
 @Injectable()
-export class UdepotService {
-  constructor(private readonly depotRepository: UdepotRepository) {}
+export class DepotService {
+  constructor(private readonly depotRepository: DepotRepository) {}
 }

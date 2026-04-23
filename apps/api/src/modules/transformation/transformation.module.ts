@@ -1,11 +1,11 @@
 import { Module } from '@nestjs/common';
-import { UtransformationController } from './transformation.controller';
-import { UtransformationService } from './transformation.service';
-import { UtransformationRepository } from './transformation.repository';
+import { TransformationController } from './transformation.controller';
+import { TransformationService } from './transformation.service';
+import { TransformationRepository } from './transformation.repository';
 
 @Module({
-  controllers: [UtransformationController],
-  providers: [UtransformationService, UtransformationRepository],
-  exports: [UtransformationService],
+  controllers: [TransformationController],
+  providers: [TransformationService, TransformationRepository],
+  exports: [TransformationService],
 })
-export class UtransformationModule {}
+export class TransformationModule {}

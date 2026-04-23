@@ -1,11 +1,11 @@
 import { Module } from '@nestjs/common';
-import { UregionsController } from './regions.controller';
-import { UregionsService } from './regions.service';
-import { UregionsRepository } from './regions.repository';
+import { RegionsController } from './regions.controller';
+import { RegionsService } from './regions.service';
+import { RegionsRepository } from './regions.repository';
 
 @Module({
-  controllers: [UregionsController],
-  providers: [UregionsService, UregionsRepository],
-  exports: [UregionsService],
+  controllers: [RegionsController],
+  providers: [RegionsService, RegionsRepository],
+  exports: [RegionsService],
 })
-export class UregionsModule {}
+export class RegionsModule {}

@@ -1,9 +1,9 @@
 import { Controller } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
-import { UtransportService } from './transport.service';
+import { TransportService } from './transport.service';
 
 @ApiTags('transport')
 @Controller('transport')
-export class UtransportController {
-  constructor(private readonly transportService: UtransportService) {}
+export class TransportController {
+  constructor(private readonly transportService: TransportService) {}
 }

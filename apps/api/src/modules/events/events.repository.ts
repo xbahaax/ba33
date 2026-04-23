@@ -3,6 +3,6 @@ import { DATABASE_TOKEN } from '../../common/database/database.module';
 import { Database } from '../../common/database/client';
 
 @Injectable()
-export class UeventsRepository {
+export class EventsRepository {
   constructor(@Inject(DATABASE_TOKEN) private readonly db: Database) {}
 }

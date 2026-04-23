@@ -1,11 +1,11 @@
 import { Module } from '@nestjs/common';
-import { UdepotController } from './depot.controller';
-import { UdepotService } from './depot.service';
-import { UdepotRepository } from './depot.repository';
+import { DepotController } from './depot.controller';
+import { DepotService } from './depot.service';
+import { DepotRepository } from './depot.repository';
 
 @Module({
-  controllers: [UdepotController],
-  providers: [UdepotService, UdepotRepository],
-  exports: [UdepotService],
+  controllers: [DepotController],
+  providers: [DepotService, DepotRepository],
+  exports: [DepotService],
 })
-export class UdepotModule {}
+export class DepotModule {}

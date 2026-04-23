@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
-import { UcertificationRepository } from './certification.repository';
+import { CertificationRepository } from './certification.repository';
 
 @Injectable()
-export class UcertificationService {
-  constructor(private readonly certificationRepository: UcertificationRepository) {}
+export class CertificationService {
+  constructor(private readonly certificationRepository: CertificationRepository) {}
 }

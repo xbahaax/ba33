@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
-import { UinstitutionalRepository } from './institutional.repository';
+import { InstitutionalRepository } from './institutional.repository';
 
 @Injectable()
-export class UinstitutionalService {
-  constructor(private readonly institutionalRepository: UinstitutionalRepository) {}
+export class InstitutionalService {
+  constructor(private readonly institutionalRepository: InstitutionalRepository) {}
 }

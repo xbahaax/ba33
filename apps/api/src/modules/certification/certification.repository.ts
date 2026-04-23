@@ -3,6 +3,6 @@ import { DATABASE_TOKEN } from '../../common/database/database.module';
 import { Database } from '../../common/database/client';
 
 @Injectable()
-export class UcertificationRepository {
+export class CertificationRepository {
   constructor(@Inject(DATABASE_TOKEN) private readonly db: Database) {}
 }

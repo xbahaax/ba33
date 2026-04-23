@@ -1,9 +1,9 @@
 import { Controller } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
-import { UsalesService } from './sales.service';
+import { SalesService } from './sales.service';
 
 @ApiTags('sales')
 @Controller('sales')
-export class UsalesController {
-  constructor(private readonly salesService: UsalesService) {}
+export class SalesController {
+  constructor(private readonly salesService: SalesService) {}
 }

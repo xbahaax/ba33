@@ -1,11 +1,11 @@
 import { Module } from '@nestjs/common';
-import { UrulesController } from './rules.controller';
-import { UrulesService } from './rules.service';
-import { UrulesRepository } from './rules.repository';
+import { RulesController } from './rules.controller';
+import { RulesService } from './rules.service';
+import { RulesRepository } from './rules.repository';
 
 @Module({
-  controllers: [UrulesController],
-  providers: [UrulesService, UrulesRepository],
-  exports: [UrulesService],
+  controllers: [RulesController],
+  providers: [RulesService, RulesRepository],
+  exports: [RulesService],
 })
-export class UrulesModule {}
+export class RulesModule {}
