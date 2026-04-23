@@ -1,0 +1,33 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: ba33-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ba33
+      POSTGRES_PASSWORD: ba33_dev_password
+      POSTGRES_DB: ba33_platform
+    ports:
+      - "5432:5432"
+    volumes:
+      - ba33-postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ba33 -d ba33_platform"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    container_name: ba33-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - ba33-redis-data:/data
+
+volumes:
+  ba33-postgres-data:
+  ba33-redis-data:

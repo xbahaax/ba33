@@ -1,0 +1,9 @@
+{
+  "name": "@ba33/design-tokens",
+  "version": "0.0.0",
+  "private": true,
+  "main": "tokens.json",
+  "scripts": {
+    "build": "echo ok"
+  }
+}
