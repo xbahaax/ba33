@@ -4,12 +4,12 @@ import { regions } from './regions';
 
 export const users = pgTable('users', {
   id: uuid('id').primaryKey().defaultRandom(),
-  email: text('email').notNull().unique(),
+  email: text('email').unique().notNull(),
   passwordHash: text('password_hash').notNull(),
   fullName: text('full_name').notNull(),
   phone: text('phone'),
   userType: userTypeEnum('user_type').notNull(),
-  status: userStatusEnum('status').default('active').notNull(),
+  status: userStatusEnum('status').default('active'),
   regionId: uuid('region_id').references(() => regions.id),
   lastLoginAt: timestamp('last_login_at', { withTimezone: true }),
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
@@ -18,8 +18,8 @@ export const users = pgTable('users', {
 
 export const roles = pgTable('roles', {
   id: uuid('id').primaryKey().defaultRandom(),
-  name: text('name').notNull().unique(),
-  permissions: jsonb('permissions').notNull().default([]),
+  name: text('name').unique().notNull(),
+  permissions: jsonb('permissions').notNull(),
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
 });

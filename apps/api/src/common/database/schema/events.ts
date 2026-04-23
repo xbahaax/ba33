@@ -1,31 +1,25 @@
-import { pgTable, uuid, text, timestamp, jsonb, boolean } from 'drizzle-orm/pg-core';
+import { pgTable, uuid, text, timestamp, jsonb, integer, boolean } from 'drizzle-orm/pg-core';
 import { users } from './users';
 
 export const events = pgTable('events', {
   id: uuid('id').primaryKey().defaultRandom(),
-  type: text('type').notNull(),
-  entityType: text('entity_type').notNull(),
-  entityId: uuid('entity_id').notNull(),
+  eventType: text('event_type').notNull(),
+  aggregateType: text('aggregate_type').notNull(),
+  aggregateId: uuid('aggregate_id').notNull(),
   actorId: uuid('actor_id').references(() => users.id),
-  actorType: text('actor_type'),
+  actorType: text('actor_type').notNull(),
   payload: jsonb('payload'),
-  metadata: jsonb('metadata'),
-  occurredAt: timestamp('occurred_at', { withTimezone: true }).defaultNow().notNull(),
-  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+  occurredAt: timestamp('occurred_at', { withTimezone: true }).notNull(),
+  recordedAt: timestamp('recorded_at', { withTimezone: true }).defaultNow().notNull(),
+  syncSource: text('sync_source'),
+  deviceId: uuid('device_id'),
+  version: integer('version').notNull(),
+  checksum: text('checksum').notNull(),
 });
 
 export const eventSubscriptions = pgTable('event_subscriptions', {
   id: uuid('id').primaryKey().defaultRandom(),
-  userId: uuid('user_id')
-    .notNull()
-    .references(() => users.id),
-  eventType: text('event_type').notNull(),
-  entityType: text('entity_type'),
-  entityId: uuid('entity_id'),
-  channel: text('channel').notNull().default('in_app'),
+  eventTypePattern: text('event_type_pattern').notNull(),
+  handlerName: text('handler_name').notNull(),
   active: boolean('active').default(true).notNull(),
-  filters: jsonb('filters'),
-  metadata: jsonb('metadata'),
-  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
-  updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
 });

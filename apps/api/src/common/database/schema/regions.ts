@@ -4,7 +4,7 @@ import { regionTypeEnum } from './enums';
 export const regions = pgTable('regions', {
   id: uuid('id').primaryKey().defaultRandom(),
   name: text('name').notNull(),
-  code: text('code').notNull().unique(),
+  code: text('code').unique().notNull(),
   parentId: uuid('parent_id').references((): any => regions.id),
   type: regionTypeEnum('type').notNull(),
   latitude: decimal('latitude', { precision: 10, scale: 7 }),

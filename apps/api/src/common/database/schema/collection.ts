@@ -1,54 +1,55 @@
-import { pgTable, uuid, text, timestamp, decimal, integer, jsonb, boolean } from 'drizzle-orm/pg-core';
+import {
+  pgTable,
+  uuid,
+  text,
+  timestamp,
+  decimal,
+  integer,
+  jsonb,
+  boolean,
+} from 'drizzle-orm/pg-core';
 import { preLotStatusEnum, routeStatusEnum, routeStopStatusEnum } from './enums';
-import { regions } from './regions';
-import { users } from './users';
 import { sources } from './sources';
+import { users } from './users';
+import { regions } from './regions';
 
 export const collectors = pgTable('collectors', {
-  id: uuid('id').primaryKey().defaultRandom(),
   userId: uuid('user_id')
-    .notNull()
+    .primaryKey()
     .references(() => users.id),
-  regionId: uuid('region_id').references(() => regions.id),
-  vehicleInfo: jsonb('vehicle_info'),
-  maxCapacityKg: decimal('max_capacity_kg', { precision: 10, scale: 2 }),
-  active: boolean('active').default(true).notNull(),
-  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
-  updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
+  assignedRegions: jsonb('assigned_regions').$type<string[]>(),
+  certifications: jsonb('certifications'),
+  active: boolean('active').default(true),
 });
 
 export const collectorBooklets = pgTable('collector_booklets', {
   id: uuid('id').primaryKey().defaultRandom(),
   collectorId: uuid('collector_id')
     .notNull()
-    .references(() => collectors.id),
-  bookletNumber: text('booklet_number').notNull().unique(),
-  issuedAt: timestamp('issued_at', { withTimezone: true }).defaultNow().notNull(),
-  expiresAt: timestamp('expires_at', { withTimezone: true }),
-  totalPages: integer('total_pages').default(50).notNull(),
-  usedPages: integer('used_pages').default(0).notNull(),
-  active: boolean('active').default(true).notNull(),
-  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
-  updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
+    .references(() => collectors.userId),
+  serialStart: text('serial_start'),
+  serialEnd: text('serial_end'),
+  issuedAt: timestamp('issued_at', { withTimezone: true }),
+  revokedAt: timestamp('revoked_at', { withTimezone: true }),
+  revokedReason: text('revoked_reason'),
 });
 
 export const preLots = pgTable('pre_lots', {
   id: uuid('id').primaryKey().defaultRandom(),
-  collectorId: uuid('collector_id')
-    .notNull()
-    .references(() => collectors.id),
   sourceId: uuid('source_id')
     .notNull()
     .references(() => sources.id),
-  bookletId: uuid('booklet_id').references(() => collectorBooklets.id),
-  pageNumber: integer('page_number'),
-  status: preLotStatusEnum('status').default('draft').notNull(),
-  estimatedWeightKg: decimal('estimated_weight_kg', { precision: 10, scale: 2 }),
+  estimatedWeightKg: decimal('estimated_weight_kg', { precision: 10, scale: 2 }).notNull(),
+  estimatedRange: text('estimated_range'),
+  locationLat: decimal('location_lat', { precision: 10, scale: 7 }),
+  locationLng: decimal('location_lng', { precision: 10, scale: 7 }),
+  regionId: uuid('region_id').references(() => regions.id),
   notes: text('notes'),
-  collectedAt: timestamp('collected_at', { withTimezone: true }),
-  latitude: decimal('latitude', { precision: 10, scale: 7 }),
-  longitude: decimal('longitude', { precision: 10, scale: 7 }),
-  metadata: jsonb('metadata'),
+  voiceNoteId: uuid('voice_note_id'), // FK to files — plain uuid to avoid circular imports
+  status: preLotStatusEnum('status').default('announced'),
+  assignedCollectorId: uuid('assigned_collector_id').references(() => collectors.userId),
+  scheduledAt: timestamp('scheduled_at', { withTimezone: true }),
+  lotId: uuid('lot_id'), // FK to lots — set when collected, plain uuid to avoid circular imports
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
 });
@@ -57,15 +58,11 @@ export const routes = pgTable('routes', {
   id: uuid('id').primaryKey().defaultRandom(),
   collectorId: uuid('collector_id')
     .notNull()
-    .references(() => collectors.id),
-  name: text('name'),
-  status: routeStatusEnum('status').default('planned').notNull(),
-  plannedDate: timestamp('planned_date', { withTimezone: true }).notNull(),
-  startedAt: timestamp('started_at', { withTimezone: true }),
-  completedAt: timestamp('completed_at', { withTimezone: true }),
-  totalDistanceKm: decimal('total_distance_km', { precision: 10, scale: 2 }),
-  regionId: uuid('region_id').references(() => regions.id),
-  metadata: jsonb('metadata'),
+    .references(() => collectors.userId),
+  date: timestamp('date', { withTimezone: true }),
+  status: routeStatusEnum('status').default('planned'),
+  totalPlannedKg: decimal('total_planned_kg', { precision: 10, scale: 2 }),
+  totalActualKg: decimal('total_actual_kg', { precision: 10, scale: 2 }),
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
 });
@@ -75,16 +72,9 @@ export const routeStops = pgTable('route_stops', {
   routeId: uuid('route_id')
     .notNull()
     .references(() => routes.id),
-  sourceId: uuid('source_id')
-    .notNull()
-    .references(() => sources.id),
-  stopOrder: integer('stop_order').notNull(),
-  status: routeStopStatusEnum('status').default('pending').notNull(),
-  scheduledArrival: timestamp('scheduled_arrival', { withTimezone: true }),
-  actualArrival: timestamp('actual_arrival', { withTimezone: true }),
-  departedAt: timestamp('departed_at', { withTimezone: true }),
   preLotId: uuid('pre_lot_id').references(() => preLots.id),
-  notes: text('notes'),
-  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
-  updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
+  sourceId: uuid('source_id').references(() => sources.id),
+  order: integer('order').notNull(),
+  status: routeStopStatusEnum('status').default('pending'),
+  arrivalTime: timestamp('arrival_time', { withTimezone: true }),
 });

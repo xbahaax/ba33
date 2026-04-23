@@ -1,315 +1,245 @@
 import { pgEnum } from 'drizzle-orm/pg-core';
 
+// regions
+export const regionTypeEnum = pgEnum('region_type', ['wilaya', 'commune', 'village']);
+
+// users
 export const userTypeEnum = pgEnum('user_type', [
   'collector',
-  'shepherd',
-  'transporter',
   'depot_manager',
-  'washer',
-  'transformer',
-  'certifier',
+  'laverie_operator',
+  'transformer_operator',
   'sales_agent',
+  'central_admin',
+  'regional_manager',
   'buyer',
   'institutional',
-  'admin',
-  'super_admin',
+  'system',
 ]);
 
-export const userStatusEnum = pgEnum('user_status', [
-  'pending',
-  'active',
-  'suspended',
-  'deactivated',
-]);
+export const userStatusEnum = pgEnum('user_status', ['active', 'suspended', 'deleted']);
 
+// sources
 export const sourceTypeEnum = pgEnum('source_type', [
-  'restaurant',
-  'hotel',
-  'canteen',
-  'industrial',
-  'household',
-  'other',
+  'c1_shepherd',
+  'c2_slaughterhouse',
+  'c3_aggregator',
 ]);
 
-export const sourceStatusEnum = pgEnum('source_status', [
-  'prospecting',
-  'active',
-  'paused',
-  'churned',
+export const sourceStatusEnum = pgEnum('source_status', ['pending', 'active', 'suspended']);
+
+// collection
+export const preLotStatusEnum = pgEnum('pre_lot_status', [
+  'announced',
+  'assigned',
+  'collected',
+  'cancelled',
+  'expired',
 ]);
 
+export const routeStatusEnum = pgEnum('route_status', ['planned', 'in_progress', 'completed']);
+
+export const routeStopStatusEnum = pgEnum('route_stop_status', [
+  'pending',
+  'completed',
+  'skipped',
+]);
+
+// lots
 export const lotStatusEnum = pgEnum('lot_status', [
+  'announced',
   'collected',
   'in_transit',
-  'at_depot',
+  'received_depot',
+  'in_pretri',
+  'stored',
+  'dispatched_to_laverie',
+  'received_laverie',
   'washing',
   'washed',
-  'transforming',
+  'qualified',
+  'dispatched_to_d3',
+  'dispatched_to_d4',
+  'in_transformation',
   'transformed',
-  'certifying',
   'certified',
-  'listed',
   'sold',
-  'dispatched',
   'delivered',
+  'rejected',
+  'lost',
+  'quarantined',
 ]);
 
 export const lotStateQuickEnum = pgEnum('lot_state_quick', [
-  'raw',
-  'cleaned',
-  'processed',
-  'certified',
-  'sold',
+  'clean',
+  'dirty',
+  'very_dirty',
+  'contaminated',
+  'with_meat',
 ]);
 
-export const urgencyLevelEnum = pgEnum('urgency_level', [
-  'low',
-  'medium',
-  'high',
-  'critical',
+export const urgencyLevelEnum = pgEnum('urgency_level', ['normal', 'urgent']);
+
+export const lotPhotoAngleEnum = pgEnum('lot_photo_angle', [
+  'overview',
+  'closeup',
+  'surroundings',
+  'other',
 ]);
 
+export const signatureTypeEnum = pgEnum('signature_type', [
+  'digital',
+  'thumbprint',
+  'paper_photo',
+]);
+
+export const lotLineageOperationEnum = pgEnum('lot_lineage_operation', ['split', 'merge']);
+
+export const weighSourceEnum = pgEnum('weigh_source', [
+  'scale_bluetooth',
+  'manual',
+  'estimated',
+]);
+
+// transport
 export const transportLaneEnum = pgEnum('transport_lane', [
-  'collection',
-  'depot_inbound',
-  'inter_depot',
-  'depot_outbound',
-  'delivery',
+  'normal',
+  'urgent_cold_chain',
+  'urgent_standard',
 ]);
 
 export const jobStatusEnum = pgEnum('job_status', [
   'pending',
   'assigned',
+  'accepted',
   'in_progress',
-  'completed',
-  'failed',
+  'delivered',
   'cancelled',
 ]);
 
-export const gradeEnum = pgEnum('grade', [
-  'A',
-  'B',
-  'C',
-  'D',
-  'rejected',
+// depot
+export const depotZonePurposeEnum = pgEnum('depot_zone_purpose', [
+  'c1_normal',
+  'c2_urgent',
+  'c3_aggregator',
+  'quarantine',
+  'dispatch_ready',
 ]);
 
-export const safetyStatusEnum = pgEnum('safety_status', [
-  'pass',
-  'fail',
-  'pending',
-]);
+export const a1SeverityEnum = pgEnum('a1_severity', ['info', 'warning', 'critical']);
+
+export const a1StatusEnum = pgEnum('a1_status', ['open', 'acknowledged', 'resolved']);
+
+// laverie
+export const gradeEnum = pgEnum('grade', ['A', 'B', 'C', 'reject']);
+
+export const safetyStatusEnum = pgEnum('safety_status', ['clear', 'flagged', 'rejected']);
 
 export const dispatchTrackEnum = pgEnum('dispatch_track', [
-  'pending',
-  'picked',
-  'in_transit',
-  'delivered',
-  'returned',
+  'd3_textile',
+  'd4_bio',
+  'quarantine',
+  'reject',
 ]);
 
-export const transformerTrackEnum = pgEnum('transformer_track', [
-  'received',
-  'processing',
-  'processed',
-  'quality_check',
-  'stored',
+export const preWashActionEnum = pgEnum('pre_wash_action', [
+  'approved',
+  'quarantined',
+  'rejected',
 ]);
+
+// transformation
+export const transformerTrackEnum = pgEnum('transformer_track', ['d3_textile', 'd4_bio']);
 
 export const productStatusEnum = pgEnum('product_status', [
-  'in_stock',
-  'reserved',
+  'in_production',
+  'produced',
+  'certified',
   'sold',
-  'expired',
-]);
-
-export const certStatusEnum = pgEnum('cert_status', [
-  'pending',
-  'in_review',
-  'approved',
+  'shipped',
+  'delivered',
   'rejected',
-  'expired',
 ]);
 
-export const channelEnum = pgEnum('channel', [
-  'b2b',
-  'b2c',
-  'export',
-  'institutional',
+export const wasteCategoryEnum = pgEnum('waste_category', [
+  'reusable',
+  'recoverable',
+  'disposal',
 ]);
+
+// certification
+export const certStatusEnum = pgEnum('cert_status', ['pending', 'issued', 'revoked']);
+
+// sales
+export const channelEnum = pgEnum('channel', ['national', 'export', 'institutional']);
 
 export const orderStatusEnum = pgEnum('order_status', [
   'draft',
+  'quote',
   'confirmed',
-  'processing',
+  'paid',
+  'preparing',
   'shipped',
   'delivered',
+  'returned',
   'cancelled',
-  'refunded',
 ]);
 
 export const paymentStatusEnum = pgEnum('payment_status', [
   'pending',
   'partial',
   'paid',
-  'overdue',
   'refunded',
-]);
-
-export const regionTypeEnum = pgEnum('region_type', [
-  'country',
-  'state',
-  'province',
-  'city',
-  'district',
-  'zone',
-]);
-
-export const preLotStatusEnum = pgEnum('pre_lot_status', [
-  'draft',
-  'confirmed',
-  'collected',
-  'cancelled',
-]);
-
-export const routeStatusEnum = pgEnum('route_status', [
-  'planned',
-  'in_progress',
-  'completed',
-  'cancelled',
-]);
-
-export const routeStopStatusEnum = pgEnum('route_stop_status', [
-  'pending',
-  'arrived',
-  'completed',
-  'skipped',
-]);
-
-export const lotPhotoAngleEnum = pgEnum('lot_photo_angle', [
-  'top',
-  'side',
-  'label',
-  'damage',
-  'other',
-]);
-
-export const signatureTypeEnum = pgEnum('signature_type', [
-  'collector',
-  'source_contact',
-  'transporter',
-  'receiver',
-]);
-
-export const weighSourceEnum = pgEnum('weigh_source', [
-  'manual',
-  'scale',
-  'estimated',
-]);
-
-export const depotZonePurposeEnum = pgEnum('depot_zone_purpose', [
-  'receiving',
-  'storage',
-  'washing',
-  'processing',
-  'dispatch',
-  'quarantine',
-  'waste',
-]);
-
-export const a1SeverityEnum = pgEnum('a1_severity', [
-  'info',
-  'warning',
-  'critical',
-  'blocker',
-]);
-
-export const a1StatusEnum = pgEnum('a1_status', [
-  'open',
-  'acknowledged',
-  'resolved',
-  'dismissed',
-]);
-
-export const preWashActionEnum = pgEnum('pre_wash_action', [
-  'soak',
-  'scrape',
-  'filter',
-  'neutralize',
-  'none',
-]);
-
-export const wasteCategoryEnum = pgEnum('waste_category', [
-  'organic',
-  'chemical',
-  'plastic',
-  'metal',
-  'mixed',
-  'hazardous',
-]);
-
-export const auditTypeEnum = pgEnum('audit_type', [
-  'create',
-  'update',
-  'delete',
-  'status_change',
-  'login',
-  'export',
 ]);
 
 export const shipmentStatusEnum = pgEnum('shipment_status', [
   'pending',
-  'picked_up',
   'in_transit',
   'delivered',
-  'failed',
   'returned',
 ]);
 
 export const salesDocTypeEnum = pgEnum('sales_doc_type', [
   'invoice',
-  'receipt',
-  'credit_note',
-  'delivery_note',
-  'purchase_order',
-]);
-
-export const institutionalQueryTypeEnum = pgEnum('institutional_query_type', [
-  'traceability',
-  'compliance',
-  'statistics',
-  'audit',
-  'report',
-]);
-
-export const fileKindEnum = pgEnum('file_kind', [
-  'photo',
-  'document',
-  'certificate',
-  'signature',
-  'report',
+  'traceability_certificate',
+  'origin_certificate',
+  'export_declaration',
   'other',
 ]);
 
-export const syncDirectionEnum = pgEnum('sync_direction', [
-  'up',
-  'down',
-  'bidirectional',
+// institutional
+export const institutionalQueryTypeEnum = pgEnum('institutional_query_type', [
+  'lot_lookup',
+  'product_lookup',
+  'shepherd_lookup',
+  'cert_verify',
+  'aggregate_stats',
+  'export',
 ]);
+
+// audit
+export const auditTypeEnum = pgEnum('audit_type', [
+  'entry_e1',
+  'exit_s1',
+  'internal_ex',
+  'internal_sx',
+  'reconciliation',
+]);
+
+// files
+export const fileKindEnum = pgEnum('file_kind', [
+  'photo',
+  'voice_note',
+  'signature',
+  'document',
+  'certificate_pdf',
+]);
+
+// sync
+export const syncDirectionEnum = pgEnum('sync_direction', ['push', 'pull']);
 
 export const syncBatchStatusEnum = pgEnum('sync_batch_status', [
   'pending',
-  'processing',
   'completed',
   'failed',
-  'partial',
-]);
-
-export const lotLineageOperationEnum = pgEnum('lot_lineage_operation', [
-  'merge',
-  'split',
-  'transform',
-  'transfer',
-  'grade',
-  'certify',
 ]);

@@ -1,52 +1,49 @@
-import { pgTable, uuid, text, timestamp, decimal, integer, jsonb, boolean } from 'drizzle-orm/pg-core';
 import {
-  lotStatusEnum,
+  pgTable,
+  uuid,
+  text,
+  timestamp,
+  decimal,
+  boolean,
+  unique,
+} from 'drizzle-orm/pg-core';
+import {
+  sourceTypeEnum,
   lotStateQuickEnum,
-  gradeEnum,
+  urgencyLevelEnum,
+  lotStatusEnum,
   lotPhotoAngleEnum,
   signatureTypeEnum,
-  weighSourceEnum,
   lotLineageOperationEnum,
+  weighSourceEnum,
 } from './enums';
-import { regions } from './regions';
-import { users } from './users';
 import { sources } from './sources';
-import { collectors } from './collection';
+import { users } from './users';
 
 export const lots = pgTable('lots', {
   id: uuid('id').primaryKey().defaultRandom(),
-  code: text('code').notNull().unique(),
-  sourceId: uuid('source_id').references(() => sources.id),
-  collectorId: uuid('collector_id').references(() => collectors.id),
-  regionId: uuid('region_id').references(() => regions.id),
-  status: lotStatusEnum('status').default('collected').notNull(),
-  stateQuick: lotStateQuickEnum('state_quick').default('raw').notNull(),
-  grade: gradeEnum('grade'),
-  weightKg: decimal('weight_kg', { precision: 10, scale: 2 }),
-  volumeLiters: decimal('volume_liters', { precision: 10, scale: 2 }),
-  fatContent: decimal('fat_content', { precision: 5, scale: 2 }),
-  acidityLevel: decimal('acidity_level', { precision: 5, scale: 2 }),
-  moisturePercent: decimal('moisture_percent', { precision: 5, scale: 2 }),
-  impurityPercent: decimal('impurity_percent', { precision: 5, scale: 2 }),
-  temperature: decimal('temperature', { precision: 5, scale: 2 }),
-  color: text('color'),
-  odor: text('odor'),
-  texture: text('texture'),
-  priceMad: decimal('price_mad', { precision: 10, scale: 2 }),
+  sourceId: uuid('source_id')
+    .notNull()
+    .references(() => sources.id),
+  sourceType: sourceTypeEnum('source_type'),
+  collectorId: uuid('collector_id'), // FK to collectors.userId — plain uuid to avoid circular imports
+  qrCode: text('qr_code').unique().notNull(),
+  declaredWeightKg: decimal('declared_weight_kg', { precision: 10, scale: 2 }),
+  actualWeightKg: decimal('actual_weight_kg', { precision: 10, scale: 2 }),
+  stateQuick: lotStateQuickEnum('state_quick'),
+  urgency: urgencyLevelEnum('urgency').default('normal'),
+  coldChainTempC: decimal('cold_chain_temp_c', { precision: 5, scale: 2 }),
+  gpsLat: decimal('gps_lat', { precision: 10, scale: 7 }),
+  gpsLng: decimal('gps_lng', { precision: 10, scale: 7 }),
+  status: lotStatusEnum('status').notNull(),
+  isUrgent: boolean('is_urgent').default(false),
   collectedAt: timestamp('collected_at', { withTimezone: true }),
-  receivedAt: timestamp('received_at', { withTimezone: true }),
-  processedAt: timestamp('processed_at', { withTimezone: true }),
-  certifiedAt: timestamp('certified_at', { withTimezone: true }),
-  soldAt: timestamp('sold_at', { withTimezone: true }),
-  qrCode: text('qr_code'),
-  barcode: text('barcode'),
-  blockchainTxHash: text('blockchain_tx_hash'),
-  parentLotId: uuid('parent_lot_id'),
-  isMerged: boolean('is_merged').default(false).notNull(),
-  mergedFromCount: integer('merged_from_count').default(0).notNull(),
+  preLotId: uuid('pre_lot_id'),
+  routeStopId: uuid('route_stop_id'),
+  currentLocationId: uuid('current_location_id'),
+  currentLocationType: text('current_location_type'),
   notes: text('notes'),
-  metadata: jsonb('metadata'),
-  createdBy: uuid('created_by').references(() => users.id),
+  voiceNoteId: uuid('voice_note_id'), // FK to files
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
 });
@@ -56,15 +53,11 @@ export const lotPhotos = pgTable('lot_photos', {
   lotId: uuid('lot_id')
     .notNull()
     .references(() => lots.id),
-  angle: lotPhotoAngleEnum('angle').notNull(),
-  fileUrl: text('file_url').notNull(),
-  fileSize: integer('file_size'),
-  mimeType: text('mime_type'),
-  takenAt: timestamp('taken_at', { withTimezone: true }),
-  latitude: decimal('latitude', { precision: 10, scale: 7 }),
-  longitude: decimal('longitude', { precision: 10, scale: 7 }),
-  metadata: jsonb('metadata'),
-  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+  fileId: uuid('file_id').notNull(), // FK to files
+  angle: lotPhotoAngleEnum('angle'),
+  capturedAt: timestamp('captured_at', { withTimezone: true }),
+  gpsLat: decimal('gps_lat', { precision: 10, scale: 7 }),
+  gpsLng: decimal('gps_lng', { precision: 10, scale: 7 }),
 });
 
 export const lotSignatures = pgTable('lot_signatures', {
@@ -72,45 +65,42 @@ export const lotSignatures = pgTable('lot_signatures', {
   lotId: uuid('lot_id')
     .notNull()
     .references(() => lots.id),
-  type: signatureTypeEnum('type').notNull(),
-  signedBy: uuid('signed_by').references(() => users.id),
+  type: signatureTypeEnum('type'),
+  fileId: uuid('file_id').notNull(), // FK to files
   signedByName: text('signed_by_name'),
-  signatureUrl: text('signature_url').notNull(),
-  signedAt: timestamp('signed_at', { withTimezone: true }).defaultNow().notNull(),
-  latitude: decimal('latitude', { precision: 10, scale: 7 }),
-  longitude: decimal('longitude', { precision: 10, scale: 7 }),
-  metadata: jsonb('metadata'),
-  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+  capturedAt: timestamp('captured_at', { withTimezone: true }),
 });
 
-export const lotLineage = pgTable('lot_lineage', {
-  id: uuid('id').primaryKey().defaultRandom(),
-  parentLotId: uuid('parent_lot_id')
-    .notNull()
-    .references(() => lots.id),
-  childLotId: uuid('child_lot_id')
-    .notNull()
-    .references(() => lots.id),
-  operation: lotLineageOperationEnum('operation').notNull(),
-  ratio: decimal('ratio', { precision: 5, scale: 4 }),
-  performedBy: uuid('performed_by').references(() => users.id),
-  notes: text('notes'),
-  metadata: jsonb('metadata'),
-  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
-});
+export const lotLineage = pgTable(
+  'lot_lineage',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    childLotId: uuid('child_lot_id')
+      .notNull()
+      .references(() => lots.id),
+    parentLotId: uuid('parent_lot_id')
+      .notNull()
+      .references(() => lots.id),
+    weightContributionKg: decimal('weight_contribution_kg', { precision: 10, scale: 2 }),
+    operation: lotLineageOperationEnum('operation'),
+    performedBy: uuid('performed_by').references(() => users.id),
+    performedAt: timestamp('performed_at', { withTimezone: true }),
+    notes: text('notes'),
+  },
+  (table) => ({
+    uniqueChildParent: unique().on(table.childLotId, table.parentLotId),
+  }),
+);
 
 export const lotWeighs = pgTable('lot_weighs', {
   id: uuid('id').primaryKey().defaultRandom(),
   lotId: uuid('lot_id')
     .notNull()
     .references(() => lots.id),
+  phase: text('phase').notNull(),
   weightKg: decimal('weight_kg', { precision: 10, scale: 2 }).notNull(),
-  source: weighSourceEnum('source').notNull(),
-  scaleId: text('scale_id'),
-  weighedBy: uuid('weighed_by').references(() => users.id),
-  weighedAt: timestamp('weighed_at', { withTimezone: true }).defaultNow().notNull(),
-  latitude: decimal('latitude', { precision: 10, scale: 7 }),
-  longitude: decimal('longitude', { precision: 10, scale: 7 }),
-  metadata: jsonb('metadata'),
-  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+  source: weighSourceEnum('source'),
+  recordedBy: uuid('recorded_by').references(() => users.id),
+  recordedAt: timestamp('recorded_at', { withTimezone: true }),
+  eventId: uuid('event_id'),
 });

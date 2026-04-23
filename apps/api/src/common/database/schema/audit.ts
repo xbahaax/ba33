@@ -1,35 +1,33 @@
-import { pgTable, uuid, text, timestamp, jsonb, boolean, decimal } from 'drizzle-orm/pg-core';
+import { pgTable, uuid, text, timestamp, decimal, boolean, jsonb } from 'drizzle-orm/pg-core';
 import { auditTypeEnum } from './enums';
 import { users } from './users';
+import { lots } from './lots';
 
 export const audits = pgTable('audits', {
   id: uuid('id').primaryKey().defaultRandom(),
-  type: auditTypeEnum('type').notNull(),
-  entityType: text('entity_type').notNull(),
-  entityId: uuid('entity_id').notNull(),
-  actorId: uuid('actor_id').references(() => users.id),
-  actorIp: text('actor_ip'),
-  actorUserAgent: text('actor_user_agent'),
-  oldValues: jsonb('old_values'),
-  newValues: jsonb('new_values'),
-  diff: jsonb('diff'),
-  metadata: jsonb('metadata'),
-  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+  auditType: auditTypeEnum('audit_type').notNull(),
+  subjectType: text('subject_type').notNull(),
+  subjectId: uuid('subject_id').notNull(),
+  findings: jsonb('findings').notNull(),
+  passed: boolean('passed').notNull(),
+  auditorId: uuid('auditor_id')
+    .notNull()
+    .references(() => users.id),
+  performedAt: timestamp('performed_at', { withTimezone: true }).notNull(),
 });
 
 export const reconciliations = pgTable('reconciliations', {
   id: uuid('id').primaryKey().defaultRandom(),
-  entityType: text('entity_type').notNull(),
-  entityId: uuid('entity_id').notNull(),
-  expectedValue: decimal('expected_value', { precision: 12, scale: 4 }),
-  actualValue: decimal('actual_value', { precision: 12, scale: 4 }),
-  discrepancy: decimal('discrepancy', { precision: 12, scale: 4 }),
-  unit: text('unit'),
-  resolved: boolean('resolved').default(false).notNull(),
-  resolvedBy: uuid('resolved_by').references(() => users.id),
-  resolvedAt: timestamp('resolved_at', { withTimezone: true }),
-  notes: text('notes'),
-  metadata: jsonb('metadata'),
-  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
-  updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
+  lotId: uuid('lot_id')
+    .notNull()
+    .references(() => lots.id),
+  phaseFrom: text('phase_from').notNull(),
+  phaseTo: text('phase_to').notNull(),
+  weightOutKg: decimal('weight_out_kg', { precision: 10, scale: 2 }).notNull(),
+  weightInKg: decimal('weight_in_kg', { precision: 10, scale: 2 }).notNull(),
+  deltaKg: decimal('delta_kg', { precision: 10, scale: 2 }).notNull(),
+  toleranceKg: decimal('tolerance_kg', { precision: 10, scale: 2 }).notNull(),
+  withinTolerance: boolean('within_tolerance').notNull(),
+  flagged: boolean('flagged').notNull(),
+  computedAt: timestamp('computed_at', { withTimezone: true }).notNull(),
 });

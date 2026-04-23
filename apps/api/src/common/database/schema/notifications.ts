@@ -1,4 +1,4 @@
-import { pgTable, uuid, text, timestamp, jsonb, boolean } from 'drizzle-orm/pg-core';
+import { pgTable, uuid, text, timestamp, jsonb } from 'drizzle-orm/pg-core';
 import { users } from './users';
 
 export const notifications = pgTable('notifications', {
@@ -6,15 +6,11 @@ export const notifications = pgTable('notifications', {
   userId: uuid('user_id')
     .notNull()
     .references(() => users.id),
-  title: text('title').notNull(),
-  body: text('body'),
   type: text('type').notNull(),
-  channel: text('channel').default('in_app').notNull(),
-  entityType: text('entity_type'),
-  entityId: uuid('entity_id'),
-  read: boolean('read').default(false).notNull(),
+  title: text('title').notNull(),
+  body: text('body').notNull(),
+  payload: jsonb('payload'),
   readAt: timestamp('read_at', { withTimezone: true }),
   sentAt: timestamp('sent_at', { withTimezone: true }),
-  metadata: jsonb('metadata'),
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
 });
