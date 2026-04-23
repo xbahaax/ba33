@@ -26,7 +26,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   }
 
   Future<void> _sendOtp() async {
-    if (_phoneController.text.length < 9) return;
     setState(() => _isLoading = true);
     await Future.delayed(const Duration(seconds: 1));
     setState(() {
@@ -38,9 +37,14 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   Future<void> _verifyOtp() async {
     if (_otpController.text.length < 4) return;
     setState(() => _isLoading = true);
-    await Future.delayed(const Duration(milliseconds: 800));
+    await Future.delayed(const Duration(milliseconds: 600));
     ref.read(authStateProvider.notifier).login();
     if (mounted) context.go('/');
+  }
+
+  void _demoLogin() {
+    ref.read(authStateProvider.notifier).login();
+    context.go('/');
   }
 
   @override
@@ -51,12 +55,16 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     return Scaffold(
       body: SafeArea(
         child: SingleChildScrollView(
-          padding: const EdgeInsets.all(Ba33Spacing.spacing6),
+          padding: const EdgeInsets.symmetric(
+            horizontal: Ba33Spacing.spacing6,
+            vertical: Ba33Spacing.spacing4,
+          ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const SizedBox(height: Ba33Spacing.spacing12),
-              // Brand header
+              const SizedBox(height: Ba33Spacing.spacing8),
+
+              // Brand icon
               Container(
                 width: 56,
                 height: 56,
@@ -75,16 +83,15 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   ),
                 ),
               ),
-              const SizedBox(height: Ba33Spacing.spacing6),
+              const SizedBox(height: Ba33Spacing.spacing4),
               Text('Transporter', style: textTheme.displaySmall),
               const SizedBox(height: Ba33Spacing.spacing1),
               Text(
-                'Connectez-vous pour accéder à vos missions',
-                style: textTheme.bodyMedium?.copyWith(
-                  color: colors.mutedForeground,
-                ),
+                'Connectez-vous pour accéder à vos missions.',
+                style: textTheme.bodyMedium
+                    ?.copyWith(color: colors.mutedForeground),
               ),
-              const SizedBox(height: Ba33Spacing.spacing12),
+              const SizedBox(height: Ba33Spacing.spacing8),
 
               if (!_otpSent) ...[
                 Text('Numéro de téléphone', style: textTheme.labelLarge),
@@ -92,30 +99,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 TextField(
                   controller: _phoneController,
                   keyboardType: TextInputType.phone,
-                  decoration: InputDecoration(
+                  decoration: const InputDecoration(
                     hintText: '06 12 34 56 78',
-                    prefixIcon: Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: Ba33Spacing.spacing3,
-                      ),
-                      margin: const EdgeInsets.symmetric(
-                        vertical: Ba33Spacing.spacing2,
-                        horizontal: Ba33Spacing.spacing2,
-                      ),
-                      decoration: BoxDecoration(
-                        color: colors.muted,
-                        borderRadius: Ba33Radii.borderRadiusMd,
-                      ),
-                      child: Center(
-                        child: Text(
-                          '+213',
-                          style: Ba33Typography.mono(
-                            fontSize: 13,
-                            color: colors.foreground,
-                          ),
-                        ),
-                      ),
-                    ),
+                    prefixText: '+213  ',
                   ),
                 ),
                 const SizedBox(height: Ba33Spacing.spacing4),
@@ -123,10 +109,14 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   width: double.infinity,
                   child: ElevatedButton(
                     onPressed: _isLoading ? null : _sendOtp,
+                    style: ElevatedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(
+                          vertical: Ba33Spacing.spacing4),
+                    ),
                     child: _isLoading
                         ? SizedBox(
-                            height: 20,
-                            width: 20,
+                            height: 18,
+                            width: 18,
                             child: CircularProgressIndicator(
                               color: colors.primaryForeground,
                               strokeWidth: 2,
@@ -136,17 +126,17 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   ),
                 ),
               ] else ...[
-                // OTP sent state
+                // OTP confirmation banner
                 Container(
-                  padding: const EdgeInsets.all(Ba33Spacing.spacing4),
+                  padding: const EdgeInsets.all(Ba33Spacing.spacing3),
                   decoration: BoxDecoration(
                     color: colors.muted,
-                    borderRadius: Ba33Radii.borderRadiusLg,
+                    borderRadius: Ba33Radii.borderRadiusMd,
                   ),
                   child: Row(
                     children: [
                       Icon(Icons.check_circle,
-                          color: colors.primary, size: 20),
+                          color: colors.primary, size: 18),
                       const SizedBox(width: Ba33Spacing.spacing2),
                       Expanded(
                         child: Text(
@@ -156,8 +146,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                         ),
                       ),
                       TextButton(
-                        onPressed: () =>
-                            setState(() => _otpSent = false),
+                        onPressed: () => setState(() => _otpSent = false),
                         child: const Text('Changer'),
                       ),
                     ],
@@ -170,6 +159,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   controller: _otpController,
                   keyboardType: TextInputType.number,
                   maxLength: 6,
+                  autofocus: true,
                   style: Ba33Typography.mono(fontSize: 24),
                   textAlign: TextAlign.center,
                   decoration: const InputDecoration(
@@ -179,7 +169,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 ),
                 const SizedBox(height: Ba33Spacing.spacing1),
                 Text(
-                  'Demo: entrez n\'importe quel code à 4+ chiffres',
+                  'Demo : entrez n\'importe quel code à 4+ chiffres',
                   style: textTheme.bodySmall
                       ?.copyWith(color: colors.mutedForeground),
                 ),
@@ -188,10 +178,14 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   width: double.infinity,
                   child: ElevatedButton(
                     onPressed: _isLoading ? null : _verifyOtp,
+                    style: ElevatedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(
+                          vertical: Ba33Spacing.spacing4),
+                    ),
                     child: _isLoading
                         ? SizedBox(
-                            height: 20,
-                            width: 20,
+                            height: 18,
+                            width: 18,
                             child: CircularProgressIndicator(
                               color: colors.primaryForeground,
                               strokeWidth: 2,
@@ -201,6 +195,32 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   ),
                 ),
               ],
+
+              const SizedBox(height: Ba33Spacing.spacing6),
+              Divider(color: colors.border),
+              const SizedBox(height: Ba33Spacing.spacing4),
+
+              // Demo bypass — always visible
+              SizedBox(
+                width: double.infinity,
+                child: OutlinedButton.icon(
+                  onPressed: _demoLogin,
+                  icon: const Icon(Icons.bolt, size: 18),
+                  label: const Text('Accès démo rapide'),
+                  style: OutlinedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(
+                        vertical: Ba33Spacing.spacing4),
+                  ),
+                ),
+              ),
+              const SizedBox(height: Ba33Spacing.spacing2),
+              Center(
+                child: Text(
+                  'Contourne le OTP — pour la démo uniquement',
+                  style: textTheme.bodySmall
+                      ?.copyWith(color: colors.mutedForeground),
+                ),
+              ),
             ],
           ),
         ),
