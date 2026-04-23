@@ -1,0 +1,21 @@
+/// Lifecycle status of a lot as it moves through the chain.
+enum LotStatus {
+  announced,
+  collected,
+  inTransit,
+  receivedDepot,
+  preSorted,
+  dispatched,
+  receivedLaverie,
+  washing,
+  washed,
+  qualified,
+  dispatchedTransformer,
+  inTransformation,
+  transformed,
+  certified,
+  forSale,
+  sold,
+  rejected,
+  quarantined,
+}
