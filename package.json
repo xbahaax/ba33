@@ -1,0 +1,23 @@
+{
+  "name": "ba33-platform",
+  "private": true,
+  "packageManager": "pnpm@10.11.0",
+  "scripts": {
+    "dev": "turbo dev",
+    "build": "turbo build",
+    "lint": "turbo lint",
+    "typecheck": "turbo typecheck",
+    "test": "turbo test",
+    "codegen": "turbo codegen",
+    "db:generate": "pnpm --filter @ba33/api drizzle-kit generate",
+    "db:migrate": "pnpm --filter @ba33/api drizzle-kit migrate",
+    "db:studio": "pnpm --filter @ba33/api drizzle-kit studio",
+    "docker:up": "docker compose -f infra/docker/docker-compose.yml up -d",
+    "docker:down": "docker compose -f infra/docker/docker-compose.yml down",
+    "clean": "turbo clean"
+  },
+  "devDependencies": {
+    "turbo": "^2.5.0",
+    "typescript": "^5.8.0"
+  }
+}
