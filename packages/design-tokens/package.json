@@ -3,6 +3,10 @@
   "version": "0.0.0",
   "private": true,
   "main": "tokens.json",
+  "exports": {
+    ".": "./tokens.json",
+    "./css": "./css/tokens.css"
+  },
   "scripts": {
     "build": "echo ok"
   }
