@@ -4,7 +4,6 @@ import {
   CardTitle,
   CardDescription,
   CardContent,
-  Badge,
 } from "@ba33/ui-web";
 import {
   Warehouse,

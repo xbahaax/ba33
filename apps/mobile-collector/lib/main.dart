@@ -1,20 +1,26 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:ba33_ui/ba33_ui.dart';
+
+import 'navigation/router.dart';
 
 void main() {
-  runApp(const MainApp());
+  WidgetsFlutterBinding.ensureInitialized();
+  runApp(const ProviderScope(child: CollectorApp()));
 }
 
-class MainApp extends StatelessWidget {
-  const MainApp({super.key});
+class CollectorApp extends StatelessWidget {
+  const CollectorApp({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return const MaterialApp(
-      home: Scaffold(
-        body: Center(
-          child: Text('Hello World!'),
-        ),
-      ),
+    return MaterialApp.router(
+      title: 'ba33 Collector',
+      debugShowCheckedModeBanner: false,
+      theme: Ba33Theme.light(),
+      darkTheme: Ba33Theme.dark(),
+      themeMode: ThemeMode.system,
+      routerConfig: routerProvider,
     );
   }
 }
