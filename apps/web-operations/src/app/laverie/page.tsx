@@ -1,7 +1,14 @@
 import { getLaverieOverview } from "@/lib/api";
 import { formatDateTime, formatNumber, formatWeight } from "@/lib/format";
+import { OperationsRoutePage } from "@/components/operations-route-page";
 
-export default async function LaveriePage() {
+export default function LaveriePage() {
+  return <OperationsRoutePage routeKey="laverie" />;
+}
+
+void LegacyLaveriePage;
+
+async function LegacyLaveriePage() {
   const data = await getLaverieOverview();
 
   if (!data) {

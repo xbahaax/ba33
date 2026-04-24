@@ -6,13 +6,20 @@ import {
   CardTitle,
 } from "@ba33/ui-web";
 import { MetricCard } from "@/components/metric-card";
+import { OperationsRoutePage } from "@/components/operations-route-page";
 import { PageHeader } from "@/components/page-header";
 import { StatusBadge } from "@/components/status-badge";
 import { UnavailableState } from "@/components/unavailable-state";
 import { getDepotOverview } from "@/lib/api";
 import { formatDateTime, formatPercent, formatWeight } from "@/lib/format";
 
-export default async function DepotPage() {
+export default function DepotPage() {
+  return <OperationsRoutePage routeKey="depot" />;
+}
+
+void LegacyDepotPage;
+
+async function LegacyDepotPage() {
   const data = await getDepotOverview();
 
   if (!data) {

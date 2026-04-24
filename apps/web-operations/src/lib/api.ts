@@ -6,6 +6,10 @@ const SERVER_API_BASE_URL =
 const CLIENT_API_BASE_URL =
   process.env.NEXT_PUBLIC_BA33_API_URL ?? "http://localhost:3001";
 
+export function getClientApiBaseUrl() {
+  return CLIENT_API_BASE_URL;
+}
+
 function getApiBaseUrl() {
   return typeof window === "undefined"
     ? SERVER_API_BASE_URL

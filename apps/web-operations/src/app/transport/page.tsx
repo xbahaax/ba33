@@ -6,13 +6,20 @@ import {
   CardTitle,
 } from "@ba33/ui-web";
 import { MetricCard } from "@/components/metric-card";
+import { OperationsRoutePage } from "@/components/operations-route-page";
 import { PageHeader } from "@/components/page-header";
 import { StatusBadge } from "@/components/status-badge";
 import { UnavailableState } from "@/components/unavailable-state";
 import { getTransportOverview } from "@/lib/api";
 import { formatDateTime, formatEnumLabel } from "@/lib/format";
 
-export default async function TransportPage() {
+export default function TransportPage() {
+  return <OperationsRoutePage routeKey="transport" />;
+}
+
+void LegacyTransportPage;
+
+async function LegacyTransportPage() {
   const data = await getTransportOverview();
 
   if (!data) {

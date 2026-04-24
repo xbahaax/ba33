@@ -13,11 +13,18 @@ import {
   getUsersOverview,
 } from "@/lib/api";
 import { MetricCard } from "@/components/metric-card";
+import { OperationsRoutePage } from "@/components/operations-route-page";
 import { PageHeader } from "@/components/page-header";
 import { UnavailableState } from "@/components/unavailable-state";
 import { formatEnumLabel } from "@/lib/format";
 
-export default async function AnalyticsPage() {
+export default function AnalyticsPage() {
+  return <OperationsRoutePage routeKey="analytics" />;
+}
+
+void LegacyAnalyticsPage;
+
+async function LegacyAnalyticsPage() {
   const [lots, transport, sales, certification, users] = await Promise.all([
     getLotsSummary(),
     getTransportOverview(),

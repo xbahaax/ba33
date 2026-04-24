@@ -25,9 +25,9 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="fr" className={`${inter.variable} ${jetbrainsMono.variable}`}>
-      <body className="flex h-screen overflow-hidden">
+      <body className="min-h-screen bg-background text-foreground">
         <AppSidebar />
-        <main className="flex-1 overflow-y-auto">
+        <main className="min-w-0 lg:ml-72">
           {children}
         </main>
       </body>

@@ -6,12 +6,19 @@ import {
   CardTitle,
 } from "@ba33/ui-web";
 import { MetricCard } from "@/components/metric-card";
+import { OperationsRoutePage } from "@/components/operations-route-page";
 import { PageHeader } from "@/components/page-header";
 import { UnavailableState } from "@/components/unavailable-state";
 import { getRegionsOverview } from "@/lib/api";
 import { formatEnumLabel } from "@/lib/format";
 
-export default async function RegionsPage() {
+export default function RegionsPage() {
+  return <OperationsRoutePage routeKey="regions" />;
+}
+
+void LegacyRegionsPage;
+
+async function LegacyRegionsPage() {
   const data = await getRegionsOverview();
 
   if (!data) {

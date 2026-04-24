@@ -6,13 +6,20 @@ import {
   CardTitle,
 } from "@ba33/ui-web";
 import { MetricCard } from "@/components/metric-card";
+import { OperationsRoutePage } from "@/components/operations-route-page";
 import { PageHeader } from "@/components/page-header";
 import { StatusBadge } from "@/components/status-badge";
 import { UnavailableState } from "@/components/unavailable-state";
 import { getUsersOverview } from "@/lib/api";
 import { formatDateTime, formatEnumLabel } from "@/lib/format";
 
-export default async function UsersPage() {
+export default function UsersPage() {
+  return <OperationsRoutePage routeKey="users" />;
+}
+
+void LegacyUsersPage;
+
+async function LegacyUsersPage() {
   const data = await getUsersOverview();
 
   if (!data) {

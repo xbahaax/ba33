@@ -6,12 +6,19 @@ import {
   CardTitle,
 } from "@ba33/ui-web";
 import { MetricCard } from "@/components/metric-card";
+import { OperationsRoutePage } from "@/components/operations-route-page";
 import { PageHeader } from "@/components/page-header";
 import { UnavailableState } from "@/components/unavailable-state";
 import { getRulesOverview } from "@/lib/api";
 import { formatDateTime } from "@/lib/format";
 
-export default async function SettingsPage() {
+export default function SettingsPage() {
+  return <OperationsRoutePage routeKey="settings" />;
+}
+
+void LegacySettingsPage;
+
+async function LegacySettingsPage() {
   const data = await getRulesOverview();
 
   if (!data) {

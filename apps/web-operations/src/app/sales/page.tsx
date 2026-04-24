@@ -6,13 +6,20 @@ import {
   CardTitle,
 } from "@ba33/ui-web";
 import { MetricCard } from "@/components/metric-card";
+import { OperationsRoutePage } from "@/components/operations-route-page";
 import { PageHeader } from "@/components/page-header";
 import { StatusBadge } from "@/components/status-badge";
 import { UnavailableState } from "@/components/unavailable-state";
 import { getSalesOverview } from "@/lib/api";
 import { formatCurrency, formatDateTime, formatEnumLabel } from "@/lib/format";
 
-export default async function SalesPage() {
+export default function SalesPage() {
+  return <OperationsRoutePage routeKey="sales" />;
+}
+
+void LegacySalesPage;
+
+async function LegacySalesPage() {
   const data = await getSalesOverview();
 
   if (!data) {

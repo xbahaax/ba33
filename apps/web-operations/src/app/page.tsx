@@ -22,11 +22,18 @@ import {
   formatWeight,
 } from "@/lib/format";
 import { MetricCard } from "@/components/metric-card";
+import { OperationsRoutePage } from "@/components/operations-route-page";
 import { PageHeader } from "@/components/page-header";
 import { StatusBadge } from "@/components/status-badge";
 import { UnavailableState } from "@/components/unavailable-state";
 
-export default async function DashboardPage() {
+export default function DashboardPage() {
+  return <OperationsRoutePage routeKey="dashboard" />;
+}
+
+void LegacyDashboardPage;
+
+async function LegacyDashboardPage() {
   const [
     lots,
     events,

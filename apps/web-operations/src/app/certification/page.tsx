@@ -6,13 +6,21 @@ import {
   CardTitle,
 } from "@ba33/ui-web";
 import { MetricCard } from "@/components/metric-card";
+import { OperationsRoutePage } from "@/components/operations-route-page";
 import { PageHeader } from "@/components/page-header";
 import { StatusBadge } from "@/components/status-badge";
 import { UnavailableState } from "@/components/unavailable-state";
 import { getCertificationOverview } from "@/lib/api";
 import { formatDateTime } from "@/lib/format";
 
-export default async function CertificationPage() {
+
+export default function CertificationPage() {
+  return <OperationsRoutePage routeKey="certification" />;
+}
+
+void LegacyCertificationPage;
+
+async function LegacyCertificationPage() {
   const data = await getCertificationOverview();
 
   if (!data) {
