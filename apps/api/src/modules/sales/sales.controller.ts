@@ -1,4 +1,4 @@
-import { Controller } from '@nestjs/common';
+import { Controller, Get } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 import { SalesService } from './sales.service';
 
@@ -6,4 +6,9 @@ import { SalesService } from './sales.service';
 @Controller('sales')
 export class SalesController {
   constructor(private readonly salesService: SalesService) {}
+
+  @Get('overview')
+  getOverview() {
+    return this.salesService.getOverview();
+  }
 }

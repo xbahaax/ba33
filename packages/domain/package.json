@@ -5,7 +5,7 @@
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "dependencies": {
-    "@ba33/types": "workspace:*"
+    "@ba33/types": "file:../types"
   },
   "scripts": {
     "build": "tsc",

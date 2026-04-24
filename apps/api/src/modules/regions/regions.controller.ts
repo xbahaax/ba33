@@ -1,4 +1,4 @@
-import { Controller } from '@nestjs/common';
+import { Controller, Get } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 import { RegionsService } from './regions.service';
 
@@ -6,4 +6,9 @@ import { RegionsService } from './regions.service';
 @Controller('regions')
 export class RegionsController {
   constructor(private readonly regionsService: RegionsService) {}
+
+  @Get('overview')
+  getOverview() {
+    return this.regionsService.getOverview();
+  }
 }

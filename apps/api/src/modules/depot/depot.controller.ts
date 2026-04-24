@@ -1,4 +1,4 @@
-import { Controller } from '@nestjs/common';
+import { Controller, Get } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 import { DepotService } from './depot.service';
 
@@ -6,4 +6,9 @@ import { DepotService } from './depot.service';
 @Controller('depot')
 export class DepotController {
   constructor(private readonly depotService: DepotService) {}
+
+  @Get('overview')
+  getOverview() {
+    return this.depotService.getOverview();
+  }
 }

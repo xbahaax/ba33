@@ -12,6 +12,7 @@ async function bootstrap() {
     logger: ['error', 'warn', 'log', 'debug', 'verbose'],
   });
 
+  app.enableCors();
   app.use(pinoHttp({ logger }));
 
   app.useGlobalPipes(
@@ -32,7 +33,7 @@ async function bootstrap() {
   const document = SwaggerModule.createDocument(app, swaggerConfig);
   SwaggerModule.setup('api', app, document);
 
-  const port = process.env.PORT || 3000;
+  const port = process.env.PORT || 3001;
   await app.listen(port);
   logger.info(`Application listening on port ${port}`);
 }

@@ -4,4 +4,8 @@ import { RulesRepository } from './rules.repository';
 @Injectable()
 export class RulesService {
   constructor(private readonly rulesRepository: RulesRepository) {}
+
+  getOverview() {
+    return this.rulesRepository.getOverview();
+  }
 }

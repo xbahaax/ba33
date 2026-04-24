@@ -1,4 +1,4 @@
-import { Controller } from '@nestjs/common';
+import { Controller, Get } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 import { RulesService } from './rules.service';
 
@@ -6,4 +6,9 @@ import { RulesService } from './rules.service';
 @Controller('rules')
 export class RulesController {
   constructor(private readonly rulesService: RulesService) {}
+
+  @Get('overview')
+  getOverview() {
+    return this.rulesService.getOverview();
+  }
 }

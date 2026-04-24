@@ -1,4 +1,4 @@
-import { Controller } from '@nestjs/common';
+import { Controller, Get } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 import { CertificationService } from './certification.service';
 
@@ -6,4 +6,9 @@ import { CertificationService } from './certification.service';
 @Controller('certification')
 export class CertificationController {
   constructor(private readonly certificationService: CertificationService) {}
+
+  @Get('overview')
+  getOverview() {
+    return this.certificationService.getOverview();
+  }
 }
