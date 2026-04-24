@@ -3,7 +3,9 @@ import 'package:go_router/go_router.dart';
 import '../features/auth/view/login_screen.dart';
 import '../features/jobs/view/job_detail_screen.dart';
 import '../features/jobs/view/job_list_screen.dart';
+import '../features/onboarding/view/onboarding_screen.dart';
 import '../features/scan/view/scan_screen.dart';
+import '../features/splash/view/splash_screen.dart';
 import '../features/trip/view/active_trip_screen.dart';
 import '../features/trip/view/pod_screen.dart';
 import '../features/trip/view/scan_delivery_screen.dart';
@@ -12,8 +14,18 @@ import '../features/farmer_declaration/view/farmer_declaration_form_screen.dart'
 import '../features/farmer_declaration/view/farmer_declaration_success_screen.dart';
 
 final routerProvider = GoRouter(
-  initialLocation: '/',
+  initialLocation: '/splash',
   routes: [
+    GoRoute(
+      path: '/splash',
+      name: 'splash',
+      builder: (context, state) => const SplashScreen(),
+    ),
+    GoRoute(
+      path: '/onboarding',
+      name: 'onboarding',
+      builder: (context, state) => const OnboardingScreen(),
+    ),
     GoRoute(
       path: '/login',
       name: 'login',
