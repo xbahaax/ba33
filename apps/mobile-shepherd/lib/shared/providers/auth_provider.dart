@@ -1,20 +1,52 @@
 import 'package:ba33_domain/ba33_domain.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
+import 'api_provider.dart';
+
 part 'auth_provider.g.dart';
 
-/// Current authenticated user state.
 @Riverpod(keepAlive: true)
 class Auth extends _$Auth {
   @override
   User? build() => null;
 
-  void login(User user) {
-    state = user;
+  Future<void> login(String email, String password) async {
+    final authService = ref.read(authServiceProvider);
+    final apiClient = ref.read(apiClientProvider);
+
+    final tokens = await authService.login(email, password);
+    final accessToken = tokens['accessToken'] as String;
+    apiClient.setAccessToken(accessToken);
+
+    final profile = await authService.me();
+    state = User(
+      id: profile['id'] as String,
+      phone: profile['phone'] as String? ?? '',
+      role: _mapRole(profile['userType'] as String? ?? 'collector'),
+      regionId: profile['regionId'] as String? ?? '',
+      name: profile['fullName'] as String?,
+      email: profile['email'] as String?,
+    );
   }
 
   void logout() {
+    ref.read(apiClientProvider).clearAccessToken();
     state = null;
+  }
+
+  static UserRole _mapRole(String type) {
+    switch (type) {
+      case 'collector':
+        return UserRole.collector;
+      case 'shepherd':
+        return UserRole.shepherd;
+      case 'transporter':
+        return UserRole.transporter;
+      case 'depot_manager':
+        return UserRole.depotOperator;
+      default:
+        return UserRole.shepherd;
+    }
   }
 }
 

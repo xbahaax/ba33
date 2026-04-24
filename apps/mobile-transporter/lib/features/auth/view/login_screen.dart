@@ -13,38 +13,44 @@ class LoginScreen extends ConsumerStatefulWidget {
 }
 
 class _LoginScreenState extends ConsumerState<LoginScreen> {
-  final _phoneController = TextEditingController();
-  final _otpController = TextEditingController();
-  bool _otpSent = false;
+  final _emailController = TextEditingController();
+  final _passwordController = TextEditingController();
   bool _isLoading = false;
+  String? _errorMessage;
 
   @override
   void dispose() {
-    _phoneController.dispose();
-    _otpController.dispose();
+    _emailController.dispose();
+    _passwordController.dispose();
     super.dispose();
   }
 
-  Future<void> _sendOtp() async {
-    setState(() => _isLoading = true);
-    await Future.delayed(const Duration(seconds: 1));
+  Future<void> _login() async {
+    final email = _emailController.text.trim();
+    final password = _passwordController.text;
+    if (email.isEmpty || password.isEmpty) {
+      setState(() => _errorMessage = 'ادخل الإيميل و كلمة السر');
+      return;
+    }
+
     setState(() {
-      _isLoading = false;
-      _otpSent = true;
+      _isLoading = true;
+      _errorMessage = null;
     });
-  }
 
-  Future<void> _verifyOtp() async {
-    if (_otpController.text.length < 4) return;
-    setState(() => _isLoading = true);
-    await Future.delayed(const Duration(milliseconds: 600));
-    ref.read(authStateProvider.notifier).login();
-    if (mounted) context.go('/');
-  }
+    final success =
+        await ref.read(authStateProvider.notifier).login(email, password);
 
-  void _demoLogin() {
-    ref.read(authStateProvider.notifier).login();
-    context.go('/');
+    if (!mounted) return;
+
+    if (success) {
+      context.go('/');
+    } else {
+      setState(() {
+        _isLoading = false;
+        _errorMessage = 'الإيميل ولا كلمة السر غالطة';
+      });
+    }
   }
 
   @override
@@ -93,132 +99,59 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
               ),
               const SizedBox(height: Ba33Spacing.spacing8),
 
-              if (!_otpSent) ...[
-                Text('رقم التيليفون', style: textTheme.labelLarge),
-                const SizedBox(height: Ba33Spacing.spacing2),
-                TextField(
-                  controller: _phoneController,
-                  keyboardType: TextInputType.phone,
-                  decoration: const InputDecoration(
-                    hintText: '06 12 34 56 78',
-                    prefixText: '+213  ',
-                  ),
+              Text('الإيميل', style: textTheme.labelLarge),
+              const SizedBox(height: Ba33Spacing.spacing2),
+              TextField(
+                controller: _emailController,
+                keyboardType: TextInputType.emailAddress,
+                textInputAction: TextInputAction.next,
+                decoration: const InputDecoration(
+                  hintText: 'transporter@ba33.dz',
                 ),
-                const SizedBox(height: Ba33Spacing.spacing4),
-                SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton(
-                    onPressed: _isLoading ? null : _sendOtp,
-                    style: ElevatedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(
-                          vertical: Ba33Spacing.spacing4),
-                    ),
-                    child: _isLoading
-                        ? SizedBox(
-                            height: 18,
-                            width: 18,
-                            child: CircularProgressIndicator(
-                              color: colors.primaryForeground,
-                              strokeWidth: 2,
-                            ),
-                          )
-                        : const Text('ابعث كود OTP'),
-                  ),
+              ),
+              const SizedBox(height: Ba33Spacing.spacing4),
+
+              Text('كلمة السر', style: textTheme.labelLarge),
+              const SizedBox(height: Ba33Spacing.spacing2),
+              TextField(
+                controller: _passwordController,
+                obscureText: true,
+                textInputAction: TextInputAction.done,
+                onSubmitted: (_) => _login(),
+                decoration: const InputDecoration(
+                  hintText: '••••••••',
                 ),
-              ] else ...[
-                // OTP confirmation banner
-                Container(
-                  padding: const EdgeInsets.all(Ba33Spacing.spacing3),
-                  decoration: BoxDecoration(
-                    color: colors.muted,
-                    borderRadius: Ba33Radii.borderRadiusMd,
-                  ),
-                  child: Row(
-                    children: [
-                      Icon(Icons.check_circle,
-                          color: colors.primary, size: 18),
-                      const SizedBox(width: Ba33Spacing.spacing2),
-                      Expanded(
-                        child: Text(
-                          'الكود تبعث ل +213 ${_phoneController.text}',
-                          style: textTheme.bodySmall
-                              ?.copyWith(color: colors.mutedForeground),
-                        ),
-                      ),
-                      TextButton(
-                        onPressed: () => setState(() => _otpSent = false),
-                        child: const Text('بدل'),
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: Ba33Spacing.spacing4),
-                Text('كود OTP', style: textTheme.labelLarge),
-                const SizedBox(height: Ba33Spacing.spacing2),
-                TextField(
-                  controller: _otpController,
-                  keyboardType: TextInputType.number,
-                  maxLength: 6,
-                  autofocus: true,
-                  style: Ba33Typography.mono(fontSize: 24),
-                  textAlign: TextAlign.center,
-                  decoration: const InputDecoration(
-                    hintText: '• • • • • •',
-                    counterText: '',
-                  ),
-                ),
-                const SizedBox(height: Ba33Spacing.spacing1),
+              ),
+
+              if (_errorMessage != null) ...[
+                const SizedBox(height: Ba33Spacing.spacing3),
                 Text(
-                  'ديمو: دخل أي كود فيه 4+ أرقام',
+                  _errorMessage!,
                   style: textTheme.bodySmall
-                      ?.copyWith(color: colors.mutedForeground),
-                ),
-                const SizedBox(height: Ba33Spacing.spacing4),
-                SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton(
-                    onPressed: _isLoading ? null : _verifyOtp,
-                    style: ElevatedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(
-                          vertical: Ba33Spacing.spacing4),
-                    ),
-                    child: _isLoading
-                        ? SizedBox(
-                            height: 18,
-                            width: 18,
-                            child: CircularProgressIndicator(
-                              color: colors.primaryForeground,
-                              strokeWidth: 2,
-                            ),
-                          )
-                        : const Text('تأكد و ادخل'),
-                  ),
+                      ?.copyWith(color: colors.destructive),
                 ),
               ],
 
               const SizedBox(height: Ba33Spacing.spacing6),
-              Divider(color: colors.border),
-              const SizedBox(height: Ba33Spacing.spacing4),
 
-              // Demo bypass — always visible
               SizedBox(
                 width: double.infinity,
-                child: OutlinedButton.icon(
-                  onPressed: _demoLogin,
-                  icon: const Icon(Icons.bolt, size: 18),
-                  label: const Text('دخول ديمو سريع'),
-                  style: OutlinedButton.styleFrom(
+                child: ElevatedButton(
+                  onPressed: _isLoading ? null : _login,
+                  style: ElevatedButton.styleFrom(
                     padding: const EdgeInsets.symmetric(
                         vertical: Ba33Spacing.spacing4),
                   ),
-                ),
-              ),
-              const SizedBox(height: Ba33Spacing.spacing2),
-              Center(
-                child: Text(
-                  'بلا OTP — للديمو فقط',
-                  style: textTheme.bodySmall
-                      ?.copyWith(color: colors.mutedForeground),
+                  child: _isLoading
+                      ? SizedBox(
+                          height: 18,
+                          width: 18,
+                          child: CircularProgressIndicator(
+                            color: colors.primaryForeground,
+                            strokeWidth: 2,
+                          ),
+                        )
+                      : const Text('ادخل'),
                 ),
               ),
             ],

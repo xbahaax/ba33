@@ -1,6 +1,5 @@
 import 'package:ba33_ui/ba33_ui.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../view_model/login_view_model.dart';
@@ -56,18 +55,14 @@ class LoginScreen extends ConsumerWidget {
               ),
               const SizedBox(height: Ba33Spacing.spacing6),
 
-              // Phone
+              // Email
               Ba33Input(
-                label: 'Phone number',
-                hint: '0555 XX XX XX',
-                prefixIcon: Icons.phone_rounded,
-                keyboardType: TextInputType.phone,
-                inputFormatters: [
-                  FilteringTextInputFormatter.digitsOnly,
-                  LengthLimitingTextInputFormatter(10),
-                ],
+                label: 'Email',
+                hint: 'collector@example.com',
+                prefixIcon: Icons.email_rounded,
+                keyboardType: TextInputType.emailAddress,
                 autofocus: true,
-                onChanged: vm.setPhone,
+                onChanged: vm.setEmail,
               ),
 
               const SizedBox(height: Ba33Spacing.spacing4),

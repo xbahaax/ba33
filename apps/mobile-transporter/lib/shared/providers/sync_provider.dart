@@ -1,5 +1,8 @@
+import 'dart:convert';
+
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
+import 'api_provider.dart';
 import 'database_provider.dart';
 
 part 'sync_provider.g.dart';
@@ -53,27 +56,49 @@ class SyncQueue extends _$SyncQueue {
     state = state.copyWith(pendingCount: count);
   }
 
-  /// Attempts to sync pending events to the backend.
-  /// With a real backend, this would make HTTP calls.
-  /// For now it simulates a successful sync after a short delay.
+  /// Syncs pending events to the backend via POST /events.
   Future<void> sync() async {
     if (state.isSyncing || !state.hasPending) return;
     state = state.copyWith(isSyncing: true);
 
-    // Simulate network call
-    await Future.delayed(const Duration(seconds: 2));
+    try {
+      final db = ref.read(appDatabaseProvider);
+      final eventsSvc = ref.read(eventsSyncServiceProvider);
 
-    final db = ref.read(appDatabaseProvider);
-    final pending = await db.getPendingEvents();
-    for (final e in pending) {
-      await db.markEventSynced(e.id);
+      final pending = await db.getPendingEvents();
+      if (pending.isEmpty) {
+        state = state.copyWith(isSyncing: false, pendingCount: 0);
+        return;
+      }
+
+      // Build the batch payload
+      final events = pending.map((e) {
+        final payload = jsonDecode(e.payload) as Map<String, dynamic>;
+        return <String, dynamic>{
+          'eventType': e.eventType,
+          'jobId': e.jobId,
+          'payload': payload,
+          'recordedAt': e.createdAt.toIso8601String(),
+        };
+      }).toList();
+
+      await eventsSvc.postEvents(events);
+
+      // Mark all as synced on success
+      for (final e in pending) {
+        await db.markEventSynced(e.id);
+      }
+
+      state = state.copyWith(
+        isSyncing: false,
+        pendingCount: 0,
+        lastSyncAt: DateTime.now(),
+      );
+    } catch (_) {
+      // On failure, keep events pending for retry
+      await _refreshCount();
+      state = state.copyWith(isSyncing: false);
     }
-
-    state = state.copyWith(
-      isSyncing: false,
-      pendingCount: 0,
-      lastSyncAt: DateTime.now(),
-    );
   }
 
   Future<void> refreshCount() => _refreshCount();

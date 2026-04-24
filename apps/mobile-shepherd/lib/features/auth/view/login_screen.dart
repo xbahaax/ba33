@@ -1,11 +1,10 @@
 import 'package:ba33_ui/ba33_ui.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../view_model/login_view_model.dart';
 
-/// Phone number login screen — enter number and go.
+/// Email + password login screen.
 class LoginScreen extends ConsumerStatefulWidget {
   const LoginScreen({super.key});
 
@@ -14,11 +13,13 @@ class LoginScreen extends ConsumerStatefulWidget {
 }
 
 class _LoginScreenState extends ConsumerState<LoginScreen> {
-  final _phoneController = TextEditingController();
+  final _emailController = TextEditingController();
+  final _passwordController = TextEditingController();
 
   @override
   void dispose() {
-    _phoneController.dispose();
+    _emailController.dispose();
+    _passwordController.dispose();
     super.dispose();
   }
 
@@ -65,17 +66,28 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
               ),
               const Spacer(),
               Text(
-                'دخل رقم تيليفونك',
+                'الإيميل',
                 style: Theme.of(context).textTheme.titleLarge,
               ),
-              const SizedBox(height: Ba33Spacing.spacing4),
+              const SizedBox(height: Ba33Spacing.spacing3),
               TextField(
-                controller: _phoneController,
-                keyboardType: TextInputType.phone,
-                inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                controller: _emailController,
+                keyboardType: TextInputType.emailAddress,
                 decoration: const InputDecoration(
-                  hintText: '0555 123 456',
-                  prefixText: '+213 ',
+                  hintText: 'example@ba33.dz',
+                ),
+              ),
+              const SizedBox(height: Ba33Spacing.spacing4),
+              Text(
+                'كلمة السر',
+                style: Theme.of(context).textTheme.titleLarge,
+              ),
+              const SizedBox(height: Ba33Spacing.spacing3),
+              TextField(
+                controller: _passwordController,
+                obscureText: true,
+                decoration: const InputDecoration(
+                  hintText: '••••••',
                 ),
               ),
               const SizedBox(height: Ba33Spacing.spacing4),
@@ -86,7 +98,10 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                       ? null
                       : () => ref
                           .read(loginViewModelProvider.notifier)
-                          .login(_phoneController.text.trim()),
+                          .login(
+                            _emailController.text.trim(),
+                            _passwordController.text,
+                          ),
                   child: loginState.isLoading
                       ? const SizedBox(
                           width: 24,

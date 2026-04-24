@@ -2,6 +2,7 @@ import { Injectable, NotFoundException, Logger } from '@nestjs/common';
 import { DepotRepository } from './depot.repository';
 import { EventsService } from '../events/events.service';
 import { RulesService } from '../rules/rules.service';
+import { NotificationsService } from '../notifications/notifications.service';
 import { v4 as uuid } from 'uuid';
 
 @Injectable()
@@ -12,6 +13,7 @@ export class DepotService {
     private readonly depotRepository: DepotRepository,
     private readonly eventsService: EventsService,
     private readonly rulesService: RulesService,
+    private readonly notificationsService: NotificationsService,
   ) {}
 
   async createDepot(data: {
@@ -122,6 +124,24 @@ export class DepotService {
       version: 1,
     });
 
+    // Notify if tolerance exceeded
+    if (toleranceExceeded && depot.managerId) {
+      await this.notificationsService.send({
+        userId: depot.managerId,
+        type: 'tolerance_exceeded',
+        title: 'Weight tolerance exceeded on lot reception',
+        body: `Lot ${lotId} arrived at depot "${depot.name}" with a ${discrepancy.toFixed(2)}kg discrepancy (declared: ${declaredWeight}kg, actual: ${actualWeight}kg). Tolerance threshold: ${tolerancePercent}%.`,
+        payload: {
+          depotId,
+          lotId,
+          declaredWeightKg: declaredWeight,
+          actualWeightKg: actualWeight,
+          discrepancyKg: discrepancy,
+          tolerancePercent,
+        },
+      });
+    }
+
     // Check A1 conditions after reception
     await this.checkA1Conditions(depotId);
 
@@ -207,6 +227,8 @@ export class DepotService {
       );
 
       if (!hasCapacityAlert) {
+        const severity = usagePercent >= 95 ? 'critical' : 'warning';
+
         await this.depotRepository.createA1Alert({
           id: uuid(),
           depotId,
@@ -217,7 +239,7 @@ export class DepotService {
             currentWeightKg: currentWeight,
             capacityKg: capacity,
           },
-          severity: usagePercent >= 95 ? 'critical' : 'warning',
+          severity,
           status: 'open',
           firedAt: new Date(),
         });
@@ -225,6 +247,23 @@ export class DepotService {
         this.logger.warn(
           `A1 alert fired for depot ${depotId}: capacity at ${usagePercent.toFixed(1)}%`,
         );
+
+        // Notify depot manager if one is assigned
+        if (depot.managerId) {
+          await this.notificationsService.send({
+            userId: depot.managerId,
+            type: 'a1_alert',
+            title: `A1 Alert: Depot capacity ${severity}`,
+            body: `Depot "${depot.name}" is at ${usagePercent.toFixed(1)}% capacity (${currentWeight.toFixed(1)}kg / ${capacity.toFixed(1)}kg). Immediate action required.`,
+            payload: {
+              depotId,
+              severity,
+              usagePercent,
+              currentWeightKg: currentWeight,
+              capacityKg: capacity,
+            },
+          });
+        }
       }
     }
   }

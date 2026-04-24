@@ -1,4 +1,3 @@
-import 'package:ba33_domain/ba33_domain.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../../../shared/providers/auth_provider.dart';
@@ -30,26 +29,22 @@ class LoginViewModel extends _$LoginViewModel {
   @override
   LoginState build() => const LoginState();
 
-  Future<void> login(String phone) async {
-    if (phone.isEmpty) {
-      state = state.copyWith(error: 'دخل رقم تيليفونك');
+  Future<void> login(String email, String password) async {
+    if (email.isEmpty || password.isEmpty) {
+      state = state.copyWith(error: 'ادخل الإيميل و كلمة السر');
       return;
     }
 
     state = state.copyWith(isLoading: true);
 
-    // TODO(BA33-020): integrate real auth API
-    await Future<void>.delayed(const Duration(milliseconds: 500));
-
-    final user = User(
-      id: 'shepherd-001',
-      phone: '+213$phone',
-      role: UserRole.shepherd,
-      regionId: 'region-01',
-      name: 'راعي',
-    );
-
-    ref.read(authProvider.notifier).login(user);
-    state = state.copyWith(isLoading: false);
+    try {
+      await ref.read(authProvider.notifier).login(email, password);
+      state = state.copyWith(isLoading: false);
+    } catch (e) {
+      state = state.copyWith(
+        isLoading: false,
+        error: 'فشل الدخول، تأكد من المعلومات',
+      );
+    }
   }
 }

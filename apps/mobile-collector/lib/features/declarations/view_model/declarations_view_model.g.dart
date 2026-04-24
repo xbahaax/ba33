@@ -7,7 +7,7 @@ part of 'declarations_view_model.dart';
 // **************************************************************************
 
 String _$declarationsViewModelHash() =>
-    r'fd67042045247d6c9581a89e78f37b00c9fd4841';
+    r'cf383bb53866ac4e547c854f81fcc155ac83b2b4';
 
 /// Manages the list of shepherd declarations (pickup requests).
 ///

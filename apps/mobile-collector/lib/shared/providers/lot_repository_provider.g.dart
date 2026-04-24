@@ -6,12 +6,9 @@ part of 'lot_repository_provider.dart';
 // RiverpodGenerator
 // **************************************************************************
 
-String _$lotRepositoryHash() => r'1d28e3cb0799ab931e04163797600c0b1544c63f';
+String _$lotRepositoryHash() => r'697bf2bd69c2d6036e4362422f7b96c2f896e2d0';
 
-/// In-memory lot repository.
-/// Will be replaced with Drift-backed persistence in a future phase.
-///
-/// Copied from [LotRepository].
+/// See also [LotRepository].
 @ProviderFor(LotRepository)
 final lotRepositoryProvider =
     NotifierProvider<LotRepository, List<Lot>>.internal(

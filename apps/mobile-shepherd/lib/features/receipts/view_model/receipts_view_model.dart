@@ -1,48 +1,53 @@
 import 'package:ba33_domain/ba33_domain.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
+import '../../../shared/providers/api_provider.dart';
+import '../../../shared/providers/auth_provider.dart';
+
 part 'receipts_view_model.g.dart';
 
 /// Fetches the shepherd's past declarations / receipts.
 @riverpod
 Future<List<Declaration>> receipts(ReceiptsRef ref) async {
-  // TODO(BA33-024): fetch real receipts from API / local DB
-  await Future<void>.delayed(const Duration(milliseconds: 500));
+  final user = ref.watch(authProvider);
+  if (user == null) return [];
 
-  // Mock data for development
-  return [
-    Declaration(
-      id: 'shepherd-001-00001-X',
-      shepherdId: 'shepherd-001',
-      weightCategory: WeightCategory.smallPile,
-      estimatedWeight: 15,
-      status: DeclarationStatus.scheduledPickup,
-      createdAt: DateTime.now().subtract(const Duration(days: 1)),
-      latitude: 36.7538,
-      longitude: 3.0588,
-      pickupScheduledAt: DateTime.now().add(const Duration(hours: 4)),
-    ),
-    Declaration(
-      id: 'shepherd-001-00002-Y',
-      shepherdId: 'shepherd-001',
-      weightCategory: WeightCategory.oneBag,
-      estimatedWeight: 5,
-      status: DeclarationStatus.collected,
-      createdAt: DateTime.now().subtract(const Duration(days: 7)),
-      latitude: 36.7538,
-      longitude: 3.0588,
-      finalWeight: 4.8,
-      priceEstimate: 2400,
-    ),
-    Declaration(
-      id: 'shepherd-001-00003-Z',
-      shepherdId: 'shepherd-001',
-      weightCategory: WeightCategory.largePile,
-      estimatedWeight: 55,
-      status: DeclarationStatus.announced,
-      createdAt: DateTime.now().subtract(const Duration(hours: 3)),
-      latitude: 36.7538,
-      longitude: 3.0588,
-    ),
-  ];
+  final collectionService = ref.watch(collectionServiceProvider);
+
+  try {
+    final data = await collectionService.listPreLots(regionId: user.regionId);
+    return data.map((item) {
+      final map = item as Map<String, dynamic>;
+      return Declaration(
+        id: map['id'] as String? ?? '',
+        shepherdId: map['sourceId'] as String? ?? '',
+        weightCategory: WeightCategory.custom,
+        estimatedWeight:
+            double.tryParse(map['estimatedWeightKg']?.toString() ?? ''),
+        status: _mapStatus(map['status'] as String? ?? 'pending'),
+        createdAt: DateTime.tryParse(map['createdAt']?.toString() ?? '') ??
+            DateTime.now(),
+        latitude: double.tryParse(map['latitude']?.toString() ?? '') ?? 0,
+        longitude: double.tryParse(map['longitude']?.toString() ?? '') ?? 0,
+        notes: map['notes'] as String?,
+      );
+    }).toList();
+  } catch (e) {
+    return [];
+  }
+}
+
+DeclarationStatus _mapStatus(String status) {
+  switch (status) {
+    case 'pending':
+      return DeclarationStatus.announced;
+    case 'assigned':
+      return DeclarationStatus.scheduledPickup;
+    case 'completed':
+      return DeclarationStatus.collected;
+    case 'cancelled':
+      return DeclarationStatus.cancelled;
+    default:
+      return DeclarationStatus.announced;
+  }
 }
