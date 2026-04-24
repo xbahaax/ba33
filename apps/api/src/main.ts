@@ -2,8 +2,11 @@ import { NestFactory } from '@nestjs/core';
 import { ValidationPipe } from '@nestjs/common';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import pino from 'pino';
-import pinoHttp from 'pino-http'; 
+import pinoHttp from 'pino-http';
 import { AppModule } from './app.module';
+import { loadEnvFile } from './common/env/load-env';
+
+loadEnvFile();
 
 async function bootstrap() {
   const logger = pino({ level: process.env.LOG_LEVEL || 'info' });

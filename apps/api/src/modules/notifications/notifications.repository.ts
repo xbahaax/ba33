@@ -1,6 +1,8 @@
-import { Injectable, Inject } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
+import { eq, and } from 'drizzle-orm';
 import { DATABASE_TOKEN } from '../../common/database/database.module';
 import type { Database } from '../../common/database/client';
+import { notifications } from '../../common/database/schema';
 
 export interface BuyerNotification {
   id: string;
@@ -13,62 +15,31 @@ export interface BuyerNotification {
 
 @Injectable()
 export class NotificationsRepository {
-  private readonly notifications: BuyerNotification[] = [
-    {
-      id: 'n1',
-      type: 'delivery',
-      title: 'Expedition en route',
-      description: 'Commande #CMD-20240312 expediee — arrivee estimee 26 Avr',
-      time: 'Il y a 10 min',
-      read: false,
-    },
-    {
-      id: 'n2',
-      type: 'certificate',
-      title: 'Nouveau certificat NFN',
-      description: 'Le produit P1-00042 vient d\'etre certifie NFN Grade A',
-      time: 'Il y a 1h',
-      read: false,
-    },
-    {
-      id: 'n3',
-      type: 'order',
-      title: 'Commande confirmee',
-      description: 'Commande #CMD-20240311 confirmee par le vendeur',
-      time: 'Il y a 3h',
-      read: false,
-    },
-    {
-      id: 'n4',
-      type: 'complaint',
-      title: 'Reclamation traitee',
-      description: 'Votre reclamation #REC-2024-01 a ete resolue',
-      time: 'Hier',
-      read: true,
-    },
-  ];
-
   constructor(@Inject(DATABASE_TOKEN) private readonly db: Database) {}
 
-  list(): BuyerNotification[] {
-    return this.notifications;
+  async list(userId: string): Promise<BuyerNotification[]> {
+    const rows = await this.db.select().from(notifications).where(eq(notifications.userId, userId));
+    return rows.map((row) => ({
+      id: row.id,
+      type: row.type as BuyerNotification['type'],
+      title: row.title,
+      description: row.body,
+      time: row.createdAt.toLocaleDateString('fr-FR'),
+      read: Boolean(row.readAt),
+    }));
   }
 
-  markAllRead(): BuyerNotification[] {
-    this.notifications.forEach((notification) => {
-      notification.read = true;
-    });
-    return this.notifications;
+  async markAllRead(userId: string): Promise<BuyerNotification[]> {
+    await this.db.update(notifications).set({ readAt: new Date() }).where(eq(notifications.userId, userId));
+    return this.list(userId);
   }
 
-  dismiss(notificationId: string): { deleted: boolean } {
-    const index = this.notifications.findIndex((notification) => notification.id === notificationId);
+  async dismiss(userId: string, notificationId: string): Promise<{ deleted: boolean }> {
+    const deleted = await this.db
+      .delete(notifications)
+      .where(and(eq(notifications.userId, userId), eq(notifications.id, notificationId)))
+      .returning();
 
-    if (index < 0) {
-      return { deleted: false };
-    }
-
-    this.notifications.splice(index, 1);
-    return { deleted: true };
+    return { deleted: deleted.length > 0 };
   }
 }

@@ -9,8 +9,8 @@ export class CertificationService {
     private readonly salesService: SalesService,
   ) {}
 
-  verifyByCode(code: string) {
-    const product = this.salesService.findProductByCertificate(code);
+  async verifyByCode(code: string) {
+    const product = await this.salesService.findProductByCertificate(code);
 
     if (!product) {
       return {
@@ -39,7 +39,7 @@ export class CertificationService {
     };
   }
 
-  verifyByQrHash(qrHash: string) {
+  async verifyByQrHash(qrHash: string) {
     return this.verifyByCode(qrHash);
   }
 }

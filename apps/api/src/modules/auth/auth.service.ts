@@ -33,7 +33,7 @@ export class AuthService {
   ) {}
 
   async login(input: LoginInput): Promise<AuthResponse> {
-    const user = this.authRepository.findByEmail(input.email);
+    const user = await this.authRepository.findByEmail(input.email);
 
     if (!user) {
       throw new UnauthorizedException('Invalid credentials');
@@ -49,14 +49,14 @@ export class AuthService {
   }
 
   async register(input: RegisterInput): Promise<AuthResponse> {
-    const existing = this.authRepository.findByEmail(input.email);
+    const existing = await this.authRepository.findByEmail(input.email);
 
     if (existing) {
       throw new ConflictException('Email already exists');
     }
 
     const passwordHash = await hash(input.password, 10);
-    const created = this.authRepository.createUser({
+    const created = await this.authRepository.createUser({
       email: input.email,
       passwordHash,
       fullName: input.fullName,
@@ -67,8 +67,8 @@ export class AuthService {
     return this.buildAuthResponse(this.authRepository.toSessionUser(created));
   }
 
-  getMe(userId: string): AuthSessionUser {
-    const user = this.authRepository.findById(userId);
+  async getMe(userId: string): Promise<AuthSessionUser> {
+    const user = await this.authRepository.findById(userId);
 
     if (!user) {
       throw new UnauthorizedException('Invalid session');
@@ -78,7 +78,7 @@ export class AuthService {
   }
 
   async changePassword(userId: string, currentPassword: string, nextPassword: string): Promise<{ updated: true }> {
-    const user = this.authRepository.findById(userId);
+    const user = await this.authRepository.findById(userId);
 
     if (!user) {
       throw new UnauthorizedException('Invalid session');
@@ -91,12 +91,12 @@ export class AuthService {
     }
 
     const passwordHash = await hash(nextPassword, 10);
-    this.authRepository.updatePassword(userId, passwordHash);
+    await this.authRepository.updatePassword(userId, passwordHash);
     return { updated: true };
   }
 
-  updateMyProfile(userId: string, updates: AuthProfileUpdates) {
-    const updated = this.authRepository.updateProfile(userId, updates);
+  async updateMyProfile(userId: string, updates: AuthProfileUpdates) {
+    const updated = await this.authRepository.updateProfile(userId, updates);
 
     if (!updated) {
       throw new UnauthorizedException('Invalid session');

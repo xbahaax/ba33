@@ -25,79 +25,79 @@ export class SalesService {
     return this.salesRepository.findProductByCertificate(code);
   }
 
-  listOrders(query: OrderQuery) {
-    return this.salesRepository.listOrders(query);
+  listOrders(buyerId: string, query: OrderQuery) {
+    return this.salesRepository.listOrders(buyerId, query);
   }
 
-  findOrder(orderId: string) {
-    return this.salesRepository.findOrder(orderId);
+  findOrder(buyerId: string, orderId: string) {
+    return this.salesRepository.findOrder(buyerId, orderId);
   }
 
-  createOrder(input: CreateOrderInput) {
-    return this.salesRepository.createOrder(input);
+  createOrder(buyerId: string, input: CreateOrderInput) {
+    return this.salesRepository.createOrder(buyerId, input);
   }
 
-  replaceOrderItems(orderId: string, items: OrderItem[]) {
-    return this.salesRepository.replaceOrderItems(orderId, items);
+  replaceOrderItems(buyerId: string, orderId: string, items: OrderItem[]) {
+    return this.salesRepository.replaceOrderItems(buyerId, orderId, items);
   }
 
-  removeOrderItem(orderId: string, itemId: string) {
-    return this.salesRepository.removeOrderItem(orderId, itemId);
+  removeOrderItem(buyerId: string, orderId: string, itemId: string) {
+    return this.salesRepository.removeOrderItem(buyerId, orderId, itemId);
   }
 
-  updateOrderStatus(orderId: string, status: OrderStatus) {
-    return this.salesRepository.updateOrderStatus(orderId, status);
+  updateOrderStatus(buyerId: string, orderId: string, status: OrderStatus) {
+    return this.salesRepository.updateOrderStatus(buyerId, orderId, status);
   }
 
-  confirmOrder(orderId: string) {
-    return this.salesRepository.confirmOrder(orderId);
+  confirmOrder(buyerId: string, orderId: string) {
+    return this.salesRepository.confirmOrder(buyerId, orderId);
   }
 
-  listOrderDocuments(orderId: string) {
-    return this.salesRepository.listOrderDocuments(orderId);
+  listOrderDocuments(buyerId: string, orderId: string) {
+    return this.salesRepository.listOrderDocuments(buyerId, orderId);
   }
 
-  findOrderDocument(orderId: string, documentId: string) {
-    return this.salesRepository.findOrderDocument(orderId, documentId);
+  findOrderDocument(buyerId: string, orderId: string, documentId: string) {
+    return this.salesRepository.findOrderDocument(buyerId, orderId, documentId);
   }
 
-  listAllDocuments(type?: DocumentType | 'all') {
-    return this.salesRepository.listAllDocuments(type);
+  listAllDocuments(buyerId: string, type?: DocumentType | 'all') {
+    return this.salesRepository.listAllDocuments(buyerId, type);
   }
 
-  listComplaints() {
-    return this.salesRepository.listComplaints();
+  listComplaints(buyerId: string) {
+    return this.salesRepository.listComplaints(buyerId);
   }
 
-  findComplaint(complaintId: string) {
-    return this.salesRepository.findComplaint(complaintId);
+  findComplaint(buyerId: string, complaintId: string) {
+    return this.salesRepository.findComplaint(buyerId, complaintId);
   }
 
-  createComplaint(input: CreateComplaintInput) {
-    return this.salesRepository.createComplaint(input);
+  createComplaint(buyerId: string, input: CreateComplaintInput) {
+    return this.salesRepository.createComplaint(buyerId, input);
   }
 
-  getProfile() {
-    return this.salesRepository.getProfile();
+  getProfile(buyerId: string) {
+    return this.salesRepository.getProfile(buyerId);
   }
 
-  updateProfile(input: Partial<BuyerProfile>) {
-    return this.salesRepository.updateProfile(input);
+  updateProfile(buyerId: string, input: Partial<BuyerProfile>) {
+    return this.salesRepository.updateProfile(buyerId, input);
   }
 
-  listAddresses() {
-    return this.salesRepository.listAddresses();
+  listAddresses(buyerId: string) {
+    return this.salesRepository.listAddresses(buyerId);
   }
 
-  createAddress(input: AddressInput) {
-    return this.salesRepository.createAddress(input);
+  createAddress(buyerId: string, input: AddressInput) {
+    return this.salesRepository.createAddress(buyerId, input);
   }
 
-  updateAddress(addressId: string, input: Partial<AddressInput> & { isDefault?: boolean }) {
-    return this.salesRepository.updateAddress(addressId, input);
+  updateAddress(buyerId: string, addressId: string, input: Partial<AddressInput> & { isDefault?: boolean }) {
+    return this.salesRepository.updateAddress(buyerId, addressId, input);
   }
 
-  deleteAddress(addressId: string) {
-    return this.salesRepository.deleteAddress(addressId);
+  deleteAddress(buyerId: string, addressId: string) {
+    return this.salesRepository.deleteAddress(buyerId, addressId);
   }
 }

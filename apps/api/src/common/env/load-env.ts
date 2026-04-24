@@ -1,11 +1,14 @@
-import { defineConfig } from 'drizzle-kit';
 import { existsSync, readFileSync } from 'fs';
 import { join } from 'path';
 
-const envPath = join(process.cwd(), '.env');
+export function loadEnvFile(filePath = join(process.cwd(), '.env')) {
+  if (!existsSync(filePath)) {
+    return;
+  }
 
-if (existsSync(envPath)) {
-  for (const line of readFileSync(envPath, 'utf8').split(/\r?\n/)) {
+  const lines = readFileSync(filePath, 'utf8').split(/\r?\n/);
+
+  for (const line of lines) {
     const trimmed = line.trim();
 
     if (!trimmed || trimmed.startsWith('#')) {
@@ -26,12 +29,3 @@ if (existsSync(envPath)) {
     }
   }
 }
-
-export default defineConfig({
-  schema: './src/common/database/schema/index.ts',
-  out: '../../infra/db/migrations',
-  dialect: 'postgresql',
-  dbCredentials: {
-    url: process.env.DATABASE_URL!,
-  },
-});

@@ -1,12 +1,18 @@
-import { Injectable, Inject } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
+import { and, desc, eq } from 'drizzle-orm';
+import { randomUUID } from 'crypto';
 import { DATABASE_TOKEN } from '../../common/database/database.module';
 import type { Database } from '../../common/database/client';
 import {
-  addresses,
-  buyerProfile,
-  complaints,
+  buyerCatalogProducts,
+  buyerComplaints,
+  buyers,
+  orderItems,
   orders,
-  products,
+  salesDocuments,
+  shipments,
+} from '../../common/database/schema';
+import type {
   BuyerAddress,
   BuyerComplaint,
   BuyerOrder,
@@ -68,18 +74,16 @@ export interface AddressInput {
   instructions?: string;
 }
 
+type DbOrderStatus = typeof orders.$inferSelect.status;
+type DbDocType = typeof salesDocuments.$inferSelect.type;
+
 @Injectable()
 export class SalesRepository {
-  private readonly products = [...products];
-  private readonly orders = [...orders];
-  private readonly addresses = [...addresses];
-  private readonly complaints = [...complaints];
-  private profile: BuyerProfile = { ...buyerProfile };
-
   constructor(@Inject(DATABASE_TOKEN) private readonly db: Database) {}
 
-  listProducts(query: ProductQuery): PaginatedResponse<BuyerProduct> {
-    let result = [...this.products];
+  async listProducts(query: ProductQuery): Promise<PaginatedResponse<BuyerProduct>> {
+    const rows = await this.db.select().from(buyerCatalogProducts);
+    let result = rows.map((row) => this.toBuyerProduct(row));
 
     if (query.type && query.type !== 'all') {
       result = result.filter((product) => product.type === query.type);
@@ -121,166 +125,482 @@ export class SalesRepository {
     return this.paginate(result, query.page, query.limit);
   }
 
-  findProduct(productId: string): BuyerProduct | undefined {
-    return this.products.find((product) => product.id === productId || product.code === productId);
+  async findProduct(productId: string): Promise<BuyerProduct | undefined> {
+    const rows = await this.db
+      .select()
+      .from(buyerCatalogProducts)
+      .where(eq(buyerCatalogProducts.id, productId))
+      .limit(1);
+
+    if (rows[0]) {
+      return this.toBuyerProduct(rows[0]);
+    }
+
+    const byCode = await this.db
+      .select()
+      .from(buyerCatalogProducts)
+      .where(eq(buyerCatalogProducts.code, productId))
+      .limit(1);
+
+    return byCode[0] ? this.toBuyerProduct(byCode[0]) : undefined;
   }
 
-  findProductByCertificate(code: string): BuyerProduct | undefined {
-    const normalized = code.toLowerCase();
-    return this.products.find((product) => product.nfnSealCode?.toLowerCase() === normalized || product.code.toLowerCase() === normalized);
+  async findProductByCertificate(code: string): Promise<BuyerProduct | undefined> {
+    const rows = await this.db
+      .select()
+      .from(buyerCatalogProducts)
+      .where(eq(buyerCatalogProducts.nfnSealCode, code))
+      .limit(1);
+
+    return rows[0] ? this.toBuyerProduct(rows[0]) : undefined;
   }
 
-  listOrders(query: OrderQuery): PaginatedResponse<BuyerOrder> {
-    const filtered = query.status && query.status !== 'all' ? this.orders.filter((order) => order.status === query.status) : this.orders;
-    return this.paginate(filtered, query.page, query.limit);
+  async listOrders(buyerId: string, query: OrderQuery): Promise<PaginatedResponse<BuyerOrder>> {
+    const dbStatus = query.status && query.status !== 'all' ? this.toDbOrderStatus(query.status) : undefined;
+    const rows = await this.db
+      .select()
+      .from(orders)
+      .where(dbStatus ? and(eq(orders.buyerId, buyerId), eq(orders.status, dbStatus)) : eq(orders.buyerId, buyerId))
+      .orderBy(desc(orders.createdAt));
+
+    const mapped = await Promise.all(rows.map((order) => this.toBuyerOrder(order)));
+    return this.paginate(mapped, query.page, query.limit);
   }
 
-  findOrder(orderId: string): BuyerOrder | undefined {
-    return this.orders.find((order) => order.id === orderId);
+  async findOrder(buyerId: string, orderCode: string): Promise<BuyerOrder | undefined> {
+    const rows = await this.db
+      .select()
+      .from(orders)
+      .where(and(eq(orders.buyerId, buyerId), eq(orders.orderCode, orderCode)))
+      .limit(1);
+
+    return rows[0] ? this.toBuyerOrder(rows[0]) : undefined;
   }
 
-  createOrder(input: CreateOrderInput): BuyerOrder {
+  async createOrder(buyerId: string, input: CreateOrderInput): Promise<BuyerOrder> {
+    const buyer = await this.getBuyer(buyerId);
+    const addresses = this.parseAddresses(buyer.shippingAddresses);
+    const shippingAddress = addresses.find((address) => address.id === input.shippingAddressId) ?? addresses.find((address) => address.isDefault) ?? addresses[0];
     const items = input.items ?? [];
-    const totalAmountDzd = items.reduce((sum, item) => sum + item.quantityKg * item.unitPriceDzd, 0);
-    const totalQuantityKg = items.reduce((sum, item) => sum + item.quantityKg, 0);
-    const shippingAddress = this.addresses.find((address) => address.id === input.shippingAddressId) ?? this.addresses.find((address) => address.isDefault) ?? this.addresses[0];
-    const order: BuyerOrder = {
-      id: `CMD-${new Date().getUTCFullYear()}-${String(this.orders.length + 1000).padStart(5, '0')}`,
-      items,
-      status: 'pending',
-      channel: input.channel ?? this.profile.preferredChannel,
-      totalAmountDzd,
-      totalQuantityKg,
-      placedAt: new Date().toISOString(),
-      shippingAddress,
-      documents: [],
+    const subtotal = items.reduce((sum, item) => sum + item.quantityKg * item.unitPriceDzd, 0);
+    const orderCode = `CMD-${new Date().getUTCFullYear()}-${String(Date.now()).slice(-5)}`;
+
+    const [created] = await this.db
+      .insert(orders)
+      .values({
+        orderCode,
+        buyerId,
+        channel: input.channel ?? buyer.preferredChannel,
+        status: 'draft',
+        paymentStatus: 'pending',
+        subtotal: String(subtotal),
+        tax: '0',
+        total: String(subtotal),
+        currency: input.channel === 'export' ? 'EUR' : 'DZD',
+        shippingAddress: shippingAddress ?? {},
+      })
+      .returning();
+
+    if (items.length > 0) {
+      await this.db.insert(orderItems).values(
+        items.map((item) => ({
+          orderId: created.id,
+          productId: item.productId,
+          productCode: item.productCode,
+          productName: item.productName,
+          grade: item.grade,
+          quantity: String(item.quantityKg),
+          unitPrice: String(item.unitPriceDzd),
+          subtotal: String(item.quantityKg * item.unitPriceDzd),
+        })),
+      );
+    }
+
+    return this.toBuyerOrder(created);
+  }
+
+  async replaceOrderItems(buyerId: string, orderCode: string, items: OrderItem[]): Promise<BuyerOrder | undefined> {
+    const order = await this.findDbOrder(buyerId, orderCode);
+
+    if (!order) {
+      return undefined;
+    }
+
+    await this.db.delete(orderItems).where(eq(orderItems.orderId, order.id));
+
+    if (items.length > 0) {
+      await this.db.insert(orderItems).values(
+        items.map((item) => ({
+          orderId: order.id,
+          productId: item.productId,
+          productCode: item.productCode,
+          productName: item.productName,
+          grade: item.grade,
+          quantity: String(item.quantityKg),
+          unitPrice: String(item.unitPriceDzd),
+          subtotal: String(item.quantityKg * item.unitPriceDzd),
+        })),
+      );
+    }
+
+    const total = items.reduce((sum, item) => sum + item.quantityKg * item.unitPriceDzd, 0);
+    const [updated] = await this.db
+      .update(orders)
+      .set({ subtotal: String(total), total: String(total), updatedAt: new Date() })
+      .where(eq(orders.id, order.id))
+      .returning();
+
+    return this.toBuyerOrder(updated);
+  }
+
+  async removeOrderItem(buyerId: string, orderCode: string, itemId: string): Promise<BuyerOrder | undefined> {
+    const order = await this.findDbOrder(buyerId, orderCode);
+
+    if (!order) {
+      return undefined;
+    }
+
+    await this.db.delete(orderItems).where(and(eq(orderItems.orderId, order.id), eq(orderItems.productId, itemId)));
+    const remainingItems = await this.listDbOrderItems(order.id);
+    const total = remainingItems.reduce((sum, item) => sum + Number(item.subtotal), 0);
+    const [updated] = await this.db
+      .update(orders)
+      .set({ subtotal: String(total), total: String(total), updatedAt: new Date() })
+      .where(eq(orders.id, order.id))
+      .returning();
+    return this.toBuyerOrder(updated);
+  }
+
+  async updateOrderStatus(buyerId: string, orderCode: string, status: OrderStatus): Promise<BuyerOrder | undefined> {
+    const order = await this.findDbOrder(buyerId, orderCode);
+
+    if (!order) {
+      return undefined;
+    }
+
+    const dbStatus = this.toDbOrderStatus(status);
+    const [updated] = await this.db
+      .update(orders)
+      .set({ status: dbStatus, updatedAt: new Date(), confirmedAt: dbStatus === 'confirmed' ? new Date() : order.confirmedAt })
+      .where(eq(orders.id, order.id))
+      .returning();
+    return this.toBuyerOrder(updated);
+  }
+
+  async confirmOrder(buyerId: string, orderCode: string): Promise<BuyerOrder | undefined> {
+    return this.updateOrderStatus(buyerId, orderCode, 'confirmed');
+  }
+
+  async listOrderDocuments(buyerId: string, orderCode: string): Promise<BuyerOrder['documents'] | undefined> {
+    const order = await this.findOrder(buyerId, orderCode);
+    return order?.documents;
+  }
+
+  async findOrderDocument(buyerId: string, orderCode: string, documentId: string): Promise<BuyerOrder['documents'][number] | undefined> {
+    const order = await this.findDbOrder(buyerId, orderCode);
+
+    if (!order) {
+      return undefined;
+    }
+
+    const docs = await this.db
+      .select()
+      .from(salesDocuments)
+      .where(and(eq(salesDocuments.orderId, order.id), eq(salesDocuments.id, documentId)))
+      .limit(1);
+
+    return docs[0] ? this.toOrderDocument(docs[0], order.orderCode) : undefined;
+  }
+
+  async listAllDocuments(buyerId: string, type?: DocumentType | 'all'): Promise<BuyerOrder['documents']> {
+    const dbOrders = await this.db.select().from(orders).where(eq(orders.buyerId, buyerId));
+    const docs = await Promise.all(
+      dbOrders.map(async (order) => {
+        const documents = await this.db.select().from(salesDocuments).where(eq(salesDocuments.orderId, order.id));
+        return documents.map((document) => this.toOrderDocument(document, order.orderCode));
+      }),
+    );
+    const flatDocuments = docs.flat();
+    return type && type !== 'all' ? flatDocuments.filter((document) => document.type === type) : flatDocuments;
+  }
+
+  async listComplaints(buyerId: string): Promise<BuyerComplaint[]> {
+    const rows = await this.db
+      .select()
+      .from(buyerComplaints)
+      .where(eq(buyerComplaints.buyerId, buyerId))
+      .orderBy(desc(buyerComplaints.submittedAt));
+    return rows.map((row) => ({
+      id: row.id,
+      orderId: row.orderCode,
+      type: row.type as ComplaintType,
+      submittedAt: row.submittedAt.toISOString(),
+      status: row.status as BuyerComplaint['status'],
+    }));
+  }
+
+  async findComplaint(buyerId: string, complaintId: string): Promise<BuyerComplaint | undefined> {
+    const rows = await this.db
+      .select()
+      .from(buyerComplaints)
+      .where(and(eq(buyerComplaints.buyerId, buyerId), eq(buyerComplaints.id, complaintId)))
+      .limit(1);
+    const row = rows[0];
+    return row
+      ? {
+          id: row.id,
+          orderId: row.orderCode,
+          type: row.type as ComplaintType,
+          submittedAt: row.submittedAt.toISOString(),
+          status: row.status as BuyerComplaint['status'],
+        }
+      : undefined;
+  }
+
+  async createComplaint(buyerId: string, input: CreateComplaintInput): Promise<BuyerComplaint> {
+    const id = `REC-${new Date().getUTCFullYear()}-${String(Date.now()).slice(-4)}`;
+    const [created] = await this.db
+      .insert(buyerComplaints)
+      .values({
+        id,
+        buyerId,
+        orderCode: input.orderId,
+        type: input.type,
+        status: 'review',
+      })
+      .returning();
+
+    return {
+      id: created.id,
+      orderId: created.orderCode,
+      type: created.type as ComplaintType,
+      submittedAt: created.submittedAt.toISOString(),
+      status: created.status as BuyerComplaint['status'],
     };
-
-    this.orders.unshift(order);
-    return order;
   }
 
-  replaceOrderItems(orderId: string, items: OrderItem[]): BuyerOrder | undefined {
-    const order = this.findOrder(orderId);
-
-    if (!order) {
-      return undefined;
-    }
-
-    order.items = items;
-    order.totalAmountDzd = items.reduce((sum, item) => sum + item.quantityKg * item.unitPriceDzd, 0);
-    order.totalQuantityKg = items.reduce((sum, item) => sum + item.quantityKg, 0);
-    return order;
-  }
-
-  removeOrderItem(orderId: string, itemId: string): BuyerOrder | undefined {
-    const order = this.findOrder(orderId);
-
-    if (!order) {
-      return undefined;
-    }
-
-    const items = order.items.filter((item) => item.productId !== itemId);
-    return this.replaceOrderItems(orderId, items);
-  }
-
-  updateOrderStatus(orderId: string, status: OrderStatus): BuyerOrder | undefined {
-    const order = this.findOrder(orderId);
-
-    if (!order) {
-      return undefined;
-    }
-
-    order.status = status;
-    return order;
-  }
-
-  confirmOrder(orderId: string): BuyerOrder | undefined {
-    return this.updateOrderStatus(orderId, 'confirmed');
-  }
-
-  listOrderDocuments(orderId: string): BuyerOrder['documents'] | undefined {
-    return this.findOrder(orderId)?.documents;
-  }
-
-  findOrderDocument(orderId: string, documentId: string): BuyerOrder['documents'][number] | undefined {
-    return this.findOrder(orderId)?.documents.find((document) => document.id === documentId);
-  }
-
-  listAllDocuments(type?: DocumentType | 'all'): BuyerOrder['documents'] {
-    const documents = this.orders.flatMap((order) => order.documents);
-    return type && type !== 'all' ? documents.filter((document) => document.type === type) : documents;
-  }
-
-  listComplaints(): BuyerComplaint[] {
-    return this.complaints;
-  }
-
-  findComplaint(complaintId: string): BuyerComplaint | undefined {
-    return this.complaints.find((complaint) => complaint.id === complaintId);
-  }
-
-  createComplaint(input: CreateComplaintInput): BuyerComplaint {
-    const complaint: BuyerComplaint = {
-      id: `REC-${new Date().getUTCFullYear()}-${String(this.complaints.length + 91).padStart(4, '0')}`,
-      orderId: input.orderId,
-      type: input.type,
-      submittedAt: new Date().toISOString(),
-      status: 'review',
+  async getProfile(buyerId: string): Promise<BuyerProfile> {
+    const buyer = await this.getBuyer(buyerId);
+    return {
+      companyName: buyer.companyName,
+      registrationNumber: buyer.registrationNumber ?? '',
+      contactEmail: '',
+      preferredChannel: buyer.preferredChannel,
     };
-    this.complaints.unshift(complaint);
-    return complaint;
   }
 
-  getProfile(): BuyerProfile {
-    return this.profile;
+  async updateProfile(buyerId: string, input: Partial<BuyerProfile>): Promise<BuyerProfile> {
+    const [updated] = await this.db
+      .update(buyers)
+      .set({
+        companyName: input.companyName,
+        registrationNumber: input.registrationNumber,
+        preferredChannel: input.preferredChannel,
+      })
+      .where(eq(buyers.userId, buyerId))
+      .returning();
+    return {
+      companyName: updated.companyName,
+      registrationNumber: updated.registrationNumber ?? '',
+      contactEmail: input.contactEmail ?? '',
+      preferredChannel: updated.preferredChannel,
+    };
   }
 
-  updateProfile(input: Partial<BuyerProfile>): BuyerProfile {
-    this.profile = { ...this.profile, ...input };
-    return this.profile;
+  async listAddresses(buyerId: string): Promise<BuyerAddress[]> {
+    const buyer = await this.getBuyer(buyerId);
+    return this.parseAddresses(buyer.shippingAddresses);
   }
 
-  listAddresses(): BuyerAddress[] {
-    return this.addresses;
-  }
-
-  createAddress(input: AddressInput): BuyerAddress {
+  async createAddress(buyerId: string, input: AddressInput): Promise<BuyerAddress> {
+    const current = await this.listAddresses(buyerId);
     const address: BuyerAddress = {
-      id: `ADDR-${String(this.addresses.length + 1).padStart(2, '0')}`,
+      id: `ADDR-${String(current.length + 1).padStart(2, '0')}`,
       ...input,
-      isDefault: this.addresses.length === 0,
+      isDefault: current.length === 0,
     };
-    this.addresses.push(address);
+    await this.saveAddresses(buyerId, [...current, address]);
     return address;
   }
 
-  updateAddress(addressId: string, input: Partial<AddressInput> & { isDefault?: boolean }): BuyerAddress | undefined {
-    const address = this.addresses.find((item) => item.id === addressId);
+  async updateAddress(buyerId: string, addressId: string, input: Partial<AddressInput> & { isDefault?: boolean }): Promise<BuyerAddress | undefined> {
+    const current = await this.listAddresses(buyerId);
+    let updatedAddress: BuyerAddress | undefined;
+    const next = current.map((address) => {
+      if (address.id !== addressId) {
+        return input.isDefault ? { ...address, isDefault: false } : address;
+      }
 
-    if (!address) {
+      updatedAddress = { ...address, ...input, isDefault: input.isDefault ?? address.isDefault };
+      return updatedAddress;
+    });
+
+    if (!updatedAddress) {
       return undefined;
     }
 
-    if (input.isDefault) {
-      this.addresses.forEach((item) => {
-        item.isDefault = item.id === addressId;
-      });
-    }
-
-    Object.assign(address, input);
-    return address;
+    await this.saveAddresses(buyerId, next);
+    return updatedAddress;
   }
 
-  deleteAddress(addressId: string): boolean {
-    const index = this.addresses.findIndex((address) => address.id === addressId);
+  async deleteAddress(buyerId: string, addressId: string): Promise<boolean> {
+    const current = await this.listAddresses(buyerId);
+    const next = current.filter((address) => address.id !== addressId);
 
-    if (index < 0) {
+    if (next.length === current.length) {
       return false;
     }
 
-    this.addresses.splice(index, 1);
+    await this.saveAddresses(buyerId, next);
     return true;
+  }
+
+  private async getBuyer(buyerId: string): Promise<typeof buyers.$inferSelect> {
+    const rows = await this.db.select().from(buyers).where(eq(buyers.userId, buyerId)).limit(1);
+
+    if (!rows[0]) {
+      throw new Error(`Buyer ${buyerId} not found`);
+    }
+
+    return rows[0];
+  }
+
+  private async findDbOrder(buyerId: string, orderCode: string): Promise<typeof orders.$inferSelect | undefined> {
+    const rows = await this.db
+      .select()
+      .from(orders)
+      .where(and(eq(orders.buyerId, buyerId), eq(orders.orderCode, orderCode)))
+      .limit(1);
+    return rows[0];
+  }
+
+  private async listDbOrderItems(orderId: string): Promise<Array<typeof orderItems.$inferSelect>> {
+    return this.db.select().from(orderItems).where(eq(orderItems.orderId, orderId));
+  }
+
+  private async toBuyerOrder(order: typeof orders.$inferSelect): Promise<BuyerOrder> {
+    const [items, docs, shipment] = await Promise.all([
+      this.listDbOrderItems(order.id),
+      this.db.select().from(salesDocuments).where(eq(salesDocuments.orderId, order.id)),
+      this.db.select().from(shipments).where(eq(shipments.orderId, order.id)).limit(1),
+    ]);
+
+    const mappedItems = items.map((item) => ({
+      productId: item.productId,
+      productCode: item.productCode,
+      productName: item.productName,
+      grade: item.grade as ProductGrade,
+      quantityKg: Number(item.quantity),
+      unitPriceDzd: Number(item.unitPrice),
+    }));
+
+    return {
+      id: order.orderCode,
+      items: mappedItems,
+      status: this.toBuyerOrderStatus(order.status),
+      channel: order.channel,
+      totalAmountDzd: Number(order.total),
+      totalQuantityKg: mappedItems.reduce((sum, item) => sum + item.quantityKg, 0),
+      placedAt: order.createdAt.toISOString(),
+      estimatedDelivery: order.status === 'shipped' ? new Date(order.createdAt.getTime() + 7 * 24 * 60 * 60 * 1000).toISOString() : undefined,
+      deliveredAt: order.deliveredAt?.toISOString(),
+      shippingAddress: this.parseAddress(order.shippingAddress),
+      trackingNumber: shipment[0]?.trackingReference ?? undefined,
+      documents: docs.map((document) => this.toOrderDocument(document, order.orderCode)),
+    };
+  }
+
+  private toOrderDocument(document: typeof salesDocuments.$inferSelect, orderCode: string): BuyerOrder['documents'][number] {
+    return {
+      id: document.id,
+      type: this.toBuyerDocumentType(document.type),
+      title: document.title,
+      orderId: orderCode,
+      sizeLabel: document.sizeLabel,
+      createdAt: document.generatedAt.toISOString(),
+    };
+  }
+
+  private toBuyerProduct(row: typeof buyerCatalogProducts.$inferSelect): BuyerProduct {
+    return {
+      id: row.id,
+      code: row.code,
+      name: row.name,
+      type: row.type as ProductType,
+      grade: row.grade as ProductGrade,
+      region: row.region,
+      availableQuantityKg: Number(row.availableQuantityKg),
+      pricePerKgDzd: Number(row.pricePerKgDzd),
+      pricePerKgEur: row.pricePerKgEur ? Number(row.pricePerKgEur) : undefined,
+      nfnSealStatus: row.nfnSealStatus as BuyerProduct['nfnSealStatus'],
+      nfnSealCode: row.nfnSealCode ?? undefined,
+      nfnCertifiedAt: row.nfnCertifiedAt?.toISOString(),
+      description: row.description,
+      images: Array.isArray(row.images) ? (row.images as string[]) : [],
+      qualityParameters: row.qualityParameters as BuyerProduct['qualityParameters'],
+      traceability: row.traceability as BuyerProduct['traceability'],
+      createdAt: row.createdAt.toISOString(),
+    };
+  }
+
+  private parseAddress(value: unknown): BuyerAddress {
+    return value && typeof value === 'object'
+      ? (value as BuyerAddress)
+      : {
+          id: randomUUID(),
+          siteName: 'Adresse principale',
+          line1: '',
+          commune: '',
+          wilaya: '',
+          postalCode: '',
+        };
+  }
+
+  private parseAddresses(value: unknown): BuyerAddress[] {
+    return Array.isArray(value) ? (value as BuyerAddress[]) : [];
+  }
+
+  private async saveAddresses(buyerId: string, addresses: BuyerAddress[]): Promise<void> {
+    await this.db.update(buyers).set({ shippingAddresses: addresses }).where(eq(buyers.userId, buyerId));
+  }
+
+  private toDbOrderStatus(status: OrderStatus): DbOrderStatus {
+    const map: Record<OrderStatus, DbOrderStatus> = {
+      pending: 'draft',
+      confirmed: 'confirmed',
+      preparing: 'preparing',
+      shipped: 'shipped',
+      delivered: 'delivered',
+      cancelled: 'cancelled',
+      disputed: 'returned',
+    };
+    return map[status];
+  }
+
+  private toBuyerOrderStatus(status: DbOrderStatus): OrderStatus {
+    const map: Record<DbOrderStatus, OrderStatus> = {
+      draft: 'pending',
+      quote: 'pending',
+      confirmed: 'confirmed',
+      paid: 'confirmed',
+      preparing: 'preparing',
+      shipped: 'shipped',
+      delivered: 'delivered',
+      returned: 'disputed',
+      cancelled: 'cancelled',
+    };
+    return map[status];
+  }
+
+  private toBuyerDocumentType(type: DbDocType): DocumentType {
+    const map: Record<DbDocType, DocumentType> = {
+      invoice: 'invoice',
+      traceability_certificate: 'certificate',
+      origin_certificate: 'certificate',
+      export_declaration: 'export',
+      other: 'delivery',
+    };
+    return map[type];
   }
 
   private paginate<T>(items: T[], rawPage?: string, rawLimit?: string): PaginatedResponse<T> {
@@ -288,11 +608,12 @@ export class SalesRepository {
     const limit = Math.max(1, Number(rawLimit ?? '20'));
     const total = items.length;
     const totalPages = Math.max(1, Math.ceil(total / limit));
-    const start = (Math.min(page, totalPages) - 1) * limit;
+    const currentPage = Math.min(page, totalPages);
+    const start = (currentPage - 1) * limit;
 
     return {
       items: items.slice(start, start + limit),
-      page: Math.min(page, totalPages),
+      page: currentPage,
       limit,
       total,
       totalPages,

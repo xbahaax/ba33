@@ -5,15 +5,15 @@ import { NotificationsRepository } from './notifications.repository';
 export class NotificationsService {
   constructor(private readonly notificationsRepository: NotificationsRepository) {}
 
-  list() {
-    return this.notificationsRepository.list();
+  list(userId: string) {
+    return this.notificationsRepository.list(userId);
   }
 
-  markAllRead() {
-    return this.notificationsRepository.markAllRead();
+  markAllRead(userId: string) {
+    return this.notificationsRepository.markAllRead(userId);
   }
 
-  dismiss(notificationId: string) {
-    return this.notificationsRepository.dismiss(notificationId);
+  dismiss(userId: string, notificationId: string) {
+    return this.notificationsRepository.dismiss(userId, notificationId);
   }
 }

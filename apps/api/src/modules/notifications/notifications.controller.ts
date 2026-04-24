@@ -1,5 +1,6 @@
 import { Controller, Delete, Get, Param, Patch, UseGuards } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
+import { CurrentUser } from '../../common/auth/decorators';
 import { JwtAuthGuard } from '../../common/auth/jwt-auth.guard';
 import { NotificationsService } from './notifications.service';
 
@@ -10,19 +11,19 @@ export class NotificationsController {
 
   @UseGuards(JwtAuthGuard)
   @Get()
-  listNotifications() {
-    return this.notificationsService.list();
+  listNotifications(@CurrentUser('id') userId: string) {
+    return this.notificationsService.list(userId);
   }
 
   @UseGuards(JwtAuthGuard)
   @Patch('read-all')
-  markAllRead() {
-    return this.notificationsService.markAllRead();
+  markAllRead(@CurrentUser('id') userId: string) {
+    return this.notificationsService.markAllRead(userId);
   }
 
   @UseGuards(JwtAuthGuard)
   @Delete(':id')
-  dismiss(@Param('id') id: string) {
-    return this.notificationsService.dismiss(id);
+  dismiss(@CurrentUser('id') userId: string, @Param('id') id: string) {
+    return this.notificationsService.dismiss(userId, id);
   }
 }
