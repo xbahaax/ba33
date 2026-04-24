@@ -44,7 +44,7 @@ class LotListScreen extends ConsumerWidget {
           : ListView.separated(
               padding: const EdgeInsets.all(Ba33Spacing.spacing4),
               itemCount: lots.length,
-              separatorBuilder: (_, __) =>
+              separatorBuilder: (_, _) =>
                   const SizedBox(height: Ba33Spacing.spacing3),
               itemBuilder: (context, index) => LotCard(lot: lots[index]),
             ),

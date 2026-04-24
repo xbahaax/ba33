@@ -6,6 +6,6 @@ part 'id_generator_provider.g.dart';
 /// Provides a namespaced [IdGenerator] for the current collector.
 /// Namespace is hardcoded for now — will come from auth in a future phase.
 @Riverpod(keepAlive: true)
-IdGenerator idGenerator(ref) {
+IdGenerator idGenerator(IdGeneratorRef ref) {
   return IdGenerator(namespace: 'COL-001');
 }

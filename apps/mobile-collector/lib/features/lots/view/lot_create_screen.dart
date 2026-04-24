@@ -115,7 +115,7 @@ class LotCreateScreen extends ConsumerWidget {
                     onChanged: formState.sourceType == SourceType.c2
                         ? null
                         : (_) => vm.toggleUrgent(),
-                    activeColor: colors.destructive,
+                    activeTrackColor: colors.destructive,
                   ),
                 ],
               ),

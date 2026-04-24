@@ -116,6 +116,7 @@ class _WeightOption extends StatelessWidget {
       WeightCategory.oneBag => Icons.shopping_bag_outlined,
       WeightCategory.smallPile => Icons.inventory_2_outlined,
       WeightCategory.largePile => Icons.warehouse_outlined,
+      WeightCategory.custom => Icons.edit_outlined,
     };
   }
 
@@ -125,6 +126,7 @@ class _WeightOption extends StatelessWidget {
       WeightCategory.oneBag => 'شكارة وحدة',
       WeightCategory.smallPile => 'كومة صغيرة',
       WeightCategory.largePile => 'كومة كبيرة',
+      WeightCategory.custom => 'وزن يدوي',
     };
   }
 
@@ -134,6 +136,7 @@ class _WeightOption extends StatelessWidget {
       WeightCategory.oneBag => '~5 كغ',
       WeightCategory.smallPile => '~10-20 كغ',
       WeightCategory.largePile => '~50+ كغ',
+      WeightCategory.custom => 'دخل الوزن',
     };
   }
 }
