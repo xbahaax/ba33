@@ -5,6 +5,8 @@ import 'package:go_router/go_router.dart';
 
 import '../../jobs/model/transport_job.dart';
 import '../view_model/active_trip_view_model.dart';
+import '../../../shared/providers/gps_provider.dart';
+import '../../../shared/providers/sync_provider.dart';
 import '../../../shared/widgets/lane_badge.dart';
 import '../../../shared/widgets/sla_countdown.dart';
 
@@ -22,6 +24,8 @@ class ActiveTripScreen extends ConsumerWidget {
     final colors = Theme.of(context).ba33;
     final textTheme = Theme.of(context).textTheme;
     final isColdChain = job.lane == TransportLane.urgentColdChain;
+    final gps = ref.watch(gpsTrackerProvider);
+    final sync = ref.watch(syncQueueProvider);
 
     return Scaffold(
       backgroundColor: colors.background,
@@ -44,24 +48,109 @@ class ActiveTripScreen extends ConsumerWidget {
             Container(
               padding: const EdgeInsets.all(Ba33Spacing.spacing3),
               decoration: BoxDecoration(
-                color: colors.primary.withAlpha(20),
+                color: gps.isTracking
+                    ? colors.primary.withAlpha(20)
+                    : colors.muted,
                 borderRadius: Ba33Radii.borderRadiusLg,
-                border: Border.all(color: colors.primary.withAlpha(50)),
+                border: Border.all(
+                  color: gps.isTracking
+                      ? colors.primary.withAlpha(50)
+                      : colors.border,
+                ),
               ),
-              child: Row(
+              child: Column(
                 children: [
-                  _PulsingDot(color: colors.primary),
-                  const SizedBox(width: Ba33Spacing.spacing3),
-                  Expanded(
-                    child: Text('GPS actif — traçage silencieux en cours',
-                        style: textTheme.bodySmall
-                            ?.copyWith(color: colors.primary)),
+                  Row(
+                    children: [
+                      _PulsingDot(
+                          color: gps.isTracking
+                              ? colors.primary
+                              : colors.mutedForeground),
+                      const SizedBox(width: Ba33Spacing.spacing3),
+                      Expanded(
+                        child: Text(
+                          gps.isTracking
+                              ? 'GPS actif — ${gps.pointsRecorded} points enregistrés'
+                              : gps.hasPermission
+                                  ? 'GPS en attente…'
+                                  : 'Permission GPS refusée',
+                          style: textTheme.bodySmall?.copyWith(
+                            color: gps.isTracking
+                                ? colors.primary
+                                : colors.mutedForeground,
+                          ),
+                        ),
+                      ),
+                      if (job.slaDeadline != null)
+                        SlaCountdown(deadline: job.slaDeadline!),
+                    ],
                   ),
-                  if (job.slaDeadline != null)
-                    SlaCountdown(deadline: job.slaDeadline!),
+                  if (gps.lastPoint != null) ...[
+                    const SizedBox(height: Ba33Spacing.spacing2),
+                    Row(
+                      children: [
+                        const SizedBox(width: 18),
+                        Text(
+                          '${gps.lastPoint!.lat.toStringAsFixed(5)}, '
+                          '${gps.lastPoint!.lng.toStringAsFixed(5)}',
+                          style: Ba33Typography.mono(
+                              fontSize: 11,
+                              color: colors.mutedForeground),
+                        ),
+                        const SizedBox(width: Ba33Spacing.spacing3),
+                        Text(
+                          gps.lastPoint!.speedLabel,
+                          style: Ba33Typography.mono(
+                              fontSize: 11, color: colors.primary),
+                        ),
+                      ],
+                    ),
+                  ],
                 ],
               ),
             ),
+            // ── Sync status ──────────────────────────
+            if (sync.hasPending) ...[
+              const SizedBox(height: Ba33Spacing.spacing2),
+              GestureDetector(
+                onTap: () =>
+                    ref.read(syncQueueProvider.notifier).sync(),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: Ba33Spacing.spacing3,
+                    vertical: Ba33Spacing.spacing2,
+                  ),
+                  decoration: BoxDecoration(
+                    color: colors.muted,
+                    borderRadius: Ba33Radii.borderRadiusMd,
+                  ),
+                  child: Row(
+                    children: [
+                      sync.isSyncing
+                          ? SizedBox(
+                              width: 12,
+                              height: 12,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: colors.primary,
+                              ),
+                            )
+                          : Icon(Icons.cloud_upload_outlined,
+                              size: 14,
+                              color: colors.mutedForeground),
+                      const SizedBox(width: Ba33Spacing.spacing2),
+                      Text(
+                        sync.isSyncing
+                            ? 'Synchronisation…'
+                            : '${sync.pendingCount} événements en attente — Appuyer pour sync',
+                        style: textTheme.bodySmall
+                            ?.copyWith(color: colors.mutedForeground),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
             const SizedBox(height: Ba33Spacing.spacing4),
 
             // ── Temperature logging (cold chain) ─────
