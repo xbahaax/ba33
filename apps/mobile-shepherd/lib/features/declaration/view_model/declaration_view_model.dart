@@ -158,16 +158,15 @@ class DeclarationViewModel extends _$DeclarationViewModel {
         }
       }
 
-      await collectionService.createPreLot({
-        'sourceId': user.id,
+      await collectionService.declareWool({
+        'userId': user.id,
         'estimatedWeightKg': _estimateWeight().toStringAsFixed(1),
-        'latitude': state.latitude.toString(),
-        'longitude': state.longitude.toString(),
-        'notes': [
-          if (state.surnom.isNotEmpty) 'surnom: ${state.surnom}',
-          if (state.mazraa.isNotEmpty) 'mazraa: ${state.mazraa}',
-          if (state.notes.isNotEmpty) state.notes,
-        ].join(' | '),
+        if (state.latitude != null) 'latitude': state.latitude.toString(),
+        if (state.longitude != null) 'longitude': state.longitude.toString(),
+        if (state.surnom.isNotEmpty) 'surnom': state.surnom,
+        if (state.mazraa.isNotEmpty) 'mazraa': state.mazraa,
+        if (state.notes.isNotEmpty) 'notes': state.notes,
+        if (user.regionId.isNotEmpty) 'regionId': user.regionId,
         if (photoFileId != null) 'photoId': photoFileId,
       });
 

@@ -18,6 +18,8 @@ import {
   ApiParam,
 } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../../common/auth/jwt-auth.guard';
+import { RolesGuard } from '../../common/auth/roles.guard';
+import { Roles } from '../../common/auth/roles.decorator';
 import { LotsService } from './lots.service';
 import { CreateLotDto } from './dto/create-lot.dto';
 import { UpdateLotDto, UpdateLotStatusDto } from './dto/update-lot.dto';
@@ -26,12 +28,13 @@ import { AddSignatureDto } from './dto/add-signature.dto';
 
 @ApiTags('lots')
 @ApiBearerAuth()
-@UseGuards(JwtAuthGuard)
+@UseGuards(JwtAuthGuard, RolesGuard)
 @Controller('lots')
 export class LotsController {
   constructor(private readonly lotsService: LotsService) {}
 
   @Post()
+  @Roles('collector', 'central_admin')
   @ApiOperation({ summary: 'Create a new lot' })
   async create(@Body() dto: CreateLotDto, @Req() req: any) {
     const actorId = req.user?.id ?? req.user?.sub;
@@ -39,6 +42,7 @@ export class LotsController {
   }
 
   @Get()
+  @Roles('collector', 'depot_manager', 'central_admin', 'regional_manager')
   @ApiOperation({ summary: 'List lots with optional filters' })
   @ApiQuery({ name: 'collectorId', required: false })
   @ApiQuery({ name: 'status', required: false })
@@ -73,6 +77,7 @@ export class LotsController {
   }
 
   @Patch(':id')
+  @Roles('collector', 'depot_manager', 'central_admin')
   @ApiOperation({ summary: 'Update lot fields' })
   @ApiParam({ name: 'id', type: 'string', format: 'uuid' })
   async update(
@@ -89,6 +94,7 @@ export class LotsController {
   }
 
   @Patch(':id/status')
+  @Roles('collector', 'depot_manager', 'central_admin')
   @ApiOperation({ summary: 'Change lot status' })
   @ApiParam({ name: 'id', type: 'string', format: 'uuid' })
   async updateStatus(
@@ -101,6 +107,7 @@ export class LotsController {
   }
 
   @Post(':id/photos')
+  @Roles('collector', 'depot_manager', 'central_admin')
   @ApiOperation({ summary: 'Add a photo reference to a lot' })
   @ApiParam({ name: 'id', type: 'string', format: 'uuid' })
   async addPhoto(
@@ -111,6 +118,7 @@ export class LotsController {
   }
 
   @Post(':id/signatures')
+  @Roles('collector', 'depot_manager', 'central_admin')
   @ApiOperation({ summary: 'Add a signature to a lot' })
   @ApiParam({ name: 'id', type: 'string', format: 'uuid' })
   async addSignature(

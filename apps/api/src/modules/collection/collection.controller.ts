@@ -18,6 +18,8 @@ import {
 } from '@nestjs/swagger';
 import { CollectionService } from './collection.service';
 import { JwtAuthGuard } from '../../common/auth/jwt-auth.guard';
+import { RolesGuard } from '../../common/auth/roles.guard';
+import { Roles } from '../../common/auth/roles.decorator';
 import { CreatePreLotDto } from './dto/create-pre-lot.dto';
 import { AssignPreLotDto } from './dto/assign-pre-lot.dto';
 import { CompletePreLotDto } from './dto/complete-pre-lot.dto';
@@ -26,15 +28,24 @@ import { CreateCollectorDto } from './dto/create-collector.dto';
 import { CreateRouteDto } from './dto/create-route.dto';
 import { UpdateRouteStopDto } from './dto/update-route-stop.dto';
 import { IssueBookletDto } from './dto/issue-booklet.dto';
+import { DeclareWoolDto } from './dto/declare-wool.dto';
 
 @ApiTags('collection')
 @ApiBearerAuth()
-@UseGuards(JwtAuthGuard)
+@UseGuards(JwtAuthGuard, RolesGuard)
 @Controller('collection')
 export class CollectionController {
   constructor(private readonly collectionService: CollectionService) {}
 
   // ── Pre-Lots ──────────────────────────────────────────────
+
+  @Post('pre-lots/declare')
+  @ApiOperation({
+    summary: 'Shepherd declaration — auto-creates source if needed',
+  })
+  async declareWool(@Body() dto: DeclareWoolDto) {
+    return this.collectionService.declareWool(dto);
+  }
 
   @Post('pre-lots')
   @ApiOperation({ summary: 'Create a pre-lot (shepherd declaration)' })
@@ -43,6 +54,7 @@ export class CollectionController {
   }
 
   @Get('pre-lots')
+  @Roles('collector', 'central_admin', 'regional_manager')
   @ApiOperation({ summary: 'List pre-lots with optional filters' })
   @ApiQuery({ name: 'status', required: false })
   @ApiQuery({ name: 'assignedCollectorId', required: false })
@@ -67,6 +79,7 @@ export class CollectionController {
   }
 
   @Patch('pre-lots/:id/assign')
+  @Roles('collector', 'central_admin')
   @ApiOperation({ summary: 'Assign a pre-lot to a collector' })
   @ApiParam({ name: 'id', description: 'Pre-lot UUID' })
   async assignPreLot(
@@ -81,6 +94,7 @@ export class CollectionController {
   }
 
   @Patch('pre-lots/:id/complete')
+  @Roles('collector', 'central_admin')
   @ApiOperation({ summary: 'Mark a pre-lot as collected' })
   @ApiParam({ name: 'id', description: 'Pre-lot UUID' })
   async completePreLot(
@@ -91,6 +105,7 @@ export class CollectionController {
   }
 
   @Patch('pre-lots/:id/cancel')
+  @Roles('collector', 'central_admin')
   @ApiOperation({ summary: 'Cancel a pre-lot' })
   @ApiParam({ name: 'id', description: 'Pre-lot UUID' })
   async cancelPreLot(
@@ -103,6 +118,7 @@ export class CollectionController {
   // ── Collectors ────────────────────────────────────────────
 
   @Post('collectors')
+  @Roles('central_admin')
   @ApiOperation({ summary: 'Create a collector profile' })
   async createCollector(@Body() dto: CreateCollectorDto) {
     return this.collectionService.createCollector(
@@ -113,6 +129,7 @@ export class CollectionController {
   }
 
   @Get('collectors/me')
+  @Roles('collector')
   @ApiOperation({ summary: 'Get own collector profile' })
   async getMyCollectorProfile(@Request() req: any) {
     return this.collectionService.getCollectorProfile(req.user.id);
@@ -121,6 +138,7 @@ export class CollectionController {
   // ── Routes ────────────────────────────────────────────────
 
   @Post('routes')
+  @Roles('collector', 'central_admin')
   @ApiOperation({ summary: 'Create a collection route' })
   async createRoute(@Body() dto: CreateRouteDto) {
     return this.collectionService.createRoute(
@@ -130,6 +148,7 @@ export class CollectionController {
   }
 
   @Get('routes')
+  @Roles('collector', 'central_admin')
   @ApiOperation({ summary: 'List routes for a collector' })
   @ApiQuery({ name: 'collectorId', required: false })
   @ApiQuery({ name: 'date', required: false, description: 'ISO date string' })
@@ -147,6 +166,7 @@ export class CollectionController {
   }
 
   @Get('routes/:id')
+  @Roles('collector', 'central_admin')
   @ApiOperation({ summary: 'Get route with stops' })
   @ApiParam({ name: 'id', description: 'Route UUID' })
   async getRoute(@Param('id') id: string) {
@@ -154,6 +174,7 @@ export class CollectionController {
   }
 
   @Patch('routes/:routeId/stops/:stopId')
+  @Roles('collector', 'central_admin')
   @ApiOperation({ summary: 'Update a route stop (arrival, status)' })
   @ApiParam({ name: 'routeId', description: 'Route UUID' })
   @ApiParam({ name: 'stopId', description: 'Route stop UUID' })
@@ -175,6 +196,7 @@ export class CollectionController {
   // ── Booklets ──────────────────────────────────────────────
 
   @Post('booklets')
+  @Roles('collector', 'central_admin')
   @ApiOperation({ summary: 'Issue a booklet to a collector' })
   async issueBooklet(@Body() dto: IssueBookletDto) {
     return this.collectionService.issueBooklet(

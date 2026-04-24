@@ -18,15 +18,18 @@ import {
 import { UsersService } from './users.service';
 import { CreateUserDto, UpdateUserDto, ListUsersQueryDto } from './dto';
 import { JwtAuthGuard } from '../../common/auth/jwt-auth.guard';
+import { RolesGuard } from '../../common/auth/roles.guard';
+import { Roles } from '../../common/auth/roles.decorator';
 
 @ApiTags('users')
 @ApiBearerAuth()
-@UseGuards(JwtAuthGuard)
+@UseGuards(JwtAuthGuard, RolesGuard)
 @Controller('users')
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
   @Get()
+  @Roles('central_admin')
   @ApiOperation({ summary: 'List all users with optional filters' })
   @ApiResponse({ status: 200, description: 'Returns list of users' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
@@ -47,6 +50,7 @@ export class UsersController {
   }
 
   @Post()
+  @Roles('central_admin')
   @ApiOperation({ summary: 'Create a new user' })
   @ApiResponse({ status: 201, description: 'User created successfully' })
   @ApiResponse({ status: 409, description: 'Email already exists' })
@@ -56,6 +60,7 @@ export class UsersController {
   }
 
   @Patch(':id')
+  @Roles('central_admin')
   @ApiOperation({ summary: 'Update user by ID' })
   @ApiResponse({ status: 200, description: 'User updated successfully' })
   @ApiResponse({ status: 404, description: 'User not found' })

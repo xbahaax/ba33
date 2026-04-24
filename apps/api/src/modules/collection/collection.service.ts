@@ -14,6 +14,86 @@ export class CollectionService {
     private readonly eventsService: EventsService,
   ) {}
 
+  // ── Shepherd Declaration ─────────────────────────────────
+
+  async declareWool(data: {
+    userId: string;
+    estimatedWeightKg: string;
+    latitude?: string;
+    longitude?: string;
+    notes?: string;
+    surnom?: string;
+    mazraa?: string;
+    regionId?: string;
+    photoId?: string;
+  }) {
+    // 1. Find or create source for this user
+    const sourceId = await this.ensureSourceForUser(data.userId, {
+      surnom: data.surnom,
+      mazraa: data.mazraa,
+      regionId: data.regionId,
+      latitude: data.latitude,
+      longitude: data.longitude,
+    });
+
+    // 2. Create pre-lot with proper sourceId
+    return this.createPreLot({
+      sourceId,
+      estimatedWeightKg: data.estimatedWeightKg,
+      locationLat: data.latitude,
+      locationLng: data.longitude,
+      regionId: data.regionId,
+      notes:
+        [
+          data.surnom ? `surnom: ${data.surnom}` : null,
+          data.mazraa ? `mazraa: ${data.mazraa}` : null,
+          data.notes,
+        ]
+          .filter(Boolean)
+          .join(' | ') || undefined,
+      voiceNoteId: undefined,
+    });
+  }
+
+  private async ensureSourceForUser(
+    userId: string,
+    details: {
+      surnom?: string;
+      mazraa?: string;
+      regionId?: string;
+      latitude?: string;
+      longitude?: string;
+    },
+  ): Promise<string> {
+    // Check if source already exists for this user
+    const existing =
+      await this.collectionRepository.findSourceByRegisteredBy(userId);
+    if (existing) return existing.id;
+
+    // Create a new source record for this shepherd
+    const sourceId = uuid();
+    await this.collectionRepository.createSource({
+      id: sourceId,
+      sourceType: 'c1_shepherd',
+      name:
+        details.surnom || details.mazraa || `فلاح-${userId.slice(0, 8)}`,
+      regionId: details.regionId ?? '00000000-0000-0000-0000-000000000000',
+      latitude: details.latitude,
+      longitude: details.longitude,
+      address: details.mazraa,
+      status: 'active',
+      registeredBy: userId,
+    });
+
+    // Create shepherd details record
+    await this.collectionRepository.createShepherdDetails(sourceId, {
+      hasSmartphone: true,
+      preferredLanguage: 'ar',
+    });
+
+    return sourceId;
+  }
+
   // ── Pre-Lots ──────────────────────────────────────────────
 
   async createPreLot(data: {

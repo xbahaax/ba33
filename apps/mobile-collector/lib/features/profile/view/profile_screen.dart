@@ -1,3 +1,4 @@
+import 'package:ba33_domain/ba33_domain.dart';
 import 'package:ba33_ui/ba33_ui.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -122,18 +123,15 @@ class ProfileScreen extends ConsumerWidget {
                     icon: Icons.summarize_rounded,
                     label: 'End of Day Summary',
                     subtitle: 'Review today\'s collections',
-                    onTap: () {
-                      // TODO(BA33-030): End of day summary
-                    },
+                    onTap: () => _showEndOfDaySummary(
+                        context, lots, totalWeight, urgentCount),
                   ),
                   Divider(color: colors.border, height: 1),
                   _ActionTile(
                     icon: Icons.settings_rounded,
                     label: 'Settings',
                     subtitle: 'Language, theme, notifications',
-                    onTap: () {
-                      // TODO(BA33-031): Settings screen
-                    },
+                    onTap: () => _showSettings(context),
                   ),
                 ],
               ),
@@ -153,6 +151,231 @@ class ProfileScreen extends ConsumerWidget {
           ],
         ),
       ),
+    );
+  }
+}
+
+void _showEndOfDaySummary(
+  BuildContext context,
+  List<Lot> lots,
+  double totalWeight,
+  int urgentCount,
+) {
+  final colors = Theme.of(context).ba33;
+  final today = DateTime.now();
+  final todayLots = lots.where((l) =>
+      l.createdAt.year == today.year &&
+      l.createdAt.month == today.month &&
+      l.createdAt.day == today.day);
+  final todayWeight =
+      todayLots.fold<double>(0, (sum, lot) => sum + lot.weight);
+
+  showModalBottomSheet(
+    context: context,
+    shape: const RoundedRectangleBorder(
+      borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+    ),
+    builder: (ctx) => Padding(
+      padding: const EdgeInsets.all(Ba33Spacing.spacing6),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Center(
+            child: Container(
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(
+                color: colors.border,
+                borderRadius: Ba33Radii.borderRadiusFull,
+              ),
+            ),
+          ),
+          const SizedBox(height: Ba33Spacing.spacing6),
+          Text(
+            'End of Day Summary',
+            style: Theme.of(ctx).textTheme.titleLarge,
+          ),
+          const SizedBox(height: Ba33Spacing.spacing2),
+          Text(
+            '${today.day}/${today.month}/${today.year}',
+            style: Ba33Typography.mono(
+              fontSize: 13,
+              color: colors.mutedForeground,
+            ),
+          ),
+          const SizedBox(height: Ba33Spacing.spacing6),
+          _SummaryRow(
+            label: 'Lots collected today',
+            value: '${todayLots.length}',
+            colors: colors,
+          ),
+          const SizedBox(height: Ba33Spacing.spacing3),
+          _SummaryRow(
+            label: 'Weight today',
+            value: '${todayWeight.toStringAsFixed(1)} kg',
+            colors: colors,
+          ),
+          const SizedBox(height: Ba33Spacing.spacing3),
+          _SummaryRow(
+            label: 'Total lots (all time)',
+            value: '${lots.length}',
+            colors: colors,
+          ),
+          const SizedBox(height: Ba33Spacing.spacing3),
+          _SummaryRow(
+            label: 'Total weight (all time)',
+            value: '${totalWeight.toStringAsFixed(1)} kg',
+            colors: colors,
+          ),
+          const SizedBox(height: Ba33Spacing.spacing3),
+          _SummaryRow(
+            label: 'Urgent lots',
+            value: '$urgentCount',
+            colors: colors,
+          ),
+          const SizedBox(height: Ba33Spacing.spacing8),
+        ],
+      ),
+    ),
+  );
+}
+
+void _showSettings(BuildContext context) {
+  final colors = Theme.of(context).ba33;
+
+  showModalBottomSheet(
+    context: context,
+    shape: const RoundedRectangleBorder(
+      borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+    ),
+    builder: (ctx) => Padding(
+      padding: const EdgeInsets.all(Ba33Spacing.spacing6),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Center(
+            child: Container(
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(
+                color: colors.border,
+                borderRadius: Ba33Radii.borderRadiusFull,
+              ),
+            ),
+          ),
+          const SizedBox(height: Ba33Spacing.spacing6),
+          Text(
+            'Settings',
+            style: Theme.of(ctx).textTheme.titleLarge,
+          ),
+          const SizedBox(height: Ba33Spacing.spacing6),
+          ListTile(
+            leading: Icon(Icons.language, color: colors.foreground),
+            title: const Text('Language'),
+            subtitle: Text(
+              'English',
+              style: TextStyle(color: colors.mutedForeground),
+            ),
+            trailing: Icon(
+              Icons.chevron_right_rounded,
+              color: colors.mutedForeground,
+            ),
+            onTap: () {
+              Navigator.of(ctx).pop();
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('Language selection coming soon'),
+                  behavior: SnackBarBehavior.floating,
+                ),
+              );
+            },
+          ),
+          Divider(color: colors.border, height: 1),
+          ListTile(
+            leading:
+                Icon(Icons.dark_mode_rounded, color: colors.foreground),
+            title: const Text('Theme'),
+            subtitle: Text(
+              'System default',
+              style: TextStyle(color: colors.mutedForeground),
+            ),
+            trailing: Icon(
+              Icons.chevron_right_rounded,
+              color: colors.mutedForeground,
+            ),
+            onTap: () {
+              Navigator.of(ctx).pop();
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('Theme selection coming soon'),
+                  behavior: SnackBarBehavior.floating,
+                ),
+              );
+            },
+          ),
+          Divider(color: colors.border, height: 1),
+          ListTile(
+            leading: Icon(Icons.notifications_outlined,
+                color: colors.foreground),
+            title: const Text('Notifications'),
+            subtitle: Text(
+              'Enabled',
+              style: TextStyle(color: colors.mutedForeground),
+            ),
+            trailing: Icon(
+              Icons.chevron_right_rounded,
+              color: colors.mutedForeground,
+            ),
+            onTap: () {
+              Navigator.of(ctx).pop();
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('Notification settings coming soon'),
+                  behavior: SnackBarBehavior.floating,
+                ),
+              );
+            },
+          ),
+          const SizedBox(height: Ba33Spacing.spacing6),
+        ],
+      ),
+    ),
+  );
+}
+
+class _SummaryRow extends StatelessWidget {
+  const _SummaryRow({
+    required this.label,
+    required this.value,
+    required this.colors,
+  });
+
+  final String label;
+  final String value;
+  final Ba33Colors colors;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Text(
+          label,
+          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                color: colors.mutedForeground,
+              ),
+        ),
+        Text(
+          value,
+          style: Ba33Typography.mono(
+            fontSize: 15,
+            fontWeight: FontWeight.w600,
+            color: colors.foreground,
+          ),
+        ),
+      ],
     );
   }
 }

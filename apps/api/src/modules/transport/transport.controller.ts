@@ -17,6 +17,8 @@ import {
 } from '@nestjs/swagger';
 import { TransportService } from './transport.service';
 import { JwtAuthGuard } from '../../common/auth/jwt-auth.guard';
+import { RolesGuard } from '../../common/auth/roles.guard';
+import { Roles } from '../../common/auth/roles.decorator';
 import { CreateJobDto } from './dto/create-job.dto';
 import { AcceptJobDto } from './dto/accept-job.dto';
 import { LoadLotDto } from './dto/load-lot.dto';
@@ -26,7 +28,8 @@ import { CreateTransporterDto } from './dto/create-transporter.dto';
 
 @ApiTags('transport')
 @ApiBearerAuth()
-@UseGuards(JwtAuthGuard)
+@UseGuards(JwtAuthGuard, RolesGuard)
+@Roles('collector', 'depot_manager', 'central_admin')
 @Controller('transport')
 export class TransportController {
   constructor(private readonly transportService: TransportService) {}

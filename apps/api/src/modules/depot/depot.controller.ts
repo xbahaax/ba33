@@ -10,15 +10,18 @@ import {
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { DepotService } from './depot.service';
 import { JwtAuthGuard } from '../../common/auth/jwt-auth.guard';
+import { RolesGuard } from '../../common/auth/roles.guard';
+import { Roles } from '../../common/auth/roles.decorator';
 
 @ApiTags('depot')
+@ApiBearerAuth()
+@UseGuards(JwtAuthGuard, RolesGuard)
+@Roles('depot_manager', 'central_admin')
 @Controller('depot')
 export class DepotController {
   constructor(private readonly depotService: DepotService) {}
 
   @Post()
-  @UseGuards(JwtAuthGuard)
-  @ApiBearerAuth()
   @ApiOperation({ summary: 'Create a new depot' })
   async createDepot(
     @Body()
@@ -34,24 +37,18 @@ export class DepotController {
   }
 
   @Get()
-  @UseGuards(JwtAuthGuard)
-  @ApiBearerAuth()
   @ApiOperation({ summary: 'List all depots' })
   async listDepots() {
     return this.depotService.listDepots();
   }
 
   @Get(':id')
-  @UseGuards(JwtAuthGuard)
-  @ApiBearerAuth()
   @ApiOperation({ summary: 'Get depot with zones' })
   async getDepot(@Param('id') id: string) {
     return this.depotService.getDepot(id);
   }
 
   @Post(':id/zones')
-  @UseGuards(JwtAuthGuard)
-  @ApiBearerAuth()
   @ApiOperation({ summary: 'Create a zone in a depot' })
   async createZone(
     @Param('id') depotId: string,
@@ -66,8 +63,6 @@ export class DepotController {
   }
 
   @Post(':id/receive')
-  @UseGuards(JwtAuthGuard)
-  @ApiBearerAuth()
   @ApiOperation({ summary: 'Receive a lot at the depot (E1 entry audit)' })
   async receiveLot(
     @Param('id') depotId: string,
@@ -91,8 +86,6 @@ export class DepotController {
   }
 
   @Post(':id/dispatch')
-  @UseGuards(JwtAuthGuard)
-  @ApiBearerAuth()
   @ApiOperation({ summary: 'Dispatch lots from depot to laverie (S1 exit)' })
   async dispatch(
     @Param('id') depotId: string,
@@ -112,24 +105,18 @@ export class DepotController {
   }
 
   @Get(':id/alerts')
-  @UseGuards(JwtAuthGuard)
-  @ApiBearerAuth()
   @ApiOperation({ summary: 'Get active A1 alerts for a depot' })
   async getAlerts(@Param('id') depotId: string) {
     return this.depotService.getActiveAlerts(depotId);
   }
 
   @Patch('alerts/:id/acknowledge')
-  @UseGuards(JwtAuthGuard)
-  @ApiBearerAuth()
   @ApiOperation({ summary: 'Acknowledge an A1 alert' })
   async acknowledgeAlert(@Param('id') alertId: string) {
     return this.depotService.acknowledgeAlert(alertId);
   }
 
   @Patch('alerts/:id/resolve')
-  @UseGuards(JwtAuthGuard)
-  @ApiBearerAuth()
   @ApiOperation({ summary: 'Resolve an A1 alert' })
   async resolveAlert(@Param('id') alertId: string) {
     return this.depotService.resolveAlert(alertId);

@@ -7,6 +7,8 @@ import {
   collectorBooklets,
   routes,
   routeStops,
+  sources,
+  shepherds,
 } from '../../common/database/schema';
 import { eq, and, desc } from 'drizzle-orm';
 
@@ -64,6 +66,56 @@ export class CollectionRepository {
       .where(eq(preLots.id, id))
       .returning();
     return row ?? null;
+  }
+
+  // ── Sources ──────────────────────────────────────────────
+
+  async findSourceByRegisteredBy(userId: string) {
+    const [source] = await this.db
+      .select()
+      .from(sources)
+      .where(
+        and(
+          eq(sources.registeredBy, userId),
+          eq(sources.sourceType, 'c1_shepherd'),
+        ),
+      )
+      .limit(1);
+    return source ?? null;
+  }
+
+  async createSource(data: {
+    id: string;
+    sourceType: 'c1_shepherd' | 'c2_slaughterhouse' | 'c3_aggregator';
+    name: string;
+    regionId: string;
+    latitude?: string;
+    longitude?: string;
+    address?: string;
+    status?: string;
+    registeredBy?: string;
+  }) {
+    const [source] = await this.db
+      .insert(sources)
+      .values(data as any)
+      .returning();
+    return source;
+  }
+
+  async createShepherdDetails(
+    sourceId: string,
+    details: {
+      hasSmartphone: boolean;
+      preferredLanguage?: string;
+      flockSizeEstimate?: number;
+      typicalYieldKgPerYear?: string;
+    },
+  ) {
+    const [shepherd] = await this.db
+      .insert(shepherds)
+      .values({ sourceId, ...details })
+      .returning();
+    return shepherd;
   }
 
   // ── Collectors ────────────────────────────────────────────

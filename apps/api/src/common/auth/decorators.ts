@@ -7,3 +7,6 @@ export const CurrentUser = createParamDecorator(
     return data ? user?.[data] : user;
   },
 );
+
+export { Roles, ROLES_KEY } from './roles.decorator';
+export { RolesGuard } from './roles.guard';

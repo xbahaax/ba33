@@ -10,6 +10,12 @@ class CollectionService {
     return response.data as Map<String, dynamic>;
   }
 
+  Future<Map<String, dynamic>> declareWool(Map<String, dynamic> data) async {
+    final response =
+        await _client.dio.post('/collection/pre-lots/declare', data: data);
+    return response.data as Map<String, dynamic>;
+  }
+
   Future<List<dynamic>> listPreLots(
       {String? status,
       String? assignedCollectorId,

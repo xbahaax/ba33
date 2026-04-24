@@ -178,16 +178,6 @@ class JobListScreen extends ConsumerWidget {
                             ?.copyWith(color: colors.destructive),
                       ),
                     ),
-                    TextButton(
-                      onPressed: () =>
-                          _showSupervisorOverride(context, ref),
-                      style: TextButton.styleFrom(
-                        padding: EdgeInsets.zero,
-                        foregroundColor: colors.destructive,
-                        textStyle: const TextStyle(fontSize: 11),
-                      ),
-                      child: const Text('المشرف'),
-                    ),
                   ],
                 ),
               ),
@@ -238,9 +228,7 @@ class JobListScreen extends ConsumerWidget {
                                 job: job,
                                 locked: hasActiveUrgentJob,
                                 onTap: hasActiveUrgentJob
-                                    ? () => _showSupervisorOverride(
-                                        context, ref,
-                                        pendingJob: job)
+                                    ? null
                                     : () => _openJob(context, ref, job),
                               )),
                         ],
@@ -262,56 +250,6 @@ class JobListScreen extends ConsumerWidget {
     context.push('/job-detail');
   }
 
-  void _showSupervisorOverride(BuildContext context, WidgetRef ref,
-      {TransportJob? pendingJob}) {
-    final controller = TextEditingController();
-    showDialog(
-      context: context,
-      builder: (ctx) {
-        final colors = Theme.of(ctx).ba33;
-        return AlertDialog(
-          title: const Text('تصريح المشرف'),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                'دخل كود المشرف باش تفتح.',
-                style: Theme.of(ctx).textTheme.bodySmall?.copyWith(
-                      color: colors.mutedForeground,
-                    ),
-              ),
-              const SizedBox(height: Ba33Spacing.spacing4),
-              TextField(
-                controller: controller,
-                obscureText: true,
-                keyboardType: TextInputType.number,
-                maxLength: 4,
-                decoration: const InputDecoration(
-                  hintText: 'كود PIN',
-                  counterText: '',
-                ),
-              ),
-            ],
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(ctx).pop(),
-              child: const Text('إلغاء'),
-            ),
-            ElevatedButton(
-              onPressed: () {
-                Navigator.of(ctx).pop();
-                if (pendingJob != null) {
-                  _openJob(context, ref, pendingJob);
-                }
-              },
-              child: const Text('أكد'),
-            ),
-          ],
-        );
-      },
-    );
-  }
 }
 
 class _SectionHeader extends StatelessWidget {
@@ -367,11 +305,11 @@ class _SectionHeader extends StatelessWidget {
 
 class _JobCard extends StatelessWidget {
   const _JobCard(
-      {required this.job, required this.locked, required this.onTap});
+      {required this.job, required this.locked, this.onTap});
 
   final TransportJob job;
   final bool locked;
-  final VoidCallback onTap;
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {

@@ -2,31 +2,30 @@ import { Controller, Get, Put, Post, Param, Body, UseGuards } from '@nestjs/comm
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { RulesService } from './rules.service';
 import { JwtAuthGuard } from '../../common/auth/jwt-auth.guard';
+import { RolesGuard } from '../../common/auth/roles.guard';
+import { Roles } from '../../common/auth/roles.decorator';
 
 @ApiTags('rules')
+@ApiBearerAuth()
+@UseGuards(JwtAuthGuard, RolesGuard)
+@Roles('central_admin', 'regional_manager')
 @Controller('rules')
 export class RulesController {
   constructor(private readonly rulesService: RulesService) {}
 
   @Get()
-  @UseGuards(JwtAuthGuard)
-  @ApiBearerAuth()
   @ApiOperation({ summary: 'List all active rules' })
   async listRules() {
     return this.rulesService.listRules();
   }
 
   @Get(':key')
-  @UseGuards(JwtAuthGuard)
-  @ApiBearerAuth()
   @ApiOperation({ summary: 'Get a specific rule by key' })
   async getRule(@Param('key') key: string) {
     return this.rulesService.getRule(key);
   }
 
   @Put(':key')
-  @UseGuards(JwtAuthGuard)
-  @ApiBearerAuth()
   @ApiOperation({ summary: 'Update a rule value (admin only)' })
   async updateRule(
     @Param('key') key: string,
@@ -36,8 +35,6 @@ export class RulesController {
   }
 
   @Post('seed')
-  @UseGuards(JwtAuthGuard)
-  @ApiBearerAuth()
   @ApiOperation({ summary: 'Seed default rules' })
   async seedDefaults() {
     return this.rulesService.seedDefaults();
