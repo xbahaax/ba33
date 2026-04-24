@@ -47,6 +47,14 @@
 			</array>
 		</dict>
 	</dict>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>نحتاجو الموقع باش نعرفو وين راك و نبعثولك جامع الصوف</string>
+	<key>NSLocationAlwaysUsageDescription</key>
+	<string>نحتاجو الموقع باش نعرفو وين راك و نبعثولك جامع الصوف</string>
+	<key>NSCameraUsageDescription</key>
+	<string>صور الصوف تساعد الجامع يحضر المعدات المناسبة</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>اختار صورة من المكتبة</string>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
 	<key>UILaunchStoryboardName</key>
