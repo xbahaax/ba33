@@ -6,7 +6,7 @@ part of 'id_generator_provider.dart';
 // RiverpodGenerator
 // **************************************************************************
 
-String _$idGeneratorHash() => r'8d5d413aeae700d992e8089b4c27a957f6948598';
+String _$idGeneratorHash() => r'eb887ee9e499903e9284c4588f8ba94d8d1b5e1c';
 
 /// Provides a namespaced [IdGenerator] for the current collector.
 /// Namespace is hardcoded for now — will come from auth in a future phase.
