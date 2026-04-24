@@ -254,7 +254,7 @@ export class LotsService {
     }
 
     const now = new Date();
-    const childLots = [];
+    const childLots: Awaited<ReturnType<typeof this.lotsRepository.create>>[] = [];
 
     for (const split of splits) {
       const childId = uuid();
@@ -270,7 +270,7 @@ export class LotsService {
         stateQuick: split.stateQuick ?? parent.stateQuick ?? undefined,
         urgency: parent.urgency ?? undefined,
         status: parent.status,
-        isUrgent: parent.isUrgent,
+        isUrgent: parent.isUrgent ?? false,
         currentLocationId: parent.currentLocationId ?? undefined,
         currentLocationType: parent.currentLocationType ?? undefined,
         notes: split.notes,

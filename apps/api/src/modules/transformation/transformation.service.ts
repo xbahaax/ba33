@@ -114,6 +114,10 @@ export class TransformationService {
         weightUsed,
       );
       totalWeight += parseFloat(weightUsed);
+
+      // Update lot status and location → in transformation at this transformer
+      await this.lotsService.updateLotStatus(lotId, 'in_transformation', operatedBy);
+      await this.lotsService.updateLocation(lotId, transformerId, 'transformer');
     }
 
     const updatedRun =
@@ -165,6 +169,12 @@ export class TransformationService {
         yieldPercent: yieldPercent.toFixed(2),
         completedAt: new Date(),
       });
+
+    // Update all lots in this run to "transformed"
+    const runLots = await this.transformationRepository.findRunLots(runId);
+    for (const runLot of runLots) {
+      await this.lotsService.updateLotStatus(runLot.lotId, 'transformed', run.operatedBy);
+    }
 
     // Check yield against BOM expected yield
     const bom = await this.transformationRepository.findBomById(run.bomId);
