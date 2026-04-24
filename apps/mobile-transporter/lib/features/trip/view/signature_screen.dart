@@ -54,7 +54,7 @@ class _SignatureScreenState extends ConsumerState<SignatureScreen> {
     ref.read(activeTripProvider.notifier).saveSignature(
           bytes,
           _nameController.text.trim().isEmpty
-              ? 'Réceptionnaire'
+              ? 'المستلم'
               : _nameController.text.trim(),
         );
     ref.read(activeTripProvider.notifier).completeDelivery();
@@ -70,7 +70,7 @@ class _SignatureScreenState extends ConsumerState<SignatureScreen> {
     return Scaffold(
       backgroundColor: colors.background,
       appBar: AppBar(
-        title: Text('Signature', style: textTheme.titleLarge),
+        title: Text('التوقيع', style: textTheme.titleLarge),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
           onPressed: () => context.pop(),
@@ -82,12 +82,12 @@ class _SignatureScreenState extends ConsumerState<SignatureScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // Receiver name
-            Text('Nom du réceptionnaire', style: textTheme.labelLarge),
+            Text('اسم المستلم', style: textTheme.labelLarge),
             const SizedBox(height: Ba33Spacing.spacing2),
             TextField(
               controller: _nameController,
               decoration: const InputDecoration(
-                hintText: 'ex: Ahmed Benali',
+                hintText: 'مثال: أحمد بنعلي',
                 prefixIcon: Icon(Icons.person_outline),
               ),
             ),
@@ -96,12 +96,12 @@ class _SignatureScreenState extends ConsumerState<SignatureScreen> {
             // Signature label + clear button
             Row(
               children: [
-                Text('Signature', style: textTheme.labelLarge),
+                Text('التوقيع', style: textTheme.labelLarge),
                 const Spacer(),
                 TextButton.icon(
                   onPressed: _clearSignature,
                   icon: const Icon(Icons.refresh, size: 16),
-                  label: const Text('Effacer'),
+                  label: const Text('امسح'),
                   style: TextButton.styleFrom(
                     foregroundColor: colors.mutedForeground,
                   ),
@@ -151,7 +151,7 @@ class _SignatureScreenState extends ConsumerState<SignatureScreen> {
                                     ),
                                     const SizedBox(height: Ba33Spacing.spacing2),
                                     Text(
-                                      'Signez ici',
+                                      'وقع هنا',
                                       style: textTheme.bodyMedium?.copyWith(
                                         color: colors.mutedForeground
                                             .withOpacity(0.5),
@@ -174,7 +174,7 @@ class _SignatureScreenState extends ConsumerState<SignatureScreen> {
               child: ElevatedButton.icon(
                 onPressed: _hasSignature ? _confirm : null,
                 icon: const Icon(Icons.check_circle_outline),
-                label: const Text('Valider et générer le bon de livraison'),
+                label: const Text('أكد و ولد بون التسليم'),
                 style: ElevatedButton.styleFrom(
                   padding: const EdgeInsets.symmetric(
                     vertical: Ba33Spacing.spacing4,

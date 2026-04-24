@@ -8,6 +8,8 @@ import '../features/trip/view/active_trip_screen.dart';
 import '../features/trip/view/pod_screen.dart';
 import '../features/trip/view/scan_delivery_screen.dart';
 import '../features/trip/view/signature_screen.dart';
+import '../features/farmer_declaration/view/farmer_declaration_form_screen.dart';
+import '../features/farmer_declaration/view/farmer_declaration_success_screen.dart';
 
 final routerProvider = GoRouter(
   initialLocation: '/',
@@ -51,6 +53,16 @@ final routerProvider = GoRouter(
       path: '/pod',
       name: 'pod',
       builder: (context, state) => const PodScreen(),
+    ),
+    GoRoute(
+      path: '/farmer-declare',
+      name: 'farmer-declare',
+      builder: (context, state) => const FarmerDeclarationFormScreen(),
+    ),
+    GoRoute(
+      path: '/farmer-declare/success',
+      name: 'farmer-declare-success',
+      builder: (context, state) => const FarmerDeclarationSuccessScreen(),
     ),
   ],
 );

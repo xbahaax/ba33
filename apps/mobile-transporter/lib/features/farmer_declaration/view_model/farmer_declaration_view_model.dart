@@ -1,16 +1,15 @@
 import 'package:ba33_domain/ba33_domain.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
-import '../../../shared/providers/auth_provider.dart';
+part 'farmer_declaration_view_model.g.dart';
 
-part 'declaration_view_model.g.dart';
-
-class DeclarationFormState {
-  const DeclarationFormState({
-    this.weightCategory,
-    this.customWeight,
+class FarmerDeclarationFormState {
+  const FarmerDeclarationFormState({
+    this.farmerName = '',
+    this.farmerPhone = '',
     this.surnom = '',
     this.mazraa = '',
+    this.weightCategory,
     this.notes = '',
     this.latitude,
     this.longitude,
@@ -21,10 +20,11 @@ class DeclarationFormState {
     this.error,
   });
 
-  final WeightCategory? weightCategory;
-  final double? customWeight;
+  final String farmerName;
+  final String farmerPhone;
   final String surnom;
   final String mazraa;
+  final WeightCategory? weightCategory;
   final String notes;
   final double? latitude;
   final double? longitude;
@@ -35,16 +35,14 @@ class DeclarationFormState {
   final String? error;
 
   bool get isValid =>
-      weightCategory != null &&
-      latitude != null &&
-      (weightCategory != WeightCategory.custom || (customWeight != null && customWeight! > 0));
+      farmerName.isNotEmpty && weightCategory != null && latitude != null;
 
-  DeclarationFormState copyWith({
-    WeightCategory? weightCategory,
-    double? customWeight,
-    bool clearCustomWeight = false,
+  FarmerDeclarationFormState copyWith({
+    String? farmerName,
+    String? farmerPhone,
     String? surnom,
     String? mazraa,
+    WeightCategory? weightCategory,
     String? notes,
     double? latitude,
     double? longitude,
@@ -54,11 +52,12 @@ class DeclarationFormState {
     bool? isSubmitted,
     String? error,
   }) {
-    return DeclarationFormState(
-      weightCategory: weightCategory ?? this.weightCategory,
-      customWeight: clearCustomWeight ? null : (customWeight ?? this.customWeight),
+    return FarmerDeclarationFormState(
+      farmerName: farmerName ?? this.farmerName,
+      farmerPhone: farmerPhone ?? this.farmerPhone,
       surnom: surnom ?? this.surnom,
       mazraa: mazraa ?? this.mazraa,
+      weightCategory: weightCategory ?? this.weightCategory,
       notes: notes ?? this.notes,
       latitude: latitude ?? this.latitude,
       longitude: longitude ?? this.longitude,
@@ -72,28 +71,16 @@ class DeclarationFormState {
 }
 
 @riverpod
-class DeclarationViewModel extends _$DeclarationViewModel {
+class FarmerDeclarationViewModel extends _$FarmerDeclarationViewModel {
   @override
-  DeclarationFormState build() => const DeclarationFormState();
+  FarmerDeclarationFormState build() => const FarmerDeclarationFormState();
 
-  void selectWeight(WeightCategory category) {
-    if (category != WeightCategory.custom) {
-      state = state.copyWith(weightCategory: category, clearCustomWeight: true);
-    } else {
-      state = state.copyWith(weightCategory: category);
-    }
+  void setFarmerName(String name) {
+    state = state.copyWith(farmerName: name);
   }
 
-  void setCustomWeight(double? weight) {
-    state = state.copyWith(customWeight: weight);
-  }
-
-  void setLocation(double lat, double lng, {String? name}) {
-    state = state.copyWith(
-      latitude: lat,
-      longitude: lng,
-      locationName: name,
-    );
+  void setFarmerPhone(String phone) {
+    state = state.copyWith(farmerPhone: phone);
   }
 
   void setSurnom(String surnom) {
@@ -102,6 +89,18 @@ class DeclarationViewModel extends _$DeclarationViewModel {
 
   void setMazraa(String mazraa) {
     state = state.copyWith(mazraa: mazraa);
+  }
+
+  void selectWeight(WeightCategory category) {
+    state = state.copyWith(weightCategory: category);
+  }
+
+  void setLocation(double lat, double lng, {String? name}) {
+    state = state.copyWith(
+      latitude: lat,
+      longitude: lng,
+      locationName: name,
+    );
   }
 
   void setPhoto(String path) {
@@ -115,35 +114,32 @@ class DeclarationViewModel extends _$DeclarationViewModel {
   Future<void> submit() async {
     if (!state.isValid) {
       state = state.copyWith(
-        error: 'اختار الكمية و خلي الموقع يخدم',
+        error: 'لازم تدخل اسم الفلاح، الكمية، و الموقع',
       );
-      return;
-    }
-
-    final user = ref.read(authProvider);
-    if (user == null) {
-      state = state.copyWith(error: 'ما راكش داخل، سجل دخولك');
       return;
     }
 
     state = state.copyWith(isSubmitting: true);
 
-    // TODO(BA33-021): submit declaration to API
+    // TODO(BA33-030): submit farmer declaration to API
     await Future<void>.delayed(const Duration(seconds: 1));
 
-    final idGen = IdGenerator(namespace: user.id);
+    final idGen = IdGenerator(namespace: 'transporter-declared');
 
-    // Create local declaration
     Declaration(
       id: idGen.nextLotId(),
-      shepherdId: user.id,
+      shepherdId: 'farmer-${state.farmerName}',
       weightCategory: state.weightCategory!,
-      estimatedWeight: state.customWeight,
       status: DeclarationStatus.announced,
       createdAt: DateTime.now(),
       latitude: state.latitude!,
       longitude: state.longitude!,
-      notes: state.notes.isEmpty ? null : state.notes,
+      notes: [
+        if (state.farmerPhone.isNotEmpty) 'tel: ${state.farmerPhone}',
+        if (state.surnom.isNotEmpty) 'surnom: ${state.surnom}',
+        if (state.mazraa.isNotEmpty) 'mazraa: ${state.mazraa}',
+        if (state.notes.isNotEmpty) state.notes,
+      ].join(' | '),
       photoUrl: state.photoPath,
     );
 
@@ -151,6 +147,6 @@ class DeclarationViewModel extends _$DeclarationViewModel {
   }
 
   void reset() {
-    state = const DeclarationFormState();
+    state = const FarmerDeclarationFormState();
   }
 }

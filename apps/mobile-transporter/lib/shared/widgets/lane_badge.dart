@@ -14,19 +14,19 @@ class LaneBadge extends StatelessWidget {
 
     final (label, bg, fg, icon) = switch (lane) {
       TransportLane.urgentColdChain => (
-          'URGENT · FROID',
+          'مستعجل · مبرد',
           colors.destructive,
           colors.destructiveForeground,
           Icons.ac_unit,
         ),
       TransportLane.urgentStandard => (
-          'URGENT',
+          'مستعجل',
           colors.destructive,
           colors.destructiveForeground,
           Icons.priority_high,
         ),
       TransportLane.normal => (
-          'NORMAL',
+          'عادي',
           colors.muted,
           colors.mutedForeground,
           Icons.local_shipping_outlined,

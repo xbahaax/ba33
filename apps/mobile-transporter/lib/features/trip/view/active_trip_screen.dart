@@ -31,7 +31,7 @@ class ActiveTripScreen extends ConsumerWidget {
     return Scaffold(
       backgroundColor: colors.background,
       appBar: AppBar(
-        title: Text('En route', style: textTheme.titleLarge),
+        title: Text('في الطريق', style: textTheme.titleLarge),
         automaticallyImplyLeading: false,
         actions: [
           Padding(
@@ -71,10 +71,10 @@ class ActiveTripScreen extends ConsumerWidget {
                       Expanded(
                         child: Text(
                           gps.isTracking
-                              ? 'GPS actif — ${gps.pointsRecorded} points enregistrés'
+                              ? 'GPS خدام — ${gps.pointsRecorded} نقاط مسجلين'
                               : gps.hasPermission
-                                  ? 'GPS en attente…'
-                                  : 'Permission GPS refusée',
+                                  ? 'GPS كيستنى…'
+                                  : 'تصريح GPS مرفوض',
                           style: textTheme.bodySmall?.copyWith(
                             color: gps.isTracking
                                 ? colors.primary
@@ -142,8 +142,8 @@ class ActiveTripScreen extends ConsumerWidget {
                       const SizedBox(width: Ba33Spacing.spacing2),
                       Text(
                         sync.isSyncing
-                            ? 'Synchronisation…'
-                            : '${sync.pendingCount} événements en attente — Appuyer pour sync',
+                            ? 'مزامنة…'
+                            : '${sync.pendingCount} أحداث كيستناو — اضغط للمزامنة',
                         style: textTheme.bodySmall
                             ?.copyWith(color: colors.mutedForeground),
                       ),
@@ -223,7 +223,7 @@ class ActiveTripScreen extends ConsumerWidget {
             const SizedBox(height: Ba33Spacing.spacing4),
 
             // ── Loaded lots ──────────────────────────
-            Text('Lots chargés', style: textTheme.titleMedium),
+            Text('اللوتات المحملين', style: textTheme.titleMedium),
             const SizedBox(height: Ba33Spacing.spacing3),
             ...job.lots.map((lot) => _LoadedLotTile(lot: lot, colors: colors)),
             const SizedBox(height: Ba33Spacing.spacing3),

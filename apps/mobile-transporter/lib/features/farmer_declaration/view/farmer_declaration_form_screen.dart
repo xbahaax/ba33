@@ -1,27 +1,31 @@
 import 'package:ba33_ui/ba33_ui.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
 
-import '../view_model/declaration_view_model.dart';
+import '../view_model/farmer_declaration_view_model.dart';
 import '../widgets/location_status.dart';
 import '../widgets/weight_estimator.dart';
 
-/// Full declaration form: weight estimation, location, optional photo, notes.
-class DeclarationFormScreen extends ConsumerStatefulWidget {
-  const DeclarationFormScreen({super.key});
+/// Form for transporter to declare wool on behalf of a farmer.
+class FarmerDeclarationFormScreen extends ConsumerStatefulWidget {
+  const FarmerDeclarationFormScreen({super.key});
 
   @override
-  ConsumerState<DeclarationFormScreen> createState() =>
-      _DeclarationFormScreenState();
+  ConsumerState<FarmerDeclarationFormScreen> createState() =>
+      _FarmerDeclarationFormScreenState();
 }
 
-class _DeclarationFormScreenState extends ConsumerState<DeclarationFormScreen> {
-  final _notesController = TextEditingController();
+class _FarmerDeclarationFormScreenState
+    extends ConsumerState<FarmerDeclarationFormScreen> {
+  final _farmerNameController = TextEditingController();
+  final _farmerPhoneController = TextEditingController();
   final _surnomController = TextEditingController();
   final _mazraaController = TextEditingController();
+  final _notesController = TextEditingController();
   bool _locationRequested = false;
   bool _locationLoading = false;
 
@@ -33,9 +37,11 @@ class _DeclarationFormScreenState extends ConsumerState<DeclarationFormScreen> {
 
   @override
   void dispose() {
-    _notesController.dispose();
+    _farmerNameController.dispose();
+    _farmerPhoneController.dispose();
     _surnomController.dispose();
     _mazraaController.dispose();
+    _notesController.dispose();
     super.dispose();
   }
 
@@ -61,7 +67,8 @@ class _DeclarationFormScreenState extends ConsumerState<DeclarationFormScreen> {
         if (permission == LocationPermission.denied) {
           if (!mounted) return;
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('لازم تسمح بالموقع باش نعرفو وينك')),
+            const SnackBar(
+                content: Text('لازم تسمح بالموقع باش نعرفو وين الفلاح')),
           );
           setState(() => _locationLoading = false);
           return;
@@ -87,7 +94,7 @@ class _DeclarationFormScreenState extends ConsumerState<DeclarationFormScreen> {
       );
 
       if (!mounted) return;
-      ref.read(declarationViewModelProvider.notifier).setLocation(
+      ref.read(farmerDeclarationViewModelProvider.notifier).setLocation(
             position.latitude,
             position.longitude,
             name: 'الموقع الحالي',
@@ -111,16 +118,16 @@ class _DeclarationFormScreenState extends ConsumerState<DeclarationFormScreen> {
       imageQuality: 80,
     );
     if (photo != null && mounted) {
-      ref.read(declarationViewModelProvider.notifier).setPhoto(photo.path);
+      ref.read(farmerDeclarationViewModelProvider.notifier).setPhoto(photo.path);
     }
   }
 
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).ba33;
-    final formState = ref.watch(declarationViewModelProvider);
+    final formState = ref.watch(farmerDeclarationViewModelProvider);
 
-    ref.listen(declarationViewModelProvider, (prev, next) {
+    ref.listen(farmerDeclarationViewModelProvider, (prev, next) {
       if (next.error != null) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -130,16 +137,16 @@ class _DeclarationFormScreenState extends ConsumerState<DeclarationFormScreen> {
         );
       }
       if (next.isSubmitted && !(prev?.isSubmitted ?? false)) {
-        context.go('/declaration/success');
+        context.go('/farmer-declare/success');
       }
     });
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('تصريح بالصوف'),
+        title: const Text('تصريح بالصوف لفلاح'),
         leading: IconButton(
           icon: const Icon(Icons.arrow_forward),
-          onPressed: () => context.go('/'),
+          onPressed: () => context.pop(),
         ),
       ),
       body: SingleChildScrollView(
@@ -148,6 +155,39 @@ class _DeclarationFormScreenState extends ConsumerState<DeclarationFormScreen> {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             Text(
+              'اسم الفلاح',
+              style: Theme.of(context).textTheme.titleMedium,
+            ),
+            const SizedBox(height: Ba33Spacing.spacing3),
+            TextField(
+              controller: _farmerNameController,
+              decoration: const InputDecoration(
+                hintText: 'الاسم الكامل تاع الفلاح',
+              ),
+              onChanged: (value) => ref
+                  .read(farmerDeclarationViewModelProvider.notifier)
+                  .setFarmerName(value),
+            ),
+            const SizedBox(height: Ba33Spacing.spacing6),
+            Text(
+              'رقم تيليفون الفلاح (اختياري)',
+              style: Theme.of(context).textTheme.titleMedium,
+            ),
+            const SizedBox(height: Ba33Spacing.spacing3),
+            TextField(
+              controller: _farmerPhoneController,
+              keyboardType: TextInputType.phone,
+              inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+              decoration: const InputDecoration(
+                hintText: '0555 123 456',
+                prefixText: '+213 ',
+              ),
+              onChanged: (value) => ref
+                  .read(farmerDeclarationViewModelProvider.notifier)
+                  .setFarmerPhone(value),
+            ),
+            const SizedBox(height: Ba33Spacing.spacing6),
+            Text(
               'السرنوم (اللقب)',
               style: Theme.of(context).textTheme.titleMedium,
             ),
@@ -155,26 +195,22 @@ class _DeclarationFormScreenState extends ConsumerState<DeclarationFormScreen> {
             TextField(
               controller: _surnomController,
               decoration: const InputDecoration(
-                hintText: 'واش يقولولك الناس؟',
+                hintText: 'واش يقولولو الناس؟',
               ),
               onChanged: (value) => ref
-                  .read(declarationViewModelProvider.notifier)
+                  .read(farmerDeclarationViewModelProvider.notifier)
                   .setSurnom(value),
             ),
             const SizedBox(height: Ba33Spacing.spacing6),
             WeightEstimator(
               selected: formState.weightCategory,
               onSelected: (category) => ref
-                  .read(declarationViewModelProvider.notifier)
+                  .read(farmerDeclarationViewModelProvider.notifier)
                   .selectWeight(category),
-              customWeight: formState.customWeight,
-              onCustomWeightChanged: (weight) => ref
-                  .read(declarationViewModelProvider.notifier)
-                  .setCustomWeight(weight),
             ),
             const SizedBox(height: Ba33Spacing.spacing6),
             Text(
-              'الموقع تاعك',
+              'الموقع',
               style: Theme.of(context).textTheme.titleMedium,
             ),
             const SizedBox(height: Ba33Spacing.spacing3),
@@ -220,7 +256,7 @@ class _DeclarationFormScreenState extends ConsumerState<DeclarationFormScreen> {
                 hintText: 'اسم المزرعة ولا البلاصة',
               ),
               onChanged: (value) => ref
-                  .read(declarationViewModelProvider.notifier)
+                  .read(farmerDeclarationViewModelProvider.notifier)
                   .setMazraa(value),
             ),
             const SizedBox(height: Ba33Spacing.spacing6),
@@ -236,10 +272,7 @@ class _DeclarationFormScreenState extends ConsumerState<DeclarationFormScreen> {
                 decoration: BoxDecoration(
                   color: colors.muted,
                   borderRadius: Ba33Radii.borderRadiusLg,
-                  border: Border.all(
-                    color: colors.border,
-                    style: BorderStyle.solid,
-                  ),
+                  border: Border.all(color: colors.border),
                 ),
                 child: Center(
                   child: Column(
@@ -279,7 +312,7 @@ class _DeclarationFormScreenState extends ConsumerState<DeclarationFormScreen> {
                 hintText: 'تفاصيل زيادة...',
               ),
               onChanged: (value) => ref
-                  .read(declarationViewModelProvider.notifier)
+                  .read(farmerDeclarationViewModelProvider.notifier)
                   .setNotes(value),
             ),
             const SizedBox(height: Ba33Spacing.spacing8),
@@ -288,7 +321,7 @@ class _DeclarationFormScreenState extends ConsumerState<DeclarationFormScreen> {
               child: ElevatedButton(
                 onPressed: formState.isValid && !formState.isSubmitting
                     ? () => ref
-                        .read(declarationViewModelProvider.notifier)
+                        .read(farmerDeclarationViewModelProvider.notifier)
                         .submit()
                     : null,
                 child: formState.isSubmitting

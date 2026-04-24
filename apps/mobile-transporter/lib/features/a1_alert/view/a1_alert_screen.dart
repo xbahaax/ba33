@@ -115,7 +115,7 @@ class _A1AlertScreenState extends ConsumerState<A1AlertScreen>
                 child: TextButton(
                   onPressed: _dismiss,
                   child: Text(
-                    'Refuser',
+                    'ارفض',
                     style: TextStyle(
                       color: colors.destructiveForeground.withAlpha(180),
                       fontSize: 14,
@@ -160,7 +160,7 @@ class _A1AlertScreenState extends ConsumerState<A1AlertScreen>
 
               // ALERTE A1 label
               Text(
-                '● ALERTE A1',
+                '● تنبيه A1',
                 style: TextStyle(
                   fontSize: 12,
                   fontWeight: FontWeight.w800,
@@ -170,7 +170,7 @@ class _A1AlertScreenState extends ConsumerState<A1AlertScreen>
               ),
               const SizedBox(height: Ba33Spacing.spacing2),
               Text(
-                'TRANSPORT URGENT',
+                'نقل مستعجل',
                 style: TextStyle(
                   fontSize: 28,
                   fontWeight: FontWeight.w800,
@@ -226,7 +226,7 @@ class _A1AlertScreenState extends ConsumerState<A1AlertScreen>
                   children: [
                     _AlertDetail(
                       icon: Icons.warehouse_outlined,
-                      label: 'Dépôt',
+                      label: 'المستودع',
                       value:
                           '${widget.alert.depotName} · ${widget.alert.depotRegion}',
                       foreground: colors.destructiveForeground,
@@ -234,23 +234,23 @@ class _A1AlertScreenState extends ConsumerState<A1AlertScreen>
                     const SizedBox(height: Ba33Spacing.spacing3),
                     _AlertDetail(
                       icon: Icons.inventory_2_outlined,
-                      label: 'Lots',
-                      value: '${widget.alert.lotsCount} lots C2',
+                      label: 'اللوتات',
+                      value: '${widget.alert.lotsCount} لوت C2',
                       foreground: colors.destructiveForeground,
                     ),
                     const SizedBox(height: Ba33Spacing.spacing3),
                     _AlertDetail(
                       icon: Icons.scale_outlined,
-                      label: 'Poids total',
+                      label: 'الوزن الكلي',
                       value:
-                          '${widget.alert.totalWeight.toStringAsFixed(1)} kg',
+                          '${widget.alert.totalWeight.toStringAsFixed(1)} كغ',
                       foreground: colors.destructiveForeground,
                       mono: true,
                     ),
                     const SizedBox(height: Ba33Spacing.spacing3),
                     _AlertDetail(
                       icon: Icons.info_outline,
-                      label: 'Raison',
+                      label: 'السبب',
                       value: widget.alert.triggerReason,
                       foreground: colors.destructiveForeground,
                     ),
@@ -291,7 +291,7 @@ class _A1AlertScreenState extends ConsumerState<A1AlertScreen>
                             size: 22, color: colors.destructive),
                         const SizedBox(width: Ba33Spacing.spacing2),
                         Text(
-                          'ACCEPTER EN 1 TAP',
+                          'اقبل ب 1 ضغطة',
                           style: TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.w800,
@@ -306,7 +306,7 @@ class _A1AlertScreenState extends ConsumerState<A1AlertScreen>
               ),
               const SizedBox(height: Ba33Spacing.spacing2),
               Text(
-                'Couloir froid · Certification urgente requise',
+                'ممر مبرد · شهادة مستعجلة لازمة',
                 style: TextStyle(
                   fontSize: 11,
                   color: colors.destructiveForeground.withAlpha(150),

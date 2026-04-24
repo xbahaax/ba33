@@ -1,30 +1,31 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
 
-part of 'declaration_view_model.dart';
+part of 'farmer_declaration_view_model.dart';
 
 // **************************************************************************
 // RiverpodGenerator
 // **************************************************************************
 
-String _$declarationViewModelHash() =>
-    r'419afc445ac8e560dc53a9d442d869cbd7fe8929';
+String _$farmerDeclarationViewModelHash() =>
+    r'24d9cb371b6840fc3b6364fd4cb487299bbd1ae4';
 
-/// See also [DeclarationViewModel].
-@ProviderFor(DeclarationViewModel)
-final declarationViewModelProvider =
+/// See also [FarmerDeclarationViewModel].
+@ProviderFor(FarmerDeclarationViewModel)
+final farmerDeclarationViewModelProvider =
     AutoDisposeNotifierProvider<
-      DeclarationViewModel,
-      DeclarationFormState
+      FarmerDeclarationViewModel,
+      FarmerDeclarationFormState
     >.internal(
-      DeclarationViewModel.new,
-      name: r'declarationViewModelProvider',
+      FarmerDeclarationViewModel.new,
+      name: r'farmerDeclarationViewModelProvider',
       debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
           ? null
-          : _$declarationViewModelHash,
+          : _$farmerDeclarationViewModelHash,
       dependencies: null,
       allTransitiveDependencies: null,
     );
 
-typedef _$DeclarationViewModel = AutoDisposeNotifier<DeclarationFormState>;
+typedef _$FarmerDeclarationViewModel =
+    AutoDisposeNotifier<FarmerDeclarationFormState>;
 // ignore_for_file: type=lint
 // ignore_for_file: subtype_of_sealed_class, invalid_use_of_internal_member, invalid_use_of_visible_for_testing_member, deprecated_member_use_from_same_package

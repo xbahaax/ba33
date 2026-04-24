@@ -15,7 +15,7 @@ class JobDetailScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final trip = ref.watch(activeTripProvider);
     if (trip == null) {
-      return const Scaffold(body: Center(child: Text('No job selected')));
+      return const Scaffold(body: Center(child: Text('ما كاين حتى مهمة')));
     }
     final job = trip.job;
     final colors = Theme.of(context).ba33;
@@ -25,7 +25,7 @@ class JobDetailScreen extends ConsumerWidget {
       backgroundColor: colors.background,
       appBar: AppBar(
         title: Text(
-          'Mission',
+          'المهمة',
           style: textTheme.titleLarge,
         ),
         leading: IconButton(
@@ -75,7 +75,7 @@ class JobDetailScreen extends ConsumerWidget {
                 children: [
                   _LocationRow(
                     icon: '🏭',
-                    label: 'DÉPART',
+                    label: 'الانطلاق',
                     name: job.originName,
                     type: job.originType,
                     colors: colors,
@@ -120,7 +120,7 @@ class JobDetailScreen extends ConsumerWidget {
                   ),
                   _LocationRow(
                     icon: '🫧',
-                    label: 'DESTINATION',
+                    label: 'الوجهة',
                     name: job.destinationName,
                     type: job.destinationType,
                     colors: colors,
@@ -135,7 +135,7 @@ class JobDetailScreen extends ConsumerWidget {
               children: [
                 Expanded(
                   child: _StatCard(
-                    label: 'Lots',
+                    label: 'اللوتات',
                     value: '${job.lots.length}',
                     icon: Icons.inventory_2_outlined,
                     colors: colors,
@@ -144,9 +144,9 @@ class JobDetailScreen extends ConsumerWidget {
                 const SizedBox(width: Ba33Spacing.spacing3),
                 Expanded(
                   child: _StatCard(
-                    label: 'Poids total',
+                    label: 'الوزن الكلي',
                     value:
-                        '${job.totalDeclaredWeight.toStringAsFixed(1)} kg',
+                        '${job.totalDeclaredWeight.toStringAsFixed(1)} كغ',
                     icon: Icons.scale_outlined,
                     mono: true,
                     colors: colors,
@@ -157,7 +157,7 @@ class JobDetailScreen extends ConsumerWidget {
             const SizedBox(height: Ba33Spacing.spacing4),
 
             // Lots list
-            Text('Lots à transporter', style: textTheme.titleMedium),
+            Text('اللوتات اللي خاصها تتنقل', style: textTheme.titleMedium),
             const SizedBox(height: Ba33Spacing.spacing3),
             ...job.lots.map((lot) => _LotItem(lot: lot, colors: colors)),
             const SizedBox(height: Ba33Spacing.spacing6),
@@ -180,8 +180,8 @@ class JobDetailScreen extends ConsumerWidget {
                     Expanded(
                       child: Text(
                         job.lane == TransportLane.urgentColdChain
-                            ? 'Transport frigorifique requis. Vérifiez la température avant chargement.'
-                            : 'Mission urgente. Respectez le délai SLA.',
+                            ? 'نقل مبرد لازم. تأكد من الحرارة قبل التحميل.'
+                            : 'مهمة مستعجلة. حترم الوقت SLA.',
                         style: textTheme.bodySmall
                             ?.copyWith(color: colors.destructive),
                       ),
@@ -197,7 +197,7 @@ class JobDetailScreen extends ConsumerWidget {
               child: ElevatedButton.icon(
                 onPressed: () => context.push('/scan-load'),
                 icon: const Icon(Icons.qr_code_scanner),
-                label: const Text('Commencer le chargement'),
+                label: const Text('ابدا التحميل'),
                 style: ElevatedButton.styleFrom(
                   padding: const EdgeInsets.symmetric(
                     vertical: Ba33Spacing.spacing4,
@@ -369,7 +369,7 @@ class _LotItem extends StatelessWidget {
             ),
           ),
           Text(
-            '${lot.declaredWeight.toStringAsFixed(1)} kg',
+            '${lot.declaredWeight.toStringAsFixed(1)} كغ',
             style: Ba33Typography.mono(
               fontSize: 13,
               fontWeight: FontWeight.w500,

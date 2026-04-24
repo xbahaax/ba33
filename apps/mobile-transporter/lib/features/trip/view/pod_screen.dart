@@ -62,12 +62,12 @@ class PodScreen extends ConsumerWidget {
                     ),
                     const SizedBox(height: Ba33Spacing.spacing3),
                     Text(
-                      'Livraison confirmée',
+                      'التسليم تأكد',
                       style: textTheme.headlineSmall,
                     ),
                     const SizedBox(height: Ba33Spacing.spacing1),
                     Text(
-                      'Bon de livraison généré',
+                      'بون التسليم تولد',
                       style: textTheme.bodySmall
                           ?.copyWith(color: colors.mutedForeground),
                     ),
@@ -81,24 +81,24 @@ class PodScreen extends ConsumerWidget {
                 colors: colors,
                 children: [
                   _InfoRow(
-                    label: 'Mission',
+                    label: 'المهمة',
                     value: job.id,
                     mono: true,
                     colors: colors,
                   ),
                   _InfoRow(
-                    label: 'Origine',
+                    label: 'الأصل',
                     value: job.originName,
                     colors: colors,
                   ),
                   _InfoRow(
-                    label: 'Destination',
+                    label: 'الوجهة',
                     value: job.destinationName,
                     colors: colors,
                   ),
                   if (trip.receiverName != null)
                     _InfoRow(
-                      label: 'Réceptionné par',
+                      label: 'استلمه',
                       value: trip.receiverName!,
                       colors: colors,
                     ),
@@ -107,7 +107,7 @@ class PodScreen extends ConsumerWidget {
               const SizedBox(height: Ba33Spacing.spacing4),
 
               // Weight reconciliation
-              Text('Réconciliation des poids', style: textTheme.titleMedium),
+              Text('مقارنة الأوزان', style: textTheme.titleMedium),
               const SizedBox(height: Ba33Spacing.spacing3),
               Container(
                 decoration: BoxDecoration(
@@ -134,7 +134,7 @@ class PodScreen extends ConsumerWidget {
                           Expanded(
                             flex: 3,
                             child: Text(
-                              'LOT',
+                              'لوت',
                               style: textTheme.labelSmall?.copyWith(
                                 color: colors.mutedForeground,
                               ),
@@ -142,7 +142,7 @@ class PodScreen extends ConsumerWidget {
                           ),
                           Expanded(
                             child: Text(
-                              'CHARGÉ',
+                              'محمل',
                               textAlign: TextAlign.end,
                               style: textTheme.labelSmall?.copyWith(
                                 color: colors.mutedForeground,
@@ -151,7 +151,7 @@ class PodScreen extends ConsumerWidget {
                           ),
                           Expanded(
                             child: Text(
-                              'LIVRÉ',
+                              'مسلم',
                               textAlign: TextAlign.end,
                               style: textTheme.labelSmall?.copyWith(
                                 color: colors.mutedForeground,
@@ -182,13 +182,13 @@ class PodScreen extends ConsumerWidget {
                           Expanded(
                             flex: 3,
                             child: Text(
-                              'TOTAL',
+                              'المجموع',
                               style: textTheme.labelLarge,
                             ),
                           ),
                           Expanded(
                             child: Text(
-                              '${totalLoaded.toStringAsFixed(1)} kg',
+                              '${totalLoaded.toStringAsFixed(1)} كغ',
                               textAlign: TextAlign.end,
                               style: Ba33Typography.mono(
                                 fontSize: 13,
@@ -199,7 +199,7 @@ class PodScreen extends ConsumerWidget {
                           ),
                           Expanded(
                             child: Text(
-                              '${totalDelivered.toStringAsFixed(1)} kg',
+                              '${totalDelivered.toStringAsFixed(1)} كغ',
                               textAlign: TextAlign.end,
                               style: Ba33Typography.mono(
                                 fontSize: 13,
@@ -246,9 +246,9 @@ class PodScreen extends ConsumerWidget {
                       const SizedBox(width: Ba33Spacing.spacing3),
                       Expanded(
                         child: Text(
-                          'Anomalie Point Noir signalée. '
-                          'Écart de ${delta.abs().toStringAsFixed(2)} kg '
-                          'transmis aux opérations centrales.',
+                          'مشكلة نقطة سوداء تبلغت. '
+                          'فرق ${delta.abs().toStringAsFixed(2)} كغ '
+                          'تبعث للعمليات المركزية.',
                           style: textTheme.bodySmall
                               ?.copyWith(color: colors.destructive),
                         ),
@@ -262,7 +262,7 @@ class PodScreen extends ConsumerWidget {
 
               // Signature preview
               if (trip.signatureBytes != null) ...[
-                Text('Signature du réceptionnaire',
+                Text('توقيع المستلم',
                     style: textTheme.titleMedium),
                 const SizedBox(height: Ba33Spacing.spacing3),
                 Container(
@@ -305,7 +305,7 @@ class PodScreen extends ConsumerWidget {
                         if (t != null) await PdfService.sharePoD(t);
                       },
                       icon: const Icon(Icons.picture_as_pdf_outlined),
-                      label: const Text('Exporter PDF'),
+                      label: const Text('صدر PDF'),
                     ),
                   ),
                   const SizedBox(width: Ba33Spacing.spacing3),
@@ -315,7 +315,7 @@ class PodScreen extends ConsumerWidget {
                         ref.read(activeTripProvider.notifier).reset();
                         context.go('/');
                       },
-                      child: const Text('Terminer'),
+                      child: const Text('خلاص'),
                     ),
                   ),
                 ],
@@ -362,7 +362,7 @@ class _LotRow extends StatelessWidget {
           ),
           Expanded(
             child: Text(
-              '${(lot.loadedWeight ?? lot.declaredWeight).toStringAsFixed(1)} kg',
+              '${(lot.loadedWeight ?? lot.declaredWeight).toStringAsFixed(1)} كغ',
               textAlign: TextAlign.end,
               style: Ba33Typography.mono(
                 fontSize: 12,
@@ -372,7 +372,7 @@ class _LotRow extends StatelessWidget {
           ),
           Expanded(
             child: Text(
-              '${(lot.deliveredWeight ?? lot.loadedWeight ?? lot.declaredWeight).toStringAsFixed(1)} kg',
+              '${(lot.deliveredWeight ?? lot.loadedWeight ?? lot.declaredWeight).toStringAsFixed(1)} كغ',
               textAlign: TextAlign.end,
               style: Ba33Typography.mono(
                 fontSize: 12,

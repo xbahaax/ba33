@@ -1,30 +1,27 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
 
-part of 'declaration_view_model.dart';
+part of 'lot_create_view_model.dart';
 
 // **************************************************************************
 // RiverpodGenerator
 // **************************************************************************
 
-String _$declarationViewModelHash() =>
-    r'419afc445ac8e560dc53a9d442d869cbd7fe8929';
+String _$lotCreateViewModelHash() =>
+    r'7d748d67e5795b8adb61db6d0974fad0982a4fd6';
 
-/// See also [DeclarationViewModel].
-@ProviderFor(DeclarationViewModel)
-final declarationViewModelProvider =
-    AutoDisposeNotifierProvider<
-      DeclarationViewModel,
-      DeclarationFormState
-    >.internal(
-      DeclarationViewModel.new,
-      name: r'declarationViewModelProvider',
+/// See also [LotCreateViewModel].
+@ProviderFor(LotCreateViewModel)
+final lotCreateViewModelProvider =
+    AutoDisposeNotifierProvider<LotCreateViewModel, LotCreateState>.internal(
+      LotCreateViewModel.new,
+      name: r'lotCreateViewModelProvider',
       debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
           ? null
-          : _$declarationViewModelHash,
+          : _$lotCreateViewModelHash,
       dependencies: null,
       allTransitiveDependencies: null,
     );
 
-typedef _$DeclarationViewModel = AutoDisposeNotifier<DeclarationFormState>;
+typedef _$LotCreateViewModel = AutoDisposeNotifier<LotCreateState>;
 // ignore_for_file: type=lint
 // ignore_for_file: subtype_of_sealed_class, invalid_use_of_internal_member, invalid_use_of_visible_for_testing_member, deprecated_member_use_from_same_package

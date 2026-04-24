@@ -12,4 +12,7 @@ enum WeightCategory {
 
   /// ~50+ kg — a large pile
   largePile,
+
+  /// Custom weight — shepherd enters exact kg manually
+  custom,
 }

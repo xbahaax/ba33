@@ -85,7 +85,7 @@ class _ScanDeliveryScreenState extends ConsumerState<ScanDeliveryScreen> {
       appBar: AppBar(
         backgroundColor: Colors.black,
         foregroundColor: Colors.white,
-        title: Text('Livraison',
+        title: Text('التسليم',
             style: textTheme.titleLarge?.copyWith(color: Colors.white)),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Colors.white),
@@ -118,7 +118,7 @@ class _ScanDeliveryScreenState extends ConsumerState<ScanDeliveryScreen> {
                           style: const TextStyle(
                               color: Colors.white,
                               fontWeight: FontWeight.w600)),
-                      Text('${job.lotsDelivered}/${job.lots.length} livrés',
+                      Text('${job.lotsDelivered}/${job.lots.length} مسلمين',
                           style: const TextStyle(
                               color: Colors.white54, fontSize: 12)),
                     ],
@@ -179,8 +179,8 @@ class _ScanDeliveryScreenState extends ConsumerState<ScanDeliveryScreen> {
                         Ba33Spacing.spacing4, Ba33Spacing.spacing2),
                     child: Text(
                       job.allLotsDelivered
-                          ? 'Tous les lots livrés ✓'
-                          : 'Lots à livrer — appuyez pour scan manuel',
+                          ? 'كامل اللوتات تسلمو ✓'
+                          : 'لوتات للتسليم — اضغط للسكان اليدوي',
                       style: textTheme.titleSmall?.copyWith(
                         color: job.allLotsDelivered
                             ? colors.primary
@@ -212,7 +212,7 @@ class _ScanDeliveryScreenState extends ConsumerState<ScanDeliveryScreen> {
                         child: ElevatedButton.icon(
                           onPressed: () => context.push('/signature'),
                           icon: const Icon(Icons.draw),
-                          label: const Text('Signature du réceptionnaire'),
+                          label: const Text('توقيع المستلم'),
                           style: ElevatedButton.styleFrom(
                             padding: const EdgeInsets.symmetric(
                                 vertical: Ba33Spacing.spacing4),
@@ -287,8 +287,8 @@ class _DeliveryLotTile extends StatelessWidget {
                           color: colors.foreground)),
                   Text(
                     lot.isDelivered
-                        ? 'Livré · ${lot.deliveredWeight?.toStringAsFixed(1)} kg'
-                        : 'Chargé · ${(lot.loadedWeight ?? lot.declaredWeight).toStringAsFixed(1)} kg',
+                        ? 'مسلم · ${lot.deliveredWeight?.toStringAsFixed(1)} كغ'
+                        : 'محمل · ${(lot.loadedWeight ?? lot.declaredWeight).toStringAsFixed(1)} كغ',
                     style: textTheme.bodySmall
                         ?.copyWith(color: colors.mutedForeground),
                   ),
@@ -369,7 +369,7 @@ class _DeliveryWeightSheetState extends State<_DeliveryWeightSheet> {
             Row(
               children: [
                 Expanded(
-                    child: Text('Poids à la livraison',
+                    child: Text('الوزن عند التسليم',
                         style: textTheme.titleLarge)),
                 IconButton(
                   onPressed: () {
@@ -390,7 +390,7 @@ class _DeliveryWeightSheetState extends State<_DeliveryWeightSheet> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text('Poids chargé', style: textTheme.labelSmall),
+                      Text('الوزن المحمل', style: textTheme.labelSmall),
                       Text('${loadedWeight.toStringAsFixed(1)} kg',
                           style: Ba33Typography.mono(
                               fontSize: 18, color: colors.mutedForeground)),
@@ -402,7 +402,7 @@ class _DeliveryWeightSheetState extends State<_DeliveryWeightSheet> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.end,
                     children: [
-                      Text('Poids livré',
+                      Text('الوزن المسلم',
                           style: textTheme.labelSmall,
                           textAlign: TextAlign.end),
                       const SizedBox(height: 4),
@@ -414,7 +414,7 @@ class _DeliveryWeightSheetState extends State<_DeliveryWeightSheet> {
                         textAlign: TextAlign.end,
                         style: Ba33Typography.mono(fontSize: 18),
                         decoration: const InputDecoration(
-                          suffixText: 'kg',
+                          suffixText: 'كغ',
                           isDense: true,
                           contentPadding: EdgeInsets.symmetric(
                               horizontal: 12, vertical: 8),
@@ -441,7 +441,7 @@ class _DeliveryWeightSheetState extends State<_DeliveryWeightSheet> {
                     const SizedBox(width: Ba33Spacing.spacing2),
                     Expanded(
                       child: Text(
-                        'Écart > 2% — anomalie Point Noir signalée.',
+                        'فرق > 2% — مشكلة نقطة سوداء تبلغت.',
                         style: textTheme.bodySmall
                             ?.copyWith(color: colors.destructive),
                       ),
@@ -455,7 +455,7 @@ class _DeliveryWeightSheetState extends State<_DeliveryWeightSheet> {
               width: double.infinity,
               child: ElevatedButton(
                 onPressed: _confirm,
-                child: const Text('Confirmer la livraison'),
+                child: const Text('أكد التسليم'),
               ),
             ),
           ],
