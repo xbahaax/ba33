@@ -1,30 +1,22 @@
 import type { Metadata } from "next";
-import { Inter, JetBrains_Mono } from "next/font/google";
+import Script from "next/script";
 import "./globals.css";
-
-const inter = Inter({
-  subsets: ["latin"],
-  variable: "--font-sans",
-});
-
-const jetbrainsMono = JetBrains_Mono({
-  subsets: ["latin"],
-  variable: "--font-mono",
-});
+import type { ReactNode } from "react";
 
 export const metadata: Metadata = {
-  title: "ba33 Buyer Portal",
-  description: "B2B buyer portal for ba33 certified wool products",
+  title: "ba33 web-buyer",
+  description: "Portail acheteur B2B pour consulter, verifier et commander les produits certifies NFN.",
 };
 
-export default function RootLayout({
-  children,
-}: Readonly<{
-  children: React.ReactNode;
-}>) {
+export default function RootLayout({ children }: { children: ReactNode }) {
   return (
-    <html lang="fr" className={`${inter.variable} ${jetbrainsMono.variable}`}>
-      <body>{children}</body>
+    <html lang="fr" dir="ltr">
+      <body className="font-sans antialiased">
+        <Script id="ba33-theme-init" strategy="beforeInteractive">
+          {`try { const savedTheme = localStorage.getItem("ba33-theme"); if (savedTheme === "dark") { document.documentElement.classList.add("dark"); } if (savedTheme === "light") { document.documentElement.classList.remove("dark"); } } catch (error) {}`}
+        </Script>
+        {children}
+      </body>
     </html>
   );
 }

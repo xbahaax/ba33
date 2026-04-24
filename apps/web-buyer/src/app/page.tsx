@@ -1,64 +1,105 @@
-import { Button, Card, CardHeader, CardTitle, CardDescription } from "@ba33/ui-web";
-import { Package, Search, ShieldCheck } from "lucide-react";
+import Link from "next/link";
+import { Badge, Button, Card, CardContent, CardDescription, CardHeader, CardTitle } from "@ba33/ui-web";
+import { FileCheck2, Package, ShieldCheck, ShoppingCart } from "lucide-react";
 
-export default function BuyerHomePage() {
+const landingFeatures = [
+  {
+    title: "Product catalog",
+    description: "Browse all P1 and P2 products with NFN seal, quantity, grade, region and price.",
+    icon: Package,
+  },
+  {
+    title: "Verify certificate",
+    description: "Scan QR or enter code to verify the authenticity of a certified product.",
+    icon: ShieldCheck,
+  },
+  {
+    title: "Cart + checkout flow",
+    description: "Prepare an order draft, choose a sales channel and review payment instructions.",
+    icon: ShoppingCart,
+  },
+  {
+    title: "Order management",
+    description: "Track shipments, download invoices and certificates, and manage complaints.",
+    icon: FileCheck2,
+  },
+];
+
+export default function HomePage() {
   return (
-    <div className="min-h-screen bg-background">
-      <header className="border-b border-border">
-        <div className="container mx-auto flex h-16 items-center justify-between px-4">
-          <div className="flex items-center gap-2">
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground font-bold text-sm">
-              b
+    <main className="min-h-screen bg-background text-foreground">
+      <div className="mx-auto flex max-w-7xl flex-col gap-12 px-4 py-10 lg:px-6 lg:py-16">
+        <header className="flex flex-col gap-8 rounded-xl border border-border bg-card p-6 text-card-foreground shadow-xs lg:flex-row lg:items-end lg:justify-between lg:p-8">
+          <div className="max-w-3xl space-y-4">
+            <div className="flex flex-wrap gap-2">
+              <Badge variant="outline">B2B customer portal</Badge>
+              <Badge variant="outline">French, English, Arabic</Badge>
+              <Badge variant="secondary">NFN</Badge>
             </div>
-            <span className="font-semibold">ba33</span>
-            <span className="text-muted-foreground text-sm">Acheteurs</span>
+            <div className="space-y-3">
+              <p className="font-serif text-3xl lg:text-4xl">ba33</p>
+              <h1 className="text-3xl font-semibold tracking-tight lg:text-5xl">
+                External-facing portal for buyers of certified wool products.
+              </h1>
+              <p className="max-w-2xl text-sm leading-7 text-muted-foreground lg:text-base">
+                Browse certified products, order, track, and verify traceability. Read-heavy on catalog, write only for buyer-owned actions.
+              </p>
+            </div>
           </div>
-          <Button variant="outline" size="sm">
-            Connexion
-          </Button>
-        </div>
-      </header>
 
-      <main className="container mx-auto px-4 py-12 space-y-12">
-        <div className="text-center space-y-4">
-          <h1 className="text-4xl font-bold tracking-tight">
-            Laine certifiée NFN
-          </h1>
-          <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-            Découvrez et commandez de la laine algérienne certifiée, traçable du berger jusqu&apos;à vous.
-          </p>
-        </div>
+          <div className="flex flex-col gap-3 sm:flex-row">
+            <Button asChild size="lg">
+              <Link href="/catalog">Entrer dans le portail</Link>
+            </Button>
+            <Button asChild size="lg" variant="outline">
+              <Link href="/login">Connexion</Link>
+            </Button>
+          </div>
+        </header>
 
-        <div className="grid gap-6 md:grid-cols-3">
-          <Card>
+        <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+          {landingFeatures.map(({ title, description, icon: Icon }) => (
+            <Card key={title} className="rounded-xl shadow-xs">
+              <CardHeader className="space-y-4">
+                <div className="flex h-11 w-11 items-center justify-center rounded-lg bg-muted text-muted-foreground">
+                  <Icon className="h-5 w-5" />
+                </div>
+                <div className="space-y-2">
+                  <CardTitle className="text-lg">{title}</CardTitle>
+                  <CardDescription className="leading-7">{description}</CardDescription>
+                </div>
+              </CardHeader>
+            </Card>
+          ))}
+        </section>
+
+        <section className="grid gap-6 lg:grid-cols-[1.1fr_0.9fr]">
+          <Card className="rounded-xl shadow-xs">
             <CardHeader>
-              <Search className="h-8 w-8 text-primary mb-2" />
-              <CardTitle>Catalogue</CardTitle>
-              <CardDescription>
-                Parcourez les produits de laine disponibles par qualité, région et transformation.
-              </CardDescription>
+              <CardTitle>Who uses it</CardTitle>
+              <CardDescription>B2B buyers — national, export, and institutional clients.</CardDescription>
             </CardHeader>
+            <CardContent className="grid gap-3 text-sm leading-7 text-muted-foreground">
+              <p>Textile mills</p>
+              <p>Agricultural companies</p>
+              <p>Export buyers</p>
+              <p>Institutional clients</p>
+            </CardContent>
           </Card>
-          <Card>
+
+          <Card className="rounded-xl shadow-xs">
             <CardHeader>
-              <Package className="h-8 w-8 text-primary mb-2" />
-              <CardTitle>Commandes</CardTitle>
-              <CardDescription>
-                Suivez vos commandes en temps réel, de la préparation à la livraison.
-              </CardDescription>
+              <CardTitle>MVP</CardTitle>
+              <CardDescription>Steps 1–3 let a buyer browse and verify before the transactional flow.</CardDescription>
             </CardHeader>
+            <CardContent className="grid gap-3 text-sm leading-7 text-muted-foreground">
+              <p>1. Next.js scaffold + public landing + auth</p>
+              <p>2. Product catalog page</p>
+              <p>3. Product detail + traceability view</p>
+            </CardContent>
           </Card>
-          <Card>
-            <CardHeader>
-              <ShieldCheck className="h-8 w-8 text-primary mb-2" />
-              <CardTitle>Traçabilité</CardTitle>
-              <CardDescription>
-                Vérifiez la certification NFN et l&apos;origine de chaque lot de laine.
-              </CardDescription>
-            </CardHeader>
-          </Card>
-        </div>
-      </main>
-    </div>
+        </section>
+      </div>
+    </main>
   );
 }
