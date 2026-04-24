@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../receipts/view_model/receipts_view_model.dart';
 import '../view_model/declaration_view_model.dart';
 
 /// Shown after a successful declaration submission.
@@ -56,6 +57,7 @@ class DeclarationSuccessScreen extends ConsumerWidget {
                 height: 56,
                 child: ElevatedButton(
                   onPressed: () {
+                    ref.invalidate(receiptsProvider);
                     ref.read(declarationViewModelProvider.notifier).reset();
                     context.go('/');
                   },
@@ -70,6 +72,7 @@ class DeclarationSuccessScreen extends ConsumerWidget {
                 height: 56,
                 child: OutlinedButton(
                   onPressed: () {
+                    ref.invalidate(receiptsProvider);
                     ref.read(declarationViewModelProvider.notifier).reset();
                     context.go('/receipts');
                   },

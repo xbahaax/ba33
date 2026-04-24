@@ -52,6 +52,7 @@ WeightCategory _inferCategory(double? weight) {
 DeclarationStatus _mapStatus(String status) {
   switch (status) {
     case 'pending':
+    case 'announced':
       return DeclarationStatus.announced;
     case 'assigned':
       return DeclarationStatus.scheduledPickup;
