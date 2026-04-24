@@ -41,8 +41,8 @@ export default function LoginPage() {
         </div>
 
         <div className="flex justify-end">
-          <Link href="/verify-otp" className="text-sm text-primary hover:underline">
-            Mot de passe oublie ?
+          <Link href="/signup" className="text-sm text-primary hover:underline">
+            Creer un compte
           </Link>
         </div>
 
@@ -68,7 +68,7 @@ export default function LoginPage() {
 
         <p className="text-center text-sm text-muted-foreground">
           Pas encore de compte ?{" "}
-          <Link href="/register" className="text-primary hover:underline">
+          <Link href="/signup" className="text-primary hover:underline">
             Creer un compte
           </Link>
         </p>

@@ -2,6 +2,7 @@ import Link from "next/link";
 import { CheckCircle } from "lucide-react";
 import { Button } from "@ba33/ui-web";
 import { CheckoutSteps } from "@/components/buyer/checkout/checkout-steps";
+import { CheckoutAddressSelection } from "@/components/buyer/checkout/checkout-address-selection";
 import { OrderSummaryPanel } from "@/components/buyer/checkout/order-summary-panel";
 import { PaymentMethodSelector } from "@/components/buyer/checkout/payment-method-selector";
 import { addresses, orders } from "@/lib/mock/orders";
@@ -27,18 +28,7 @@ export default async function CheckoutPage({ searchParams }: { searchParams: Che
         <section className="space-y-6">
           {step === 1 ? (
             <div className="space-y-6 rounded-xl border border-border bg-card p-6 text-card-foreground shadow-xs">
-              <div className="space-y-4">
-                <h1 className="text-xl font-semibold text-foreground">Adresse de livraison</h1>
-                <div className="grid gap-4 md:grid-cols-2">
-                  {addresses.map((address, index) => (
-                    <div key={address.id} className={index === 0 ? "rounded-xl border-2 border-primary p-4" : "rounded-xl border-2 border-transparent p-4 hover:border-primary"}>
-                      <p className="font-medium text-foreground">{address.siteName}</p>
-                      <p className="mt-2 text-sm text-muted-foreground">{address.line1}, {address.commune}, {address.wilaya}</p>
-                    </div>
-                  ))}
-                </div>
-                <Button variant="outline">+ Nouvelle adresse</Button>
-              </div>
+              <CheckoutAddressSelection initialAddresses={addresses} />
 
               <div className="space-y-4">
                 <h2 className="text-lg font-semibold text-foreground">Canal de vente</h2>

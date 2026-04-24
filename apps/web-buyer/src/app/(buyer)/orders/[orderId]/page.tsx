@@ -1,8 +1,7 @@
-import Link from "next/link";
-import { AlertCircle, FileDown } from "lucide-react";
-import { Button, Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@ba33/ui-web";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@ba33/ui-web";
 import { DocumentCard } from "@/components/buyer/documents/document-card";
 import { GradeBadge } from "@/components/buyer/shared/grade-badge";
+import { OrderHeaderActions } from "@/components/buyer/orders/order-header-actions";
 import { OrderStatusBadge } from "@/components/buyer/orders/order-status-badge";
 import { OrderTimeline } from "@/components/buyer/orders/order-timeline";
 import { ShipmentTracker } from "@/components/buyer/orders/shipment-tracker";
@@ -30,18 +29,7 @@ export default async function OrderDetailPage({ params }: OrderDetailPageProps) 
           <OrderStatusBadge status={order.status} />
           <p className="font-mono text-sm text-muted-foreground">{order.placedAt.toLocaleDateString("fr-FR")}</p>
         </div>
-        <div className="flex flex-col gap-3 sm:flex-row">
-          <Button>
-            <FileDown className="h-4 w-4" />
-            Télécharger la facture
-          </Button>
-          <Button asChild variant="outline">
-            <Link href={`/complaints/new?orderId=${order.id}`}>
-              <AlertCircle className="h-4 w-4" />
-              Soumettre une réclamation
-            </Link>
-          </Button>
-        </div>
+        <OrderHeaderActions orderId={order.id} />
       </div>
 
       <OrderTimeline status={order.status} />

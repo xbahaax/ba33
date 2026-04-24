@@ -26,14 +26,14 @@ export function VerifyCertificateClient({
   );
 
   return (
-    <div className="mx-auto max-w-[640px] py-10 lg:py-16">
+    <div className="mx-auto max-w-160 py-10 lg:py-16">
       <Card className="rounded-xl shadow-xs">
         <CardHeader className="space-y-4 text-center">
           <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-primary/10 text-primary">
             <ShieldCheck className="h-6 w-6" />
           </div>
           <div className="space-y-2">
-            <CardTitle className="font-serif text-2xl font-bold text-foreground">Vérification de Certificat NFN</CardTitle>
+            <CardTitle className="text-2xl font-bold text-foreground">Vérification de Certificat NFN</CardTitle>
             <CardDescription>Vérifiez l&apos;authenticité d&apos;un produit certifié ba33/NFN</CardDescription>
           </div>
         </CardHeader>

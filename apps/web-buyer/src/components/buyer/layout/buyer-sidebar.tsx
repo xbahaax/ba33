@@ -89,46 +89,53 @@ export function BuyerSidebar() {
                 {group.label}
               </p>
               <div className="space-y-0.5">
-                {group.items.map((item) => {
-                  const isActive = pathname === item.href || pathname.startsWith(`${item.href}/`);
-                  const Icon = item.icon;
-                  const badgeValue = item.href === "/cart" && cartEntries.length > 0 ? String(cartEntries.length) : item.badge;
+                {(() => {
+                  const activeHref =
+                    group.items
+                      .filter((candidate) => pathname === candidate.href || pathname.startsWith(`${candidate.href}/`))
+                      .sort((left, right) => right.href.length - left.href.length)[0]?.href ?? null;
 
-                  return (
-                    <Link
-                      key={item.href}
-                      href={item.href}
-                      className={cn(
-                        "group flex items-center justify-between rounded-lg px-3 py-2.5 text-sm transition-all duration-150",
-                        isActive
-                          ? "bg-sidebar-primary text-sidebar-primary-foreground font-medium shadow-xs"
-                          : "text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
-                      )}
-                    >
-                      <span className="flex items-center gap-3">
-                        <Icon
-                          className={cn(
-                            "h-[18px] w-[18px] transition-transform duration-150",
-                            isActive ? "scale-110" : "group-hover:scale-105"
-                          )}
-                        />
-                        <span>{item.label}</span>
-                      </span>
-                      {badgeValue ? (
-                        <span
-                          className={cn(
-                            "rounded-full px-2 py-0.5 font-mono text-xs font-bold",
-                            isActive
-                              ? "bg-sidebar-primary-foreground/20 text-sidebar-primary-foreground"
-                              : "bg-primary/15 text-primary"
-                          )}
-                        >
-                          {badgeValue}
+                  return group.items.map((item) => {
+                    const isActive = item.href === activeHref;
+                    const Icon = item.icon;
+                    const badgeValue = item.href === "/cart" && cartEntries.length > 0 ? String(cartEntries.length) : item.badge;
+
+                    return (
+                      <Link
+                        key={item.href}
+                        href={item.href}
+                        className={cn(
+                          "group flex items-center justify-between rounded-lg px-3 py-2.5 text-sm transition-all duration-150",
+                          isActive
+                            ? "bg-sidebar-primary text-sidebar-primary-foreground font-medium shadow-xs"
+                            : "text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+                        )}
+                      >
+                        <span className="flex items-center gap-3">
+                          <Icon
+                            className={cn(
+                              "h-[18px] w-[18px] transition-transform duration-150",
+                              isActive ? "scale-110" : "group-hover:scale-105"
+                            )}
+                          />
+                          <span>{item.label}</span>
                         </span>
-                      ) : null}
-                    </Link>
-                  );
-                })}
+                        {badgeValue ? (
+                          <span
+                            className={cn(
+                              "rounded-full px-2 py-0.5 font-mono text-xs font-bold",
+                              isActive
+                                ? "bg-sidebar-primary-foreground/20 text-sidebar-primary-foreground"
+                                : "bg-primary/15 text-primary"
+                            )}
+                          >
+                            {badgeValue}
+                          </span>
+                        ) : null}
+                      </Link>
+                    );
+                  });
+                })()}
               </div>
             </div>
           ))}

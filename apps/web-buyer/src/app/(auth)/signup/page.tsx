@@ -3,7 +3,7 @@ import { Button, Card, CardContent, CardDescription, CardHeader, CardTitle, Inpu
 
 const steps = ["Compte", "Entreprise", "Verification"];
 
-export default function RegisterPage() {
+export default function SignupPage() {
   return (
     <Card className="rounded-xl border border-border bg-card text-card-foreground shadow-md">
       <CardHeader className="space-y-4 p-8">
@@ -25,22 +25,22 @@ export default function RegisterPage() {
       <CardContent className="space-y-6 px-8 pb-8 pt-0">
         <div className="space-y-4">
           <div className="space-y-2">
-            <label className="text-sm font-medium" htmlFor="register-email">
+            <label className="text-sm font-medium" htmlFor="signup-email">
               Email professionnel
             </label>
-            <Input id="register-email" type="email" placeholder="contact@entreprise.dz" />
+            <Input id="signup-email" type="email" placeholder="contact@entreprise.dz" />
           </div>
           <div className="space-y-2">
-            <label className="text-sm font-medium" htmlFor="register-password">
+            <label className="text-sm font-medium" htmlFor="signup-password">
               Mot de passe
             </label>
-            <Input id="register-password" type="password" />
+            <Input id="signup-password" type="password" />
           </div>
           <div className="space-y-2">
-            <label className="text-sm font-medium" htmlFor="register-confirm">
+            <label className="text-sm font-medium" htmlFor="signup-confirm">
               Confirmation du mot de passe
             </label>
-            <Input id="register-confirm" type="password" />
+            <Input id="signup-confirm" type="password" />
           </div>
           <div className="grid gap-4 md:grid-cols-2">
             <div className="space-y-2">

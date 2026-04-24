@@ -3,13 +3,14 @@
 import { useState } from "react";
 import { ShoppingCart } from "lucide-react";
 import { Button } from "@ba33/ui-web";
+import { cn } from "@ba33/ui-web/cn";
 import type { Product } from "@/lib/types/product";
 import { addProductToCart } from "@/lib/cart-store";
 
 export function AddToCartButton({
   product,
   quantityKg = 50,
-  size,
+  size = "sm",
   className,
 }: {
   product: Product;
@@ -23,7 +24,7 @@ export function AddToCartButton({
     <Button
       type="button"
       size={size}
-      className={className}
+      className={cn("h-9 whitespace-nowrap border border-border px-3 text-xs", className)}
       onClick={() => {
         addProductToCart(product, quantityKg);
         setAdded(true);
@@ -31,7 +32,7 @@ export function AddToCartButton({
       }}
     >
       <ShoppingCart className="mr-1.5 h-4 w-4" />
-      {added ? "Ajouté" : "Ajouter panier"}
+      {added ? "Ajouté" : "Ajouter au panier"}
     </Button>
   );
 }

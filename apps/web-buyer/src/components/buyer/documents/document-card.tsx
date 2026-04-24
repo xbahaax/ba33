@@ -1,7 +1,10 @@
-import { Download, Eye, Globe, Receipt, ShieldCheck, Truck } from "lucide-react";
+"use client";
+
+import { Download, Globe, Receipt, ShieldCheck, Truck } from "lucide-react";
 import { Button } from "@ba33/ui-web";
 import type { OrderDocument } from "@/lib/types/document";
 import { DocumentPreviewModal } from "@/components/buyer/documents/document-preview-modal";
+import { downloadTextFile } from "@/lib/download-file";
 
 const iconConfig: Record<string, { icon: React.ElementType; colorClass: string; bgClass: string; label: string }> = {
   invoice: { icon: Receipt, colorClass: "text-chart-2", bgClass: "bg-chart-2/10", label: "Facture" },
@@ -45,8 +48,14 @@ export function DocumentCard({ document }: { document: OrderDocument }) {
       {/* Actions */}
       <div className="mt-4 flex items-center gap-2 border-t border-border pt-3">
         <DocumentPreviewModal title={document.title} />
-        <Button variant="ghost" size="sm" className="flex-1 text-xs" type="button">
-          <Download className="h-3.5 w-3.5 mr-1.5" />
+        <Button
+          variant="ghost"
+          size="sm"
+          className="flex-1 text-xs"
+          type="button"
+          onClick={() => downloadTextFile(`${document.id}.txt`, `${document.title}\nCommande: ${document.orderId}`)}
+        >
+          <Download className="mr-1.5 h-3.5 w-3.5" />
           Télécharger
         </Button>
       </div>

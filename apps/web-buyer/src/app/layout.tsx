@@ -10,7 +10,7 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
-    <html lang="fr" dir="ltr">
+    <html lang="fr" dir="ltr" suppressHydrationWarning>
       <body className="font-sans antialiased">
         <Script id="ba33-theme-init" strategy="beforeInteractive">
           {`try { const savedTheme = localStorage.getItem("ba33-theme"); if (savedTheme === "dark") { document.documentElement.classList.add("dark"); } if (savedTheme === "light") { document.documentElement.classList.remove("dark"); } } catch (error) {}`}

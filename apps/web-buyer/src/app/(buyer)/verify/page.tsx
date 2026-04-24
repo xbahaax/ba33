@@ -1,6 +1,4 @@
-import Link from "next/link";
-import { CheckCircle, Download, HelpCircle, QrCode, ShieldCheck, XCircle } from "lucide-react";
-import { Button, Card, CardContent, CardDescription, CardHeader, CardTitle } from "@ba33/ui-web";
+import { VerifyCertificateClient } from "@/components/buyer/verify/verify-certificate-client";
 import { products } from "@/lib/mock/products";
 
 type VerifySearchParams = Promise<Record<string, string | string[] | undefined>>;
@@ -11,104 +9,8 @@ function getParam(value: string | string[] | undefined) {
 
 export default async function VerifyPage({ searchParams }: { searchParams: VerifySearchParams }) {
   const params = await searchParams;
-  const mode = getParam(params.mode) ?? "code";
+  const mode = getParam(params.mode) === "qr" ? "qr" : "code";
   const code = getParam(params.code) ?? "";
-  const product = products.find((item) => item.nfnSealCode === code);
 
-  return (
-    <div className="mx-auto max-w-[640px] py-10 lg:py-16">
-      <Card className="rounded-xl shadow-xs">
-        <CardHeader className="space-y-4 text-center">
-          <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-primary/10 text-primary">
-            <ShieldCheck className="h-6 w-6" />
-          </div>
-          <div className="space-y-2">
-            <CardTitle className="text-2xl font-bold text-foreground">Vérification de Certificat NFN</CardTitle>
-            <CardDescription>Vérifiez l&apos;authenticité d&apos;un produit certifié ba33/NFN</CardDescription>
-          </div>
-        </CardHeader>
-        <CardContent className="space-y-6">
-          <div className="grid grid-cols-2 gap-2 rounded-lg bg-muted p-1">
-            <Link href="/verify?mode=code" className={mode !== "qr" ? "rounded-lg bg-background px-4 py-2 text-center text-sm font-medium text-foreground shadow-xs" : "rounded-lg px-4 py-2 text-center text-sm text-muted-foreground"}>
-              Entrer un code
-            </Link>
-            <Link href="/verify?mode=qr" className={mode === "qr" ? "rounded-lg bg-background px-4 py-2 text-center text-sm font-medium text-foreground shadow-xs" : "rounded-lg px-4 py-2 text-center text-sm text-muted-foreground"}>
-              Scanner un QR
-            </Link>
-          </div>
-
-          {mode === "qr" ? (
-            <div className="space-y-4 rounded-xl bg-muted p-6 text-center">
-              <div className="flex aspect-square items-center justify-center rounded-xl bg-background text-muted-foreground">
-                <QrCode className="h-20 w-20" />
-              </div>
-              <p className="text-sm text-muted-foreground">Pointez vers le QR du certificat</p>
-            </div>
-          ) : (
-            <form className="space-y-4">
-              <input
-                type="text"
-                name="code"
-                defaultValue={code}
-                placeholder="NFN-P1-00042-X7..."
-                className="w-full rounded-lg border border-input bg-background px-3 py-2 font-mono text-sm"
-              />
-              <Button className="w-full">Vérifier</Button>
-            </form>
-          )}
-
-          {code ? (
-            product?.nfnSealStatus === "certified" ? (
-              <section className="rounded-xl border-2 border-primary bg-primary/10 p-6">
-                <div className="flex items-start gap-3">
-                  <CheckCircle className="h-8 w-8 text-primary" />
-                  <div className="space-y-3">
-                    <h2 className="text-xl font-bold text-primary">Certificat Valide</h2>
-                    <div className="grid gap-2 text-sm text-foreground">
-                      <p>Code produit : <span className="font-mono">{product.code}</span></p>
-                      <p>Grade : <span className="font-mono">{product.grade}</span></p>
-                      <p>Région : {product.region}</p>
-                      <p>Date certification : {product.nfnCertifiedAt?.toLocaleDateString("fr-FR")}</p>
-                      <p>Statut : ✓ Actif</p>
-                    </div>
-                    <div className="flex flex-col gap-3 sm:flex-row">
-                      <Button asChild>
-                        <Link href={`/catalog/${product.id}`}>Voir la traçabilité complète</Link>
-                      </Button>
-                      <Button variant="outline" type="button">
-                        <Download className="h-4 w-4 mr-1.5" />
-                        Télécharger le certificat PDF
-                      </Button>
-                    </div>
-                  </div>
-                </div>
-              </section>
-            ) : product?.nfnSealStatus === "revoked" ? (
-              <section className="rounded-xl border-2 border-destructive bg-destructive/10 p-6">
-                <div className="flex items-start gap-3">
-                  <XCircle className="h-8 w-8 text-destructive" />
-                  <div className="space-y-2">
-                    <h2 className="text-xl font-bold text-destructive">Certificat Révoqué</h2>
-                    <p className="text-sm text-foreground">Motif de révocation : lot suspendu après contrôle documentaire.</p>
-                    <p className="text-sm text-muted-foreground">Date : 12/03/2026</p>
-                    <p className="text-sm text-muted-foreground">Contact support : support@ba33.dz</p>
-                  </div>
-                </div>
-              </section>
-            ) : (
-              <section className="rounded-xl border border-border bg-muted p-6">
-                <div className="flex items-start gap-3">
-                  <HelpCircle className="h-8 w-8 text-muted-foreground" />
-                  <div className="space-y-2">
-                    <h2 className="text-xl font-semibold text-foreground">Aucun certificat trouvé pour ce code</h2>
-                    <p className="text-sm text-muted-foreground">Vérifiez la saisie et réessayez avec le code complet du certificat.</p>
-                  </div>
-                </div>
-              </section>
-            )
-          ) : null}
-        </CardContent>
-      </Card>
-    </div>
-  );
+  return <VerifyCertificateClient initialMode={mode} initialCode={code} products={products} />;
 }

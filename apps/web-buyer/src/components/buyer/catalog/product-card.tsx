@@ -1,10 +1,13 @@
+"use client";
+
 import Link from "next/link";
-import { MapPin, Package, ShoppingCart } from "lucide-react";
+import { MapPin, Package } from "lucide-react";
 import { Button } from "@ba33/ui-web";
 import type { Product } from "@/lib/types/product";
 import { GradeBadge } from "@/components/buyer/shared/grade-badge";
 import { NfnSealBadge } from "@/components/buyer/catalog/nfn-seal-badge";
 import { WeightDisplay } from "@/components/buyer/shared/weight-display";
+import { AddToCartButton } from "@/components/buyer/shared/add-to-cart-button";
 
 export function ProductCard({ product, view }: { product: Product; view: "grid" | "list" }) {
   if (view === "list") {
@@ -43,10 +46,7 @@ export function ProductCard({ product, view }: { product: Product; view: "grid" 
               <Button asChild variant="outline" size="sm">
                 <Link href={`/catalog/${product.id}`}>Voir détails</Link>
               </Button>
-              <Button size="sm" type="button">
-                <ShoppingCart className="h-4 w-4 mr-1.5" />
-                Ajouter
-              </Button>
+              <AddToCartButton product={product} size="sm" />
             </div>
           </div>
         </div>
@@ -64,7 +64,7 @@ export function ProductCard({ product, view }: { product: Product; view: "grid" 
         </div>
 
         {/* Gradient overlay at bottom */}
-        <div className="absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-card/60 to-transparent" />
+        <div className="absolute inset-x-0 bottom-0 h-16 bg-linear-to-t from-card/60 to-transparent" />
 
         {/* Badges overlay */}
         <div className="absolute left-3 top-3 flex flex-wrap gap-1.5">
@@ -104,10 +104,7 @@ export function ProductCard({ product, view }: { product: Product; view: "grid" 
           <Button asChild variant="outline" className="flex-1 text-sm">
             <Link href={`/catalog/${product.id}`}>Voir détails</Link>
           </Button>
-          <Button className="flex-1 text-sm" type="button">
-            <ShoppingCart className="h-4 w-4 mr-1.5" />
-            Ajouter
-          </Button>
+          <AddToCartButton product={product} size="sm" className="flex-1" />
         </div>
       </div>
     </article>

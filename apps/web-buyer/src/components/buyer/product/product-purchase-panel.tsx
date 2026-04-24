@@ -69,7 +69,8 @@ export function ProductPurchasePanel({ product }: { product: Product }) {
 
           <div className="space-y-3">
             <Button
-              className="w-full"
+              size="sm"
+              className="h-9 w-full whitespace-nowrap border border-border px-3 text-xs"
               type="button"
               onClick={() => {
                 addProductToCart(product, safeQuantity);

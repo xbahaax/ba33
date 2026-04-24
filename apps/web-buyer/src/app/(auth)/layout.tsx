@@ -41,7 +41,7 @@ export default function AuthLayout({ children }: { children: ReactNode }) {
         />
 
         {/* Gradient overlay */}
-        <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-transparent via-transparent to-primary/10" />
+        <div className="pointer-events-none absolute inset-0 bg-linear-to-br from-transparent via-transparent to-primary/10" />
 
         {/* Content */}
         <div className="relative z-10 flex h-full flex-col justify-between p-10">
@@ -102,7 +102,7 @@ export default function AuthLayout({ children }: { children: ReactNode }) {
         <div className="w-full max-w-md space-y-6">
           {/* Mobile logo (hidden on desktop) */}
           <div className="space-y-1 text-center lg:hidden">
-            <Link href="/" className="inline-flex items-center justify-center gap-2">
+            <Link href="/login" className="inline-flex items-center justify-center gap-2">
               <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary">
                 <span className="font-serif text-sm font-bold text-primary-foreground">b</span>
               </div>

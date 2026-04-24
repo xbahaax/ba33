@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { DocumentCard } from "@/components/buyer/documents/document-card";
 import { orders } from "@/lib/mock/orders";
 import { FileText, Receipt, ShieldCheck, Globe, Truck, Search } from "lucide-react";
@@ -50,7 +51,7 @@ export default async function DocumentsPage({ searchParams }: { searchParams: Do
           const Icon = dt.icon;
           const isActive = activeType === dt.value;
           return (
-            <a
+            <Link
               key={dt.value}
               href={dt.value === "all" ? "/documents" : `/documents?type=${dt.value}`}
               className={
@@ -61,7 +62,7 @@ export default async function DocumentsPage({ searchParams }: { searchParams: Do
             >
               <Icon className={`h-3.5 w-3.5 ${isActive ? "text-primary" : dt.color}`} />
               {dt.label}
-            </a>
+            </Link>
           );
         })}
       </div>
@@ -94,9 +95,9 @@ export default async function DocumentsPage({ searchParams }: { searchParams: Do
           <FileText className="h-12 w-12 opacity-20" />
           <p className="text-base font-medium text-foreground">Aucun document trouvé</p>
           <p className="text-sm">Essayez de modifier vos filtres</p>
-          <a href="/documents" className="text-sm text-primary hover:underline">
+          <Link href="/documents" className="text-sm text-primary hover:underline">
             Réinitialiser les filtres
-          </a>
+          </Link>
         </div>
       ) : (
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">

@@ -12,7 +12,7 @@ export default async function NewComplaintPage({ searchParams }: { searchParams:
   const orderId = getParam(params.orderId);
 
   return (
-    <div className="mx-auto max-w-[720px] space-y-6">
+    <div className="mx-auto max-w-180 space-y-6">
       <div>
         <h1 className="text-2xl font-semibold text-foreground">Nouvelle réclamation</h1>
       </div>
