@@ -19,6 +19,8 @@ dependencies:
   permission_handler: ^11.3.1
   ba33_ui:
     path: ../../packages/ba33_ui
+  ba33_api_client:
+    path: ../../packages/ba33_api_client
   ba33_domain:
     path: ../../packages/ba33_domain
 

@@ -8,6 +8,7 @@ import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import pino from 'pino';
 import pinoHttp from 'pino-http';
 import { AppModule } from './app.module';
+import { AuditInterceptor } from './common/interceptors/audit.interceptor';
 
 async function bootstrap() {
   const logger = pino({ level: process.env.LOG_LEVEL || 'info' });
@@ -25,6 +26,8 @@ async function bootstrap() {
       transform: true,
     }),
   );
+
+  app.useGlobalInterceptors(new AuditInterceptor());
 
   const swaggerConfig = new DocumentBuilder()
     .setTitle('BA33 Platform API')

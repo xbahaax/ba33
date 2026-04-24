@@ -5,7 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../view_model/login_view_model.dart';
 
-/// Phone number login screen — enter number and go.
+/// Phone number + password login screen.
 class LoginScreen extends ConsumerStatefulWidget {
   const LoginScreen({super.key});
 
@@ -15,10 +15,12 @@ class LoginScreen extends ConsumerStatefulWidget {
 
 class _LoginScreenState extends ConsumerState<LoginScreen> {
   final _phoneController = TextEditingController();
+  final _passwordController = TextEditingController();
 
   @override
   void dispose() {
     _phoneController.dispose();
+    _passwordController.dispose();
     super.dispose();
   }
 
@@ -65,17 +67,35 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
               ),
               const Spacer(),
               Text(
-                'دخل رقم تيليفونك',
+                'رقم الهاتف',
                 style: Theme.of(context).textTheme.titleLarge,
               ),
+              const SizedBox(height: Ba33Spacing.spacing3),
+              Directionality(
+                textDirection: TextDirection.ltr,
+                child: TextField(
+                  controller: _phoneController,
+                  keyboardType: TextInputType.phone,
+                  inputFormatters: [
+                    FilteringTextInputFormatter.digitsOnly,
+                  ],
+                  decoration: const InputDecoration(
+                    prefixText: '+213 ',
+                    hintText: '555123456',
+                  ),
+                ),
+              ),
               const SizedBox(height: Ba33Spacing.spacing4),
+              Text(
+                'كلمة السر',
+                style: Theme.of(context).textTheme.titleLarge,
+              ),
+              const SizedBox(height: Ba33Spacing.spacing3),
               TextField(
-                controller: _phoneController,
-                keyboardType: TextInputType.phone,
-                inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                controller: _passwordController,
+                obscureText: true,
                 decoration: const InputDecoration(
-                  hintText: '0555 123 456',
-                  prefixText: '+213 ',
+                  hintText: '••••••',
                 ),
               ),
               const SizedBox(height: Ba33Spacing.spacing4),
@@ -86,7 +106,10 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                       ? null
                       : () => ref
                           .read(loginViewModelProvider.notifier)
-                          .login(_phoneController.text.trim()),
+                          .login(
+                            _phoneController.text.trim(),
+                            _passwordController.text,
+                          ),
                   child: loginState.isLoading
                       ? const SizedBox(
                           width: 24,

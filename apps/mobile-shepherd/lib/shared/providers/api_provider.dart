@@ -1,0 +1,26 @@
+import 'package:ba33_api_client/ba33_api_client.dart';
+import 'package:riverpod_annotation/riverpod_annotation.dart';
+
+part 'api_provider.g.dart';
+
+const _baseUrl = String.fromEnvironment('API_URL', defaultValue: 'http://localhost:3100');
+
+@Riverpod(keepAlive: true)
+Ba33ApiClient apiClient(ApiClientRef ref) {
+  return Ba33ApiClient(baseUrl: _baseUrl);
+}
+
+@Riverpod(keepAlive: true)
+AuthService authService(AuthServiceRef ref) {
+  return AuthService(ref.watch(apiClientProvider));
+}
+
+@Riverpod(keepAlive: true)
+CollectionService collectionService(CollectionServiceRef ref) {
+  return CollectionService(ref.watch(apiClientProvider));
+}
+
+@Riverpod(keepAlive: true)
+FilesService filesService(FilesServiceRef ref) {
+  return FilesService(ref.watch(apiClientProvider));
+}

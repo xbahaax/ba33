@@ -19,7 +19,7 @@ class LoginState {
   final bool obscurePassword;
   final String? error;
 
-  bool get isValid => phone.length >= 9 && password.length >= 4;
+  bool get isValid => phone.isNotEmpty && password.length >= 4;
 
   LoginState copyWith({
     String? phone,
@@ -57,18 +57,19 @@ class LoginViewModel extends _$LoginViewModel {
 
   Future<bool> login() async {
     if (!state.isValid) {
-      state = state.copyWith(error: 'Phone and password are required');
+      state = state.copyWith(error: 'رقم الهاتف وكلمة المرور مطلوبان');
       return false;
     }
     state = state.copyWith(isLoading: true, error: null);
 
-    final success =
-        await ref.read(authProvider.notifier).login(state.phone, state.password);
+    final success = await ref
+        .read(authProvider.notifier)
+        .login(state.phone, state.password);
 
     if (!success) {
       state = state.copyWith(
         isLoading: false,
-        error: 'Invalid phone or password',
+        error: 'رقم الهاتف أو كلمة المرور غير صحيحة',
       );
       return false;
     }

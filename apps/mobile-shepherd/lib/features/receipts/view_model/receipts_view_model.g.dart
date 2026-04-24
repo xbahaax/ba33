@@ -6,7 +6,7 @@ part of 'receipts_view_model.dart';
 // RiverpodGenerator
 // **************************************************************************
 
-String _$receiptsHash() => r'cd9a1b9befd37127afe19f6b8a3c5adba5b46ac8';
+String _$receiptsHash() => r'360058fb705b1a62077a892051904fc77b744912';
 
 /// Fetches the shepherd's past declarations / receipts.
 ///

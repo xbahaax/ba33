@@ -1,6 +1,5 @@
 import 'package:ba33_ui/ba33_ui.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../view_model/login_view_model.dart';
@@ -58,14 +57,10 @@ class LoginScreen extends ConsumerWidget {
 
               // Phone
               Ba33Input(
-                label: 'Phone number',
-                hint: '0555 XX XX XX',
+                label: 'رقم الهاتف',
+                hint: '0555123456',
                 prefixIcon: Icons.phone_rounded,
                 keyboardType: TextInputType.phone,
-                inputFormatters: [
-                  FilteringTextInputFormatter.digitsOnly,
-                  LengthLimitingTextInputFormatter(10),
-                ],
                 autofocus: true,
                 onChanged: vm.setPhone,
               ),

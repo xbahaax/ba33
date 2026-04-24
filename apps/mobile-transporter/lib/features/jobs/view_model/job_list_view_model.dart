@@ -1,5 +1,7 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
+import '../../../features/auth/view_model/auth_view_model.dart';
+import '../../../shared/providers/api_provider.dart';
 import '../model/transport_job.dart';
 
 part 'job_list_view_model.g.dart';
@@ -8,8 +10,14 @@ part 'job_list_view_model.g.dart';
 class JobList extends _$JobList {
   @override
   Future<List<TransportJob>> build() async {
-    await Future.delayed(const Duration(milliseconds: 600));
-    return _mockJobs();
+    final auth = ref.watch(authStateProvider);
+    final transportSvc = ref.read(transportServiceProvider);
+
+    final raw = await transportSvc.listJobs(transporterId: auth.userId);
+    return raw.map((e) {
+      final j = e as Map<String, dynamic>;
+      return _mapApiJob(j);
+    }).toList();
   }
 
   Future<void> refresh() async {
@@ -17,106 +25,70 @@ class JobList extends _$JobList {
     state = await AsyncValue.guard(build);
   }
 
-  List<TransportJob> _mockJobs() {
-    final now = DateTime.now();
-    return [
-      TransportJob(
-        id: 'TJ-C2-ALG-00001',
-        originName: 'Dépôt Alger Nord',
-        originType: 'depot',
-        destinationName: 'Laverie Blida',
-        destinationType: 'laverie',
-        lane: TransportLane.urgentColdChain,
-        status: JobStatus.pending,
-        requestedAt: now.subtract(const Duration(hours: 2)),
-        slaDeadline: now.add(const Duration(hours: 1, minutes: 47)),
-        lots: [
-          TransportLot(
-            id: 'L-C2-ALG-00042',
-            qrCode: 'C2-00042-X7K',
-            sourceType: 'C2',
-            declaredWeight: 42.5,
-          ),
-          TransportLot(
-            id: 'L-C2-ALG-00043',
-            qrCode: 'C2-00043-Y2M',
-            sourceType: 'C2',
-            declaredWeight: 38.0,
-          ),
-          TransportLot(
-            id: 'L-C2-ALG-00044',
-            qrCode: 'C2-00044-Z9P',
-            sourceType: 'C2',
-            declaredWeight: 44.0,
-          ),
-        ],
-      ),
-      TransportJob(
-        id: 'TJ-C1-SET-00023',
-        originName: 'Dépôt Sétif',
-        originType: 'depot',
-        destinationName: 'Laverie Constantine',
-        destinationType: 'laverie',
-        lane: TransportLane.normal,
-        status: JobStatus.pending,
-        requestedAt: now.subtract(const Duration(hours: 5)),
-        lots: [
-          TransportLot(
-            id: 'L-C1-SET-00102',
-            qrCode: 'C1-00102-A4B',
-            sourceType: 'C1',
-            declaredWeight: 55.0,
-          ),
-          TransportLot(
-            id: 'L-C1-SET-00103',
-            qrCode: 'C1-00103-C8D',
-            sourceType: 'C1',
-            declaredWeight: 62.5,
-          ),
-          TransportLot(
-            id: 'L-C1-SET-00104',
-            qrCode: 'C1-00104-E2F',
-            sourceType: 'C1',
-            declaredWeight: 48.0,
-          ),
-          TransportLot(
-            id: 'L-C1-SET-00105',
-            qrCode: 'C1-00105-G6H',
-            sourceType: 'C1',
-            declaredWeight: 71.5,
-          ),
-          TransportLot(
-            id: 'L-C1-SET-00106',
-            qrCode: 'C1-00106-I1J',
-            sourceType: 'C1',
-            declaredWeight: 50.0,
-          ),
-        ],
-      ),
-      TransportJob(
-        id: 'TJ-C1-ORA-00031',
-        originName: 'Coopérative Mascara',
-        originType: 'source',
-        destinationName: 'Dépôt Oran',
-        destinationType: 'depot',
-        lane: TransportLane.normal,
-        status: JobStatus.pending,
-        requestedAt: now.subtract(const Duration(hours: 1)),
-        lots: [
-          TransportLot(
-            id: 'L-C3-ORA-00201',
-            qrCode: 'C3-00201-K3L',
-            sourceType: 'C3',
-            declaredWeight: 120.0,
-          ),
-          TransportLot(
-            id: 'L-C3-ORA-00202',
-            qrCode: 'C3-00202-M7N',
-            sourceType: 'C3',
-            declaredWeight: 98.5,
-          ),
-        ],
-      ),
-    ];
+  /// Maps the API response to the local TransportJob model.
+  TransportJob _mapApiJob(Map<String, dynamic> j) {
+    final lotsRaw = j['lots'] as List<dynamic>? ?? [];
+    final lots = lotsRaw.map((l) {
+      final lot = l as Map<String, dynamic>;
+      return TransportLot(
+        id: lot['id'] as String? ?? '',
+        qrCode: lot['qrCode'] as String? ?? lot['id'] as String? ?? '',
+        sourceType: lot['sourceType'] as String? ?? '',
+        declaredWeight: (lot['declaredWeight'] as num?)?.toDouble() ?? 0.0,
+        loadedWeight: (lot['loadedWeight'] as num?)?.toDouble(),
+        deliveredWeight: (lot['deliveredWeight'] as num?)?.toDouble(),
+        isLoaded: lot['isLoaded'] as bool? ?? false,
+        isDelivered: lot['isDelivered'] as bool? ?? false,
+      );
+    }).toList();
+
+    // Map lane string from API to enum
+    TransportLane lane;
+    switch (j['lane'] as String? ?? 'normal') {
+      case 'urgentColdChain':
+        lane = TransportLane.urgentColdChain;
+      case 'urgentStandard':
+        lane = TransportLane.urgentStandard;
+      default:
+        lane = TransportLane.normal;
+    }
+
+    // Map status string from API to enum
+    JobStatus status;
+    switch (j['status'] as String? ?? 'pending') {
+      case 'accepted':
+        status = JobStatus.accepted;
+      case 'inProgress':
+      case 'in_progress':
+        status = JobStatus.inProgress;
+      case 'delivered':
+        status = JobStatus.delivered;
+      case 'cancelled':
+        status = JobStatus.cancelled;
+      default:
+        status = JobStatus.pending;
+    }
+
+    return TransportJob(
+      id: j['id'] as String,
+      originName: j['originName'] as String? ??
+          j['originId'] as String? ??
+          'Unknown',
+      originType: j['originType'] as String? ?? 'depot',
+      destinationName: j['destinationName'] as String? ??
+          j['destinationId'] as String? ??
+          'Unknown',
+      destinationType: j['destinationType'] as String? ?? 'depot',
+      lane: lane,
+      status: status,
+      lots: lots,
+      requestedAt: j['requestedAt'] != null
+          ? DateTime.parse(j['requestedAt'] as String)
+          : DateTime.now(),
+      slaDeadline: j['slaDeadline'] != null
+          ? DateTime.parse(j['slaDeadline'] as String)
+          : null,
+      transporterId: j['transporterId'] as String?,
+    );
   }
 }

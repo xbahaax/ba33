@@ -1,6 +1,7 @@
 import 'package:ba33_domain/ba33_domain.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
+import '../../../shared/providers/api_provider.dart';
 import '../../../shared/providers/auth_provider.dart';
 
 part 'declaration_view_model.g.dart';
@@ -37,7 +38,8 @@ class DeclarationFormState {
   bool get isValid =>
       weightCategory != null &&
       latitude != null &&
-      (weightCategory != WeightCategory.custom || (customWeight != null && customWeight! > 0));
+      (weightCategory != WeightCategory.custom ||
+          (customWeight != null && customWeight! > 0));
 
   DeclarationFormState copyWith({
     WeightCategory? weightCategory,
@@ -56,7 +58,8 @@ class DeclarationFormState {
   }) {
     return DeclarationFormState(
       weightCategory: weightCategory ?? this.weightCategory,
-      customWeight: clearCustomWeight ? null : (customWeight ?? this.customWeight),
+      customWeight:
+          clearCustomWeight ? null : (customWeight ?? this.customWeight),
       surnom: surnom ?? this.surnom,
       mazraa: mazraa ?? this.mazraa,
       notes: notes ?? this.notes,
@@ -84,32 +87,40 @@ class DeclarationViewModel extends _$DeclarationViewModel {
     }
   }
 
-  void setCustomWeight(double? weight) {
-    state = state.copyWith(customWeight: weight);
-  }
+  void setCustomWeight(double? weight) =>
+      state = state.copyWith(customWeight: weight);
 
-  void setLocation(double lat, double lng, {String? name}) {
-    state = state.copyWith(
-      latitude: lat,
-      longitude: lng,
-      locationName: name,
-    );
-  }
+  void setLocation(double lat, double lng, {String? name}) =>
+      state = state.copyWith(
+        latitude: lat,
+        longitude: lng,
+        locationName: name,
+      );
 
-  void setSurnom(String surnom) {
-    state = state.copyWith(surnom: surnom);
-  }
+  void setSurnom(String surnom) => state = state.copyWith(surnom: surnom);
 
-  void setMazraa(String mazraa) {
-    state = state.copyWith(mazraa: mazraa);
-  }
+  void setMazraa(String mazraa) => state = state.copyWith(mazraa: mazraa);
 
-  void setPhoto(String path) {
-    state = state.copyWith(photoPath: path);
-  }
+  void setPhoto(String path) => state = state.copyWith(photoPath: path);
 
-  void setNotes(String notes) {
-    state = state.copyWith(notes: notes);
+  void setNotes(String notes) => state = state.copyWith(notes: notes);
+
+  double _estimateWeight() {
+    if (state.weightCategory == WeightCategory.custom) {
+      return state.customWeight ?? 0;
+    }
+    switch (state.weightCategory!) {
+      case WeightCategory.oneSheep:
+        return 2.5;
+      case WeightCategory.oneBag:
+        return 5.0;
+      case WeightCategory.smallPile:
+        return 15.0;
+      case WeightCategory.largePile:
+        return 50.0;
+      case WeightCategory.custom:
+        return state.customWeight ?? 0;
+    }
   }
 
   Future<void> submit() async {
@@ -128,26 +139,45 @@ class DeclarationViewModel extends _$DeclarationViewModel {
 
     state = state.copyWith(isSubmitting: true);
 
-    // TODO(BA33-021): submit declaration to API
-    await Future<void>.delayed(const Duration(seconds: 1));
+    try {
+      final collectionService = ref.read(collectionServiceProvider);
 
-    final idGen = IdGenerator(namespace: user.id);
+      // Upload photo if present
+      String? photoFileId;
+      if (state.photoPath != null) {
+        try {
+          final filesService = ref.read(filesServiceProvider);
+          final fileResult = await filesService.upload(
+            state.photoPath!,
+            'photo',
+            uploadedBy: user.id,
+          );
+          photoFileId = fileResult['id'] as String?;
+        } catch (_) {
+          // Photo upload failure is non-blocking
+        }
+      }
 
-    // Create local declaration
-    Declaration(
-      id: idGen.nextLotId(),
-      shepherdId: user.id,
-      weightCategory: state.weightCategory!,
-      estimatedWeight: state.customWeight,
-      status: DeclarationStatus.announced,
-      createdAt: DateTime.now(),
-      latitude: state.latitude!,
-      longitude: state.longitude!,
-      notes: state.notes.isEmpty ? null : state.notes,
-      photoUrl: state.photoPath,
-    );
+      await collectionService.createPreLot({
+        'sourceId': user.id,
+        'estimatedWeightKg': _estimateWeight().toStringAsFixed(1),
+        'latitude': state.latitude.toString(),
+        'longitude': state.longitude.toString(),
+        'notes': [
+          if (state.surnom.isNotEmpty) 'surnom: ${state.surnom}',
+          if (state.mazraa.isNotEmpty) 'mazraa: ${state.mazraa}',
+          if (state.notes.isNotEmpty) state.notes,
+        ].join(' | '),
+        if (photoFileId != null) 'photoId': photoFileId,
+      });
 
-    state = state.copyWith(isSubmitting: false, isSubmitted: true);
+      state = state.copyWith(isSubmitting: false, isSubmitted: true);
+    } catch (e) {
+      state = state.copyWith(
+        isSubmitting: false,
+        error: 'فشل الإرسال، عاود حاول',
+      );
+    }
   }
 
   void reset() {
