@@ -20,6 +20,7 @@ class Ba33Input extends StatelessWidget {
     this.maxLines = 1,
     this.enabled = true,
     this.autofocus = false,
+    this.obscureText = false,
   });
 
   final TextEditingController? controller;
@@ -35,6 +36,7 @@ class Ba33Input extends StatelessWidget {
   final int maxLines;
   final bool enabled;
   final bool autofocus;
+  final bool obscureText;
 
   @override
   Widget build(BuildContext context) {
@@ -61,9 +63,10 @@ class Ba33Input extends StatelessWidget {
           validator: validator,
           onChanged: onChanged,
           onFieldSubmitted: onFieldSubmitted,
-          maxLines: maxLines,
+          maxLines: obscureText ? 1 : maxLines,
           enabled: enabled,
           autofocus: autofocus,
+          obscureText: obscureText,
         ),
       ],
     );

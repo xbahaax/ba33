@@ -41,7 +41,7 @@ class LotCard extends StatelessWidget {
 
           const SizedBox(height: Ba33Spacing.spacing3),
 
-          // Weight + source row
+          // Weight
           Row(
             children: [
               Icon(Icons.scale, size: 16, color: colors.mutedForeground),
@@ -54,12 +54,20 @@ class LotCard extends StatelessWidget {
                   color: colors.foreground,
                 ),
               ),
-              const SizedBox(width: Ba33Spacing.spacing4),
+            ],
+          ),
+
+          const SizedBox(height: Ba33Spacing.spacing2),
+
+          // Badges (wrapped to avoid overflow)
+          Wrap(
+            spacing: Ba33Spacing.spacing2,
+            runSpacing: Ba33Spacing.spacing1,
+            children: [
               Ba33Badge(
                 label: _sourceLabel(lot.sourceType),
                 variant: Ba33BadgeVariant.outline,
               ),
-              const SizedBox(width: Ba33Spacing.spacing2),
               Ba33Badge(
                 label: _woolLabel(lot.woolState),
               ),
