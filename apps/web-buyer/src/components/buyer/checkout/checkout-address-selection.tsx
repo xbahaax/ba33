@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Button, Dialog, DialogClose, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger, Input } from "@ba33/ui-web";
+import { Button, Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger, Input } from "@ba33/ui-web";
 import type { Address } from "@/lib/types/order";
 
 type AddressDraft = {
@@ -24,31 +24,39 @@ const emptyDraft: AddressDraft = {
   instructions: "",
 };
 
-export function CheckoutAddressSelection({ initialAddresses }: { initialAddresses: Address[] }) {
-  const [addressList, setAddressList] = useState<Address[]>(initialAddresses);
-  const [selectedAddressId, setSelectedAddressId] = useState(initialAddresses.find((address) => address.isDefault)?.id ?? initialAddresses[0]?.id ?? "");
-  const [draft, setDraft] = useState<AddressDraft>(emptyDraft);
+type Props = {
+  addressList: Address[];
+  selectedAddressId: string;
+  onSelectAddress: (id: string) => void;
+  onAddressCreated: (draft: Omit<Address, "id" | "isDefault">) => Promise<Address | null>;
+};
 
-  const saveAddress = () => {
+export function CheckoutAddressSelection({ addressList, selectedAddressId, onSelectAddress, onAddressCreated }: Props) {
+  const [draft, setDraft] = useState<AddressDraft>(emptyDraft);
+  const [isSaving, setIsSaving] = useState(false);
+  const [open, setOpen] = useState(false);
+
+  const saveAddress = async () => {
     if (!draft.siteName || !draft.line1 || !draft.commune || !draft.wilaya || !draft.postalCode) {
       return;
     }
 
-    const nextAddress: Address = {
-      id: `ADDR-${Date.now()}`,
-      siteName: draft.siteName,
-      line1: draft.line1,
-      line2: draft.line2 || undefined,
-      commune: draft.commune,
-      wilaya: draft.wilaya,
-      postalCode: draft.postalCode,
-      instructions: draft.instructions || undefined,
-      isDefault: addressList.length === 0,
-    };
-
-    setAddressList((current) => [...current, nextAddress]);
-    setSelectedAddressId(nextAddress.id);
-    setDraft(emptyDraft);
+    setIsSaving(true);
+    try {
+      await onAddressCreated({
+        siteName: draft.siteName,
+        line1: draft.line1,
+        line2: draft.line2 || undefined,
+        commune: draft.commune,
+        wilaya: draft.wilaya,
+        postalCode: draft.postalCode,
+        instructions: draft.instructions || undefined,
+      });
+      setDraft(emptyDraft);
+      setOpen(false);
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   return (
@@ -62,7 +70,7 @@ export function CheckoutAddressSelection({ initialAddresses }: { initialAddresse
             <button
               key={address.id}
               type="button"
-              onClick={() => setSelectedAddressId(address.id)}
+              onClick={() => onSelectAddress(address.id)}
               className={isSelected ? "rounded-xl border-2 border-primary bg-primary/5 p-4 text-left" : "rounded-xl border-2 border-transparent p-4 text-left hover:border-primary/50"}
             >
               <p className="font-medium text-foreground">{address.siteName}</p>
@@ -74,7 +82,7 @@ export function CheckoutAddressSelection({ initialAddresses }: { initialAddresse
         })}
       </div>
 
-      <Dialog>
+      <Dialog open={open} onOpenChange={setOpen}>
         <DialogTrigger asChild>
           <Button variant="outline" type="button" onClick={() => setDraft(emptyDraft)}>
             + Nouvelle adresse
@@ -99,16 +107,12 @@ export function CheckoutAddressSelection({ initialAddresses }: { initialAddresse
               onChange={(event) => setDraft((current) => ({ ...current, instructions: event.target.value }))}
             />
             <div className="flex justify-end gap-3">
-              <DialogClose asChild>
-                <Button variant="outline" type="button">
-                  Annuler
-                </Button>
-              </DialogClose>
-              <DialogClose asChild>
-                <Button type="button" onClick={saveAddress}>
-                  Enregistrer
-                </Button>
-              </DialogClose>
+              <Button variant="outline" type="button" onClick={() => setOpen(false)}>
+                Annuler
+              </Button>
+              <Button type="button" disabled={isSaving} onClick={saveAddress}>
+                {isSaving ? "Enregistrement..." : "Enregistrer"}
+              </Button>
             </div>
           </div>
         </DialogContent>

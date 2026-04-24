@@ -31,7 +31,7 @@ export default async function OrderDetailPage({ params }: OrderDetailPageProps) 
           <OrderStatusBadge status={order.status} />
           <p className="font-mono text-sm text-muted-foreground">{order.placedAt.toLocaleDateString("fr-FR")}</p>
         </div>
-        <OrderHeaderActions orderId={order.id} />
+        <OrderHeaderActions orderId={order.id} documents={order.documents} />
       </div>
 
       <OrderTimeline status={order.status} />

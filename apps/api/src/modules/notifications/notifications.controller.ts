@@ -11,19 +11,16 @@ import { NotificationsService } from './notifications.service';
 export class NotificationsController {
   constructor(private readonly notificationsService: NotificationsService) {}
 
-  @UseGuards(JwtAuthGuard)
   @Get()
   listNotifications(@CurrentUser('id') userId: string) {
     return this.notificationsService.list(userId);
   }
 
-  @UseGuards(JwtAuthGuard)
   @Patch('read-all')
   markAllRead(@CurrentUser('id') userId: string) {
     return this.notificationsService.markAllRead(userId);
   }
 
-  @UseGuards(JwtAuthGuard)
   @Delete(':id')
   dismiss(@CurrentUser('id') userId: string, @Param('id') id: string) {
     return this.notificationsService.dismiss(userId, id);

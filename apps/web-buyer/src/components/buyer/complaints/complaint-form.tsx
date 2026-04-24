@@ -25,13 +25,15 @@ export function ComplaintForm({ orders, selectedOrderId }: { orders: Order[]; se
         const formData = new FormData(event.currentTarget);
         const orderId = String(formData.get("orderId") ?? selectedOrderId ?? orders[0]?.id ?? "");
         const type = String(formData.get("type") ?? "other") as ComplaintType;
+        const description = String(formData.get("description") ?? "");
+        const resolution = String(formData.get("resolution") ?? "");
 
         if (!orderId) {
           return;
         }
 
         try {
-          const complaint = await createComplaint({ orderId, type });
+          const complaint = await createComplaint({ orderId, type, description, resolution });
           setCreatedComplaintId(complaint.id);
         } catch (error) {
           const message = error instanceof Error ? error.message : "Impossible de soumettre la réclamation.";
@@ -73,7 +75,7 @@ export function ComplaintForm({ orders, selectedOrderId }: { orders: Order[]; se
 
       <section className="space-y-4">
         <h2 className="text-lg font-semibold text-foreground">Etape 2 — Description</h2>
-        <textarea rows={6} className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm" placeholder="Décrivez le problème en détail" />
+        <textarea name="description" rows={6} className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm" placeholder="Décrivez le problème en détail" />
         <div className="rounded-xl border-2 border-dashed border-border p-5 text-sm text-muted-foreground">
           Zone upload photos / preuves (images + PDF)
         </div>
@@ -94,7 +96,7 @@ export function ComplaintForm({ orders, selectedOrderId }: { orders: Order[]; se
             "Autre",
           ].map((option) => (
             <label key={option} className="flex items-center gap-3 rounded-xl border border-border px-4 py-3 text-sm hover:bg-accent hover:text-accent-foreground">
-              <input type="radio" name="resolution" />
+              <input type="radio" name="resolution" value={option} />
               {option}
             </label>
           ))}

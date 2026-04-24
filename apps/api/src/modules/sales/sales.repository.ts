@@ -64,6 +64,8 @@ export interface CreateOrderInput {
 export interface CreateComplaintInput {
   orderId: string;
   type: ComplaintType;
+  description?: string;
+  resolution?: string;
 }
 
 export interface AddressInput {
@@ -557,6 +559,8 @@ export class SalesRepository {
       id: row.id,
       orderId: row.orderCode,
       type: row.type as ComplaintType,
+      description: row.description,
+      resolution: row.resolution,
       submittedAt: row.submittedAt.toISOString(),
       status: row.status as BuyerComplaint['status'],
     }));
@@ -574,6 +578,8 @@ export class SalesRepository {
           id: row.id,
           orderId: row.orderCode,
           type: row.type as ComplaintType,
+          description: row.description,
+          resolution: row.resolution,
           submittedAt: row.submittedAt.toISOString(),
           status: row.status as BuyerComplaint['status'],
         }
@@ -590,6 +596,8 @@ export class SalesRepository {
         orderCode: input.orderId,
         type: input.type,
         status: 'review',
+        description: input.description ?? '',
+        resolution: input.resolution ?? '',
       })
       .returning();
 
@@ -597,6 +605,8 @@ export class SalesRepository {
       id: created.id,
       orderId: created.orderCode,
       type: created.type as ComplaintType,
+      description: created.description,
+      resolution: created.resolution,
       submittedAt: created.submittedAt.toISOString(),
       status: created.status as BuyerComplaint['status'],
     };

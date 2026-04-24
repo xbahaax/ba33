@@ -9,40 +9,6 @@ type NotificationType = "order" | "delivery" | "certificate" | "complaint";
 
 type Notification = BuyerNotification;
 
-const initialNotifications: Notification[] = [
-  {
-    id: "n1",
-    type: "delivery",
-    title: "Expédition en route",
-    description: "Commande #CMD-20240312 expédiée — arrivée estimée 26 Avr",
-    time: "Il y a 10 min",
-    read: false,
-  },
-  {
-    id: "n2",
-    type: "certificate",
-    title: "Nouveau certificat NFN",
-    description: "Le produit P1-00042 vient d'être certifié NFN Grade A",
-    time: "Il y a 1h",
-    read: false,
-  },
-  {
-    id: "n3",
-    type: "order",
-    title: "Commande confirmée",
-    description: "Commande #CMD-20240311 confirmée par le vendeur",
-    time: "Il y a 3h",
-    read: false,
-  },
-  {
-    id: "n4",
-    type: "complaint",
-    title: "Réclamation traitée",
-    description: "Votre réclamation #REC-2024-01 a été résolue",
-    time: "Hier",
-    read: true,
-  },
-];
 
 const typeIcon: Record<NotificationType, React.ElementType> = {
   order: Package,
@@ -60,7 +26,7 @@ const typeColors: Record<NotificationType, string> = {
 
 export function NotificationPanel() {
   const [open, setOpen] = useState(false);
-  const [notifications, setNotifications] = useState(initialNotifications);
+  const [notifications, setNotifications] = useState<Notification[]>([]);
   const panelRef = useRef<HTMLDivElement>(null);
 
   const unreadCount = notifications.filter((n) => !n.read).length;
@@ -80,11 +46,7 @@ export function NotificationPanel() {
           setNotifications(items);
         }
       })
-      .catch(() => {
-        if (active) {
-          setNotifications(initialNotifications);
-        }
-      });
+      .catch(() => {});
 
     document.addEventListener("mousedown", handleClickOutside);
     return () => {

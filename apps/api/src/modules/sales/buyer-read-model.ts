@@ -130,6 +130,8 @@ export interface BuyerComplaint {
   id: string;
   orderId: string;
   type: ComplaintType;
+  description: string;
+  resolution: string;
   submittedAt: string;
   status: ComplaintStatus;
 }
@@ -474,8 +476,8 @@ export const orders: BuyerOrder[] = [
 ];
 
 export const complaints: BuyerComplaint[] = [
-  { id: 'REC-2026-0041', orderId: 'CMD-2026-00163', type: 'delivery', submittedAt: '2026-03-01T09:00:00.000Z', status: 'review' },
-  { id: 'REC-2026-0037', orderId: 'CMD-2026-00142', type: 'quantity', submittedAt: '2026-02-18T13:30:00.000Z', status: 'resolved' },
+  { id: 'REC-2026-0041', orderId: 'CMD-2026-00163', type: 'delivery', description: '', resolution: '', submittedAt: '2026-03-01T09:00:00.000Z', status: 'review' },
+  { id: 'REC-2026-0037', orderId: 'CMD-2026-00142', type: 'quantity', description: '', resolution: '', submittedAt: '2026-02-18T13:30:00.000Z', status: 'resolved' },
 ];
 
 export const buyerProfile: BuyerProfile = {

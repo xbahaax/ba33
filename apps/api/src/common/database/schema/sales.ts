@@ -107,6 +107,8 @@ export const buyerComplaints = pgTable('buyer_complaints', {
   orderCode: text('order_code').notNull(),
   type: text('type').notNull(),
   status: text('status').default('review').notNull(),
+  description: text('description').notNull().default(''),
+  resolution: text('resolution').notNull().default(''),
   submittedAt: timestamp('submitted_at', { withTimezone: true }).defaultNow().notNull(),
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),

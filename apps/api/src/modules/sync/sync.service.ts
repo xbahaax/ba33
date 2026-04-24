@@ -46,6 +46,9 @@ export class SyncService {
   }
 
   async getDevice(deviceId: string) {
+    if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(deviceId)) {
+      throw new NotFoundException(`Device ${deviceId} not registered`);
+    }
     const device = await this.syncRepository.findDeviceByDeviceId(deviceId);
     if (!device) {
       throw new NotFoundException(`Device ${deviceId} not registered`);

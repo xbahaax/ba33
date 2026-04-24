@@ -23,8 +23,8 @@ export interface BuyerAuthUser {
   email: string;
   passwordHash: string;
   fullName: string;
-  userType: 'buyer';
-  profile: AuthUserProfile;
+  userType: string;
+  profile: AuthUserProfile | null;
 }
 
 export interface AuthAssignedRole {
@@ -226,7 +226,7 @@ export class AuthRepository {
   async updateProfile(userId: string, updates: AuthProfileUpdates): Promise<AuthSessionUser | undefined> {
     const existing = await this.findBuyerById(userId);
 
-    if (!existing) {
+    if (!existing || !existing.profile) {
       return undefined;
     }
 
@@ -361,7 +361,7 @@ export class AuthRepository {
       email: user.email,
       passwordHash: user.passwordHash,
       fullName: user.fullName,
-      userType: 'buyer',
+      userType: user.userType,
       profile: {
         companyName: buyer.companyName,
         registrationNumber: buyer.registrationNumber ?? '',

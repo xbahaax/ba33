@@ -14,7 +14,29 @@ export type NotificationType =
 
 @Injectable()
 export class NotificationsService {
+  private readonly logger = new Logger(NotificationsService.name);
+
   constructor(private readonly notificationsRepository: NotificationsRepository) {}
+
+  async send(data: {
+    userId: string;
+    type: NotificationType;
+    title: string;
+    body: string;
+    payload?: Record<string, unknown>;
+  }) {
+    const notification = await this.notificationsRepository.create({
+      id: uuid(),
+      userId: data.userId,
+      type: data.type,
+      title: data.title,
+      body: data.body,
+      payload: data.payload,
+      sentAt: new Date(),
+    });
+    this.logger.log(`Notification sent [${data.type}] to user ${data.userId}: ${data.title}`);
+    return notification;
+  }
 
   list(userId: string) {
     return this.notificationsRepository.list(userId);

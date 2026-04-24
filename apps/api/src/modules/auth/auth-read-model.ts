@@ -25,8 +25,8 @@ export interface AuthUser {
   email: string;
   passwordHash: string;
   fullName: string;
-  userType: 'buyer';
-  profile: AuthUserProfile;
+  userType: string;
+  profile: AuthUserProfile | null;
 }
 
 export const authUsersSeed: AuthUser[] = [

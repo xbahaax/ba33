@@ -1,4 +1,3 @@
-import { products as fallbackProducts } from "@/lib/mock/products";
 import type { OrderDocument } from "@/lib/types/document";
 import type { Product } from "@/lib/types/product";
 import type { Address, Complaint, ComplaintType, Order } from "@/lib/types/order";
@@ -169,13 +168,6 @@ async function apiFetchText(path: string, token?: string): Promise<string> {
   return response.text();
 }
 
-async function withFallback<T>(request: Promise<T>, fallback: T): Promise<T> {
-  try {
-    return await request;
-  } catch {
-    return fallback;
-  }
-}
 
 function toTraceability(payload: TraceabilityPayload): TraceabilityChain {
   return {
@@ -279,19 +271,17 @@ export async function changeMyPassword(
 
 export async function getProducts(query?: URLSearchParams): Promise<Product[]> {
   const suffix = query && query.size > 0 ? `?${query.toString()}` : "";
-  const payload = await withFallback(apiFetch<PaginatedPayload<ProductPayload>>(`/products${suffix}`), {
-    items: fallbackProducts as unknown as ProductPayload[],
-  });
+  const payload = await apiFetch<PaginatedPayload<ProductPayload>>(`/products${suffix}`);
   return payload.items.map(toProduct);
 }
 
 export async function getProduct(productId: string): Promise<Product | undefined> {
-  const fallback = fallbackProducts.find((product) => product.id === productId);
-  const payload = await withFallback(
-    apiFetch<ProductPayload>(`/products/${encodeURIComponent(productId)}`),
-    fallback as unknown as ProductPayload | undefined,
-  );
-  return payload ? toProduct(payload) : undefined;
+  try {
+    const payload = await apiFetch<ProductPayload>(`/products/${encodeURIComponent(productId)}`);
+    return toProduct(payload);
+  } catch {
+    return undefined;
+  }
 }
 
 export async function verifyCertificate(
@@ -345,7 +335,7 @@ export async function getComplaints(token?: string): Promise<Complaint[]> {
 }
 
 export async function createComplaint(
-  input: { orderId: string; type: ComplaintType },
+  input: { orderId: string; type: ComplaintType; description?: string; resolution?: string },
   token?: string,
 ): Promise<Complaint> {
   const payload = await apiFetch<ComplaintPayload>(

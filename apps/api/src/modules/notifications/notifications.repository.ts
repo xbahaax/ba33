@@ -42,4 +42,20 @@ export class NotificationsRepository {
 
     return { deleted: deleted.length > 0 };
   }
+
+  async create(data: {
+    id: string;
+    userId: string;
+    type: string;
+    title: string;
+    body: string;
+    payload?: unknown;
+    sentAt?: Date;
+  }) {
+    const [notification] = await this.db
+      .insert(notifications)
+      .values(data)
+      .returning();
+    return notification;
+  }
 }
