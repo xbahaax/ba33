@@ -603,27 +603,33 @@ const depotRoute: OperationsPageConfig<DepotOverviewResponse> = {
           getRowKey={(reception) => reception.id}
           emptyMessage="Aucune reception recente n'a ete retournee."
           columns={[
+            { header: "Depot", render: (r) => r.depotName ?? "—" },
+            { header: "Lot", render: (r) => r.lotQrCode ?? "—", cellClassName: "font-mono text-xs" },
+            { header: "Poids réel", render: (r) => formatWeight(r.actualWeightKg) },
+            { header: "Écart", render: (r) => formatWeight(r.discrepancyKg) },
             {
-              header: "Depot",
-              render: (reception) => reception.depotName ?? "—",
+              header: "Classe",
+              render: (r) => r.lotClassification
+                ? <StatusBadge value={r.lotClassification} />
+                : "—",
             },
             {
-              header: "Lot",
-              render: (reception) => reception.lotQrCode ?? "—",
-              cellClassName: "font-mono text-xs",
+              header: "VM%",
+              render: (r) => r.vegetalMatterPercent ? `${r.vegetalMatterPercent}%` : "—",
             },
             {
-              header: "Poids",
-              render: (reception) => formatWeight(reception.actualWeightKg),
+              header: "H% entrée",
+              render: (r) => r.humidityEntryPercent ? `${r.humidityEntryPercent}%` : "—",
             },
             {
-              header: "Ecart",
-              render: (reception) => formatWeight(reception.discrepancyKg),
+              header: "Temp. tas",
+              render: (r) => r.stackTemperatureC ? `${r.stackTemperatureC}°C` : "—",
             },
             {
-              header: "Recu le",
-              render: (reception) => formatDateTime(reception.receivedAt),
+              header: "Sortie prévue",
+              render: (r) => r.plannedExitDate ?? "—",
             },
+            { header: "Reçu le", render: (r) => formatDateTime(r.receivedAt) },
           ]}
         />
 
@@ -649,6 +655,36 @@ const depotRoute: OperationsPageConfig<DepotOverviewResponse> = {
           ]}
         />
       </div>
+
+      <DataTableCard
+        title="File d'attente — Sortie dépôt (S1)"
+        description="Lots en stock prêts à être expédiés vers laverie ou transformateur."
+        rows={data.dispatchQueue}
+        getRowKey={(lot) => lot.id}
+        emptyMessage="Aucun lot en attente de sortie."
+        columns={[
+          { header: "QR Code", render: (lot) => lot.qrCode, cellClassName: "font-mono text-xs" },
+          { header: "Dépôt", render: (lot) => lot.depotName ?? "—" },
+          { header: "Zone", render: (lot) => lot.zoneCode ?? "—" },
+          { header: "Poids", render: (lot) => formatWeight(lot.weightKg) },
+          {
+            header: "Classe tri",
+            render: (lot) => lot.lotClassification
+              ? <StatusBadge value={lot.lotClassification} />
+              : "—",
+          },
+          {
+            header: "VM%",
+            render: (lot) => lot.vegetalMatterPercent ? `${lot.vegetalMatterPercent}%` : "—",
+          },
+          {
+            header: "H%",
+            render: (lot) => lot.humidityEntryPercent ? `${lot.humidityEntryPercent}%` : "—",
+          },
+          { header: "Sortie prévue", render: (lot) => lot.plannedExitDate ?? "—" },
+          { header: "Urgence", render: (lot) => <StatusBadge value={lot.urgency ?? "normal"} /> },
+        ]}
+      />
     </>
   ),
 };
@@ -705,23 +741,12 @@ const laverieRoute: OperationsPageConfig<LaverieOverviewResponse> = {
           emptyMessage="Aucun cycle actif n'a ete retourne."
           columns={[
             { header: "Laverie", render: (run) => run.laverieName ?? "—" },
-            {
-              header: "Poids entrant",
-              render: (run) => formatWeight(run.dirtyWeightKg),
-            },
-            {
-              header: "Eau",
-              render: (run) =>
-                run.waterLiters ? `${formatNumber(run.waterLiters)} L` : "—",
-            },
-            {
-              header: "Temperature",
-              render: (run) => (run.waterTempC ? `${run.waterTempC}°C` : "—"),
-            },
-            {
-              header: "Demarre",
-              render: (run) => formatDateTime(run.startedAt),
-            },
+            { header: "Poids sale", render: (run) => formatWeight(run.dirtyWeightKg) },
+            { header: "Eau (L)", render: (run) => run.waterLiters ? `${formatNumber(run.waterLiters)} L` : "—" },
+            { header: "Temp. eau", render: (run) => run.waterTempC ? `${run.waterTempC}°C` : "—" },
+            { header: "Détergent", render: (run) => run.detergentType ?? "—" },
+            { header: "Suint récupéré", render: (run) => run.suintRecoveredLiters ? `${run.suintRecoveredLiters} L` : "—" },
+            { header: "Démarré", render: (run) => formatDateTime(run.startedAt) },
           ]}
         />
 
@@ -731,38 +756,43 @@ const laverieRoute: OperationsPageConfig<LaverieOverviewResponse> = {
           getRowKey={(qualification) => qualification.id}
           emptyMessage="Aucune qualification recente n'a ete retournee."
           columns={[
-            {
-              header: "Grade",
-              render: (qualification) => qualification.grade,
-            },
-            {
-              header: "Securite",
-              render: (qualification) => (
-                <StatusBadge value={qualification.safetyStatus} />
-              ),
-            },
-            {
-              header: "Longueur fibre",
-              render: (qualification) =>
-                qualification.fiberLengthMm
-                  ? `${formatNumber(qualification.fiberLengthMm)} mm`
-                  : "—",
-            },
-            {
-              header: "Diametre",
-              render: (qualification) =>
-                qualification.fiberDiameterMicron
-                  ? `${formatNumber(qualification.fiberDiameterMicron)} um`
-                  : "—",
-            },
-            {
-              header: "Controle le",
-              render: (qualification) =>
-                formatDateTime(qualification.performedAt),
-            },
+            { header: "Grade", render: (q) => q.grade },
+            { header: "Sécurité", render: (q) => <StatusBadge value={q.safetyStatus} /> },
+            { header: "Fibre (mm)", render: (q) => q.fiberLengthMm ? `${formatNumber(q.fiberLengthMm)} mm` : "—" },
+            { header: "Diam. (µm)", render: (q) => q.fiberDiameterMicron ? `${formatNumber(q.fiberDiameterMicron)} µm` : "—" },
+            { header: "Couleur", render: (q) => q.color ?? "—" },
+            { header: "H% résid.", render: (q) => q.residualHumidityPercent ? `${q.residualHumidityPercent}%` : "—" },
+            { header: "Suint%", render: (q) => q.residualSuintPercent ? `${q.residualSuintPercent}%` : "—" },
+            { header: "pH", render: (q) => q.phLevel ?? "—" },
+            { header: "Blancheur", render: (q) => q.whitenessIndex ?? "—" },
+            { header: "kWh séchage", render: (q) => q.energyKwhUsed ?? "—" },
+            { header: "L/kg", render: (q) => q.waterLitersPerKg ?? "—" },
+            { header: "Contrôlé le", render: (q) => formatDateTime(q.performedAt) },
           ]}
         />
       </div>
+
+      <DataTableCard
+        title="File d'attente — Lavage (lots reçus)"
+        description="Lots réceptionnés en laverie, en attente de démarrage de cycle."
+        rows={data.washQueue}
+        getRowKey={(lot) => lot.id}
+        emptyMessage="Aucun lot en attente de lavage."
+        columns={[
+          { header: "QR Code", render: (lot) => lot.qrCode, cellClassName: "font-mono text-xs" },
+          { header: "Laverie", render: (lot) => lot.laverieName ?? "—" },
+          { header: "Poids", render: (lot) => formatWeight(lot.weightKg) },
+          {
+            header: "État conditionnement",
+            render: (lot) => lot.conditioningState
+              ? <StatusBadge value={lot.conditioningState} />
+              : "—",
+          },
+          { header: "Temp. requise", render: (lot) => lot.requiredWashTempC ? `${lot.requiredWashTempC}°C` : "—" },
+          { header: "Détergent requis", render: (lot) => lot.requiredDetergentType ?? "—" },
+          { header: "Reçu le", render: (lot) => lot.receivedAt ? formatDateTime(lot.receivedAt) : "—" },
+        ]}
+      />
     </>
   ),
 };
@@ -831,27 +861,40 @@ const transformationRoute: OperationsPageConfig<TransformationOverviewResponse> 
             getRowKey={(run) => run.id}
             emptyMessage="Aucun run actif n'a ete retourne."
             columns={[
+              { header: "Site", render: (run) => run.transformerName ?? "—" },
+              { header: "Entrée", render: (run) => formatWeight(run.inputWeightKg) },
+              { header: "Sortie", render: (run) => run.outputWeightKg ? formatWeight(run.outputWeightKg) : "—" },
               {
-                header: "Site",
-                render: (run) => run.transformerName ?? "—",
+                header: "Type produit",
+                render: (run) => run.productDestinationType
+                  ? formatEnumLabel(run.productDestinationType)
+                  : "—",
               },
               {
-                header: "Entree",
-                render: (run) => formatWeight(run.inputWeightKg),
+                header: "Épaisseur cible",
+                render: (run) => run.targetThicknessMm ? `${run.targetThicknessMm} mm` : "—",
               },
               {
-                header: "Sortie",
-                render: (run) =>
-                  run.outputWeightKg ? formatWeight(run.outputWeightKg) : "—",
+                header: "Densité cible",
+                render: (run) => run.targetDensityKgM3 ? `${run.targetDensityKgM3} kg/m³` : "—",
               },
               {
-                header: "Operateur",
-                render: (run) => run.operatorName ?? "—",
+                header: "Antimites",
+                render: (run) => run.antimitesTreatmentType
+                  ? formatEnumLabel(run.antimitesTreatmentType)
+                  : "—",
               },
               {
-                header: "Demarre",
-                render: (run) => formatDateTime(run.startedAt),
+                header: "Corps étrangers",
+                render: (run) => run.foreignBodyPresent === true
+                  ? <StatusBadge value="warning" />
+                  : run.foreignBodyPresent === false
+                    ? <StatusBadge value="clear" />
+                    : "—",
               },
+              { header: "Déchargement", render: (run) => run.unloadingMode ?? "—" },
+              { header: "Opérateur", render: (run) => run.operatorName ?? "—" },
+              { header: "Démarré", render: (run) => formatDateTime(run.startedAt) },
             ]}
           />
 

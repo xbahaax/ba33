@@ -61,6 +61,9 @@ export class LaverieRepository {
           waterTempC: washingRuns.waterTempC,
           startedAt: washingRuns.startedAt,
           operatorName: users.fullName,
+          // Stage 5/7 fields
+          detergentType: washingRuns.detergentType,
+          suintRecoveredLiters: washingRuns.suintRecoveredLiters,
         })
         .from(washingRuns)
         .leftJoin(laveries, eq(washingRuns.laverieId, laveries.id))
@@ -76,8 +79,17 @@ export class LaverieRepository {
           safetyStatus: qualifications.safetyStatus,
           fiberLengthMm: qualifications.fiberLengthMm,
           fiberDiameterMicron: qualifications.fiberDiameterMicron,
+          moisturePercent: qualifications.moisturePercent,
+          color: qualifications.color,
           performedAt: qualifications.performedAt,
           analystName: users.fullName,
+          // Stage 7 — Certificat de pureté
+          residualHumidityPercent: qualifications.residualHumidityPercent,
+          residualSuintPercent: qualifications.residualSuintPercent,
+          whitenessIndex: qualifications.whitenessIndex,
+          phLevel: qualifications.phLevel,
+          energyKwhUsed: qualifications.energyKwhUsed,
+          waterLitersPerKg: qualifications.waterLitersPerKg,
         })
         .from(qualifications)
         .leftJoin(users, eq(qualifications.performedBy, users.id))
@@ -111,6 +123,10 @@ export class LaverieRepository {
           laverieName: laveries.name,
           weightKg: lots.actualWeightKg,
           receivedAt: laverieReceptions.receivedAt,
+          // Stage 5 fields
+          conditioningState: laverieReceptions.conditioningState,
+          requiredWashTempC: laverieReceptions.requiredWashTempC,
+          requiredDetergentType: laverieReceptions.requiredDetergentType,
         })
         .from(lots)
         .leftJoin(laveries, eq(lots.currentLocationId, laveries.id))

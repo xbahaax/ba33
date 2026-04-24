@@ -220,6 +220,12 @@ export interface DepotOverviewResponse {
     toleranceExceeded: boolean;
     zoneCode: string | null;
     receivedAt: string;
+    // Stage 3
+    lotClassification: string | null;
+    stackTemperatureC: string | null;
+    humidityEntryPercent: string | null;
+    vegetalMatterPercent: string | null;
+    plannedExitDate: string | null;
   }>;
   recentAlerts: Array<{
     id: string;
@@ -249,6 +255,11 @@ export interface DepotOverviewResponse {
     weightKg: string | null;
     depotName: string | null;
     zoneCode: string | null;
+    // Stage 3 (from reception)
+    lotClassification: string | null;
+    vegetalMatterPercent: string | null;
+    humidityEntryPercent: string | null;
+    plannedExitDate: string | null;
   }>;
   zones: Array<{
     id: string;
@@ -315,6 +326,9 @@ export interface LaverieOverviewResponse {
     waterTempC: string | null;
     startedAt: string;
     operatorName: string | null;
+    // Stage 5/7
+    detergentType: string | null;
+    suintRecoveredLiters: string | null;
   }>;
   recentQualifications: Array<{
     id: string;
@@ -323,8 +337,17 @@ export interface LaverieOverviewResponse {
     safetyStatus: string;
     fiberLengthMm: string | null;
     fiberDiameterMicron: string | null;
+    moisturePercent: string | null;
+    color: string | null;
     performedAt: string;
     analystName: string | null;
+    // Stage 7 — Certificat de pureté
+    residualHumidityPercent: string | null;
+    residualSuintPercent: string | null;
+    whitenessIndex: string | null;
+    phLevel: string | null;
+    energyKwhUsed: string | null;
+    waterLitersPerKg: string | null;
   }>;
   receptionQueue: Array<{
     id: string;
@@ -342,6 +365,10 @@ export interface LaverieOverviewResponse {
     laverieName: string | null;
     weightKg: string | null;
     receivedAt: string | null;
+    // Stage 5
+    conditioningState: string | null;
+    requiredWashTempC: string | null;
+    requiredDetergentType: string | null;
   }>;
   qualificationQueue: Array<{
     id: string;
@@ -385,6 +412,17 @@ export interface TransformationOverviewResponse {
     outputWeightKg: string | null;
     startedAt: string;
     operatorName: string | null;
+    // Stage 6 — Engrais direct
+    drynessIndex: string | null;
+    foreignBodyPresent: boolean | null;
+    unloadingMode: string | null;
+    // Stage 8 — Isolants/Géotextiles
+    productDestinationType: string | null;
+    targetThicknessMm: string | null;
+    targetDensityKgM3: string | null;
+    antimitesTreatmentType: string | null;
+    bindingFiberPercent: string | null;
+    fireRetardantProduct: string | null;
   }>;
   recentProducts: Array<{
     id: string;

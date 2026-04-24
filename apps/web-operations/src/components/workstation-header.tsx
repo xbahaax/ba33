@@ -3,7 +3,6 @@
 import type { ReactNode } from "react";
 import { Badge, Button } from "@ba33/ui-web";
 import { LogOut } from "lucide-react";
-import { useRouter } from "next/navigation";
 import { useSession } from "@/components/session-provider";
 import { setStoredAccessToken } from "@/lib/api";
 import { formatEnumLabel } from "@/lib/format";
@@ -14,8 +13,6 @@ interface WorkstationHeaderProps {
 
 export function WorkstationHeader({ nav }: WorkstationHeaderProps) {
   const { session } = useSession();
-  const router = useRouter();
-
   function handleLogout() {
     setStoredAccessToken(null);
     window.location.href = "/login";

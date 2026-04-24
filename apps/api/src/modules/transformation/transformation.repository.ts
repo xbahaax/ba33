@@ -50,6 +50,17 @@ export class TransformationRepository {
             outputWeightKg: productionRuns.outputWeightKg,
             startedAt: productionRuns.startedAt,
             operatorName: users.fullName,
+            // Stage 6 — Engrais direct
+            drynessIndex: productionRuns.drynessIndex,
+            foreignBodyPresent: productionRuns.foreignBodyPresent,
+            unloadingMode: productionRuns.unloadingMode,
+            // Stage 8 — Isolants/Géotextiles
+            productDestinationType: productionRuns.productDestinationType,
+            targetThicknessMm: productionRuns.targetThicknessMm,
+            targetDensityKgM3: productionRuns.targetDensityKgM3,
+            antimitesTreatmentType: productionRuns.antimitesTreatmentType,
+            bindingFiberPercent: productionRuns.bindingFiberPercent,
+            fireRetardantProduct: productionRuns.fireRetardantProduct,
           })
           .from(productionRuns)
           .leftJoin(transformers, eq(productionRuns.transformerId, transformers.id))

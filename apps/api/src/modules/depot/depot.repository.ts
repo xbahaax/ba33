@@ -73,6 +73,12 @@ export class DepotRepository {
           toleranceExceeded: depotReceptions.toleranceExceeded,
           zoneCode: depotZones.code,
           receivedAt: depotReceptions.receivedAt,
+          // Stage 3 fields
+          lotClassification: depotReceptions.lotClassification,
+          stackTemperatureC: depotReceptions.stackTemperatureC,
+          humidityEntryPercent: depotReceptions.humidityEntryPercent,
+          vegetalMatterPercent: depotReceptions.vegetalMatterPercent,
+          plannedExitDate: depotReceptions.plannedExitDate,
         })
         .from(depotReceptions)
         .leftJoin(depots, eq(depotReceptions.depotId, depots.id))
@@ -119,6 +125,11 @@ export class DepotRepository {
           weightKg: lots.actualWeightKg,
           depotName: depots.name,
           zoneCode: depotZones.code,
+          // Stage 3 fields from reception
+          lotClassification: depotReceptions.lotClassification,
+          vegetalMatterPercent: depotReceptions.vegetalMatterPercent,
+          humidityEntryPercent: depotReceptions.humidityEntryPercent,
+          plannedExitDate: depotReceptions.plannedExitDate,
         })
         .from(lots)
         .leftJoin(depots, eq(lots.currentLocationId, depots.id))
