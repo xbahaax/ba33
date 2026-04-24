@@ -15,7 +15,7 @@ export function ConfirmActionDialog({
   title: string;
   description: string;
   confirmLabel: string;
-  onConfirm: () => void;
+  onConfirm: () => void | Promise<void>;
   destructive?: boolean;
 }) {
   return (

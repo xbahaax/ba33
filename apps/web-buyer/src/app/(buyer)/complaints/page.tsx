@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { Plus, Clock, CheckCircle, XCircle, MessageSquareWarning, AlertCircle } from "lucide-react";
 import { Button, Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@ba33/ui-web";
-import { complaints } from "@/lib/mock/orders";
+import { getComplaints } from "@/lib/api/buyer-api";
 
 const statusConfig: Record<string, { label: string; className: string; icon: React.ElementType }> = {
   review: {
@@ -28,7 +28,8 @@ const typeLabels: Record<string, string> = {
   other: "Autre",
 };
 
-export default function ComplaintsPage() {
+export default async function ComplaintsPage() {
+  const complaints = await getComplaints();
   const inReview = complaints.filter((c) => c.status === "review").length;
 
   return (

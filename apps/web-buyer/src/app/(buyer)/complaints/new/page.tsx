@@ -1,5 +1,5 @@
 import { ComplaintForm } from "@/components/buyer/complaints/complaint-form";
-import { orders } from "@/lib/mock/orders";
+import { getOrders } from "@/lib/api/buyer-api";
 
 type ComplaintSearchParams = Promise<Record<string, string | string[] | undefined>>;
 
@@ -10,6 +10,7 @@ function getParam(value: string | string[] | undefined) {
 export default async function NewComplaintPage({ searchParams }: { searchParams: ComplaintSearchParams }) {
   const params = await searchParams;
   const orderId = getParam(params.orderId);
+  const orders = await getOrders();
 
   return (
     <div className="mx-auto max-w-180 space-y-6">
@@ -18,7 +19,7 @@ export default async function NewComplaintPage({ searchParams }: { searchParams:
       </div>
       <ComplaintForm orders={orders} selectedOrderId={orderId} />
       <div className="rounded-xl border border-chart-1/30 bg-chart-1/10 p-8 text-center">
-        <p className="font-mono font-bold text-foreground">REC-2026-0091</p>
+        <p className="font-mono font-bold text-foreground">Traitement NFN</p>
         <p className="mt-2 text-sm text-muted-foreground">Délai de traitement estimé : 5 jours ouvrables</p>
       </div>
     </div>

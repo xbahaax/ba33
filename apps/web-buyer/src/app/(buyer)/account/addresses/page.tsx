@@ -1,11 +1,11 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Button, Dialog, DialogClose, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger, Input } from "@ba33/ui-web";
 import { Edit, Trash2 } from "lucide-react";
-import { addresses as mockAddresses } from "@/lib/mock/orders";
 import type { Address } from "@/lib/types/order";
 import { ConfirmActionDialog } from "@/components/buyer/shared/confirm-action-dialog";
+import { createAddress, deleteAddress, getAddresses, updateAddress } from "@/lib/api/buyer-api";
 
 type AddressDraft = {
   siteName: string;
@@ -28,10 +28,24 @@ const emptyDraft: AddressDraft = {
 };
 
 export default function AddressesPage() {
-  const [addresses, setAddresses] = useState<Address[]>(mockAddresses);
+  const [addresses, setAddresses] = useState<Address[]>([]);
   const [draft, setDraft] = useState<AddressDraft>(emptyDraft);
   const [editingId, setEditingId] = useState<string | null>(null);
   const dialogTitle = useMemo(() => (editingId ? "Modifier une adresse" : "Ajouter une adresse"), [editingId]);
+
+  useEffect(() => {
+    let active = true;
+
+    void getAddresses().then((items) => {
+      if (active) {
+        setAddresses(items);
+      }
+    });
+
+    return () => {
+      active = false;
+    };
+  }, []);
 
   const openCreate = () => {
     setEditingId(null);
@@ -51,36 +65,27 @@ export default function AddressesPage() {
     });
   };
 
-  const saveDraft = () => {
+  const saveDraft = async () => {
     if (!draft.siteName || !draft.line1 || !draft.commune || !draft.wilaya || !draft.postalCode) {
       return;
     }
 
     if (editingId) {
-      setAddresses((current) =>
-        current.map((address) =>
-          address.id === editingId
-            ? {
-                ...address,
-                ...draft,
-                line2: draft.line2 || undefined,
-                instructions: draft.instructions || undefined,
-              }
-            : address
-        )
-      );
-      return;
-    }
-
-    setAddresses((current) => [
-      ...current,
-      {
-        id: `ADDR-${Date.now()}`,
+      const updatedAddress = await updateAddress(editingId, {
         ...draft,
         line2: draft.line2 || undefined,
         instructions: draft.instructions || undefined,
-      },
-    ]);
+      });
+      setAddresses((current) => current.map((address) => (address.id === editingId ? updatedAddress : address)));
+      return;
+    }
+
+    const createdAddress = await createAddress({
+      ...draft,
+      line2: draft.line2 || undefined,
+      instructions: draft.instructions || undefined,
+    });
+    setAddresses((current) => [...current, createdAddress]);
   };
 
   return (
@@ -208,7 +213,10 @@ export default function AddressesPage() {
                 description="Cette adresse sera retirée de la liste de livraison."
                 confirmLabel="Supprimer"
                 destructive
-                onConfirm={() => setAddresses((current) => current.filter((item) => item.id !== address.id))}
+                onConfirm={async () => {
+                  await deleteAddress(address.id);
+                  setAddresses((current) => current.filter((item) => item.id !== address.id));
+                }}
               />
 
               {!address.isDefault ? (
@@ -221,14 +229,15 @@ export default function AddressesPage() {
                   title="Définir par défaut"
                   description="Cette adresse deviendra l'adresse principale pour les prochaines commandes."
                   confirmLabel="Définir"
-                  onConfirm={() =>
+                  onConfirm={async () => {
+                    await updateAddress(address.id, { isDefault: true });
                     setAddresses((current) =>
                       current.map((item) => ({
                         ...item,
                         isDefault: item.id === address.id,
                       }))
-                    )
-                  }
+                    );
+                  }}
                 />
               ) : null}
             </div>

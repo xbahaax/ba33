@@ -1,3 +1,7 @@
+"use client";
+
+import { useState } from "react";
+import { createComplaint } from "@/lib/api/buyer-api";
 import type { ComplaintType, Order } from "@/lib/types/order";
 
 const complaintTypes: Array<{ value: ComplaintType; label: string }> = [
@@ -9,8 +13,25 @@ const complaintTypes: Array<{ value: ComplaintType; label: string }> = [
 ];
 
 export function ComplaintForm({ orders, selectedOrderId }: { orders: Order[]; selectedOrderId?: string }) {
+  const [createdComplaintId, setCreatedComplaintId] = useState<string | null>(null);
+
   return (
-    <div className="space-y-8 rounded-xl border border-border bg-card p-6 text-card-foreground shadow-xs">
+    <form
+      className="space-y-8 rounded-xl border border-border bg-card p-6 text-card-foreground shadow-xs"
+      onSubmit={async (event) => {
+        event.preventDefault();
+        const formData = new FormData(event.currentTarget);
+        const orderId = String(formData.get("orderId") ?? selectedOrderId ?? orders[0]?.id ?? "");
+        const type = String(formData.get("type") ?? "other") as ComplaintType;
+
+        if (!orderId) {
+          return;
+        }
+
+        const complaint = await createComplaint({ orderId, type });
+        setCreatedComplaintId(complaint.id);
+      }}
+    >
       <div className="grid gap-3 md:grid-cols-3">
         {["Identification", "Description", "Resolution"].map((label, index) => (
           <div key={label} className="flex items-center gap-3 rounded-xl bg-muted px-4 py-3">
@@ -24,7 +45,7 @@ export function ComplaintForm({ orders, selectedOrderId }: { orders: Order[]; se
 
       <section className="space-y-4">
         <h2 className="text-lg font-semibold text-foreground">Etape 1 — Identification</h2>
-        <select defaultValue={selectedOrderId ?? orders[0]?.id} className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm">
+        <select name="orderId" defaultValue={selectedOrderId ?? orders[0]?.id} className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm">
           {orders.map((order) => (
             <option key={order.id} value={order.id}>
               {order.id} — {order.placedAt.toLocaleDateString("fr-FR")}
@@ -34,7 +55,7 @@ export function ComplaintForm({ orders, selectedOrderId }: { orders: Order[]; se
         <div className="rounded-xl bg-muted p-4 text-sm text-muted-foreground">
           Commande concernee : {selectedOrderId ?? orders[0]?.id}
         </div>
-        <select className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm">
+        <select name="type" className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm">
           {complaintTypes.map((complaintType) => (
             <option key={complaintType.value} value={complaintType.value}>
               {complaintType.label}
@@ -78,9 +99,16 @@ export function ComplaintForm({ orders, selectedOrderId }: { orders: Order[]; se
         </label>
       </section>
 
-      <button type="button" className="w-full rounded-lg bg-primary px-4 py-3 text-sm font-medium text-primary-foreground shadow-sm">
+      {createdComplaintId ? (
+        <div className="rounded-xl border border-chart-1/30 bg-chart-1/10 p-4 text-center">
+          <p className="font-mono font-bold text-foreground">{createdComplaintId}</p>
+          <p className="mt-1 text-sm text-muted-foreground">Réclamation transmise à l&apos;API ba33.</p>
+        </div>
+      ) : null}
+
+      <button type="submit" className="w-full rounded-lg bg-primary px-4 py-3 text-sm font-medium text-primary-foreground shadow-sm">
         Soumettre la réclamation
       </button>
-    </div>
+    </form>
   );
 }

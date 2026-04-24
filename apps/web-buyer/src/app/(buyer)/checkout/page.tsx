@@ -5,7 +5,7 @@ import { CheckoutSteps } from "@/components/buyer/checkout/checkout-steps";
 import { CheckoutAddressSelection } from "@/components/buyer/checkout/checkout-address-selection";
 import { OrderSummaryPanel } from "@/components/buyer/checkout/order-summary-panel";
 import { PaymentMethodSelector } from "@/components/buyer/checkout/payment-method-selector";
-import { addresses, orders } from "@/lib/mock/orders";
+import { getAddresses, getOrders } from "@/lib/api/buyer-api";
 import type { SalesChannel } from "@/lib/types/order";
 
 type CheckoutSearchParams = Promise<Record<string, string | string[] | undefined>>;
@@ -18,6 +18,7 @@ export default async function CheckoutPage({ searchParams }: { searchParams: Che
   const params = await searchParams;
   const step = Math.max(1, Math.min(3, Number(getParam(params.step) ?? "1"))) as 1 | 2 | 3;
   const channel = ((getParam(params.channel) ?? "national") as SalesChannel);
+  const [addresses, orders] = await Promise.all([getAddresses(), getOrders()]);
   const items = orders[1].items;
 
   return (

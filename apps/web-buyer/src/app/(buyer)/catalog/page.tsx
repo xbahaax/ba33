@@ -3,7 +3,7 @@ import { FileText } from "lucide-react";
 import { Button } from "@ba33/ui-web";
 import { ProductFilters } from "@/components/buyer/catalog/product-filters";
 import { ProductGrid } from "@/components/buyer/catalog/product-grid";
-import { products } from "@/lib/mock/products";
+import { getProducts } from "@/lib/api/buyer-api";
 
 type CatalogSearchParams = Promise<Record<string, string | string[] | undefined>>;
 
@@ -23,6 +23,7 @@ export default async function CatalogPage({ searchParams }: { searchParams: Cata
   const certifiedOnly = getSingleParam(params.nfn) === "1";
   const selectedGrades = (grade ?? "").split(",").filter(Boolean);
 
+  const products = await getProducts();
   let filteredProducts = [...products];
 
   if (type && type !== "all") {

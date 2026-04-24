@@ -5,7 +5,7 @@ import { TraceabilityMap } from "@/components/buyer/product/traceability-map";
 import { GradeBadge } from "@/components/buyer/shared/grade-badge";
 import { NfnSealBadge } from "@/components/buyer/catalog/nfn-seal-badge";
 import { ProductPurchasePanel } from "@/components/buyer/product/product-purchase-panel";
-import { products } from "@/lib/mock/products";
+import { getProduct } from "@/lib/api/buyer-api";
 
 type ProductPageProps = {
   params: Promise<{ productId: string }>;
@@ -13,7 +13,7 @@ type ProductPageProps = {
 
 export default async function ProductDetailPage({ params }: ProductPageProps) {
   const { productId } = await params;
-  const product = products.find((item) => item.id === productId);
+  const product = await getProduct(productId);
 
   if (!product) {
     return <div className="rounded-xl border border-border bg-card p-6 shadow-xs">Produit introuvable.</div>;

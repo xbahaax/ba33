@@ -2,7 +2,7 @@ import Link from "next/link";
 import { Button, Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@ba33/ui-web";
 import { OrderCard } from "@/components/buyer/orders/order-card";
 import { OrderStatusBadge } from "@/components/buyer/orders/order-status-badge";
-import { orders } from "@/lib/mock/orders";
+import { getOrders } from "@/lib/api/buyer-api";
 
 type OrdersSearchParams = Promise<Record<string, string | string[] | undefined>>;
 
@@ -14,6 +14,7 @@ export default async function OrdersPage({ searchParams }: { searchParams: Order
   const params = await searchParams;
   const status = getParam(params.status);
   const query = getParam(params.q)?.toLowerCase() ?? "";
+  const orders = await getOrders();
 
   const filteredOrders = orders.filter((order) => {
     const statusMatch = !status || status === "all" ? true : order.status === status;

@@ -5,7 +5,7 @@ import { OrderHeaderActions } from "@/components/buyer/orders/order-header-actio
 import { OrderStatusBadge } from "@/components/buyer/orders/order-status-badge";
 import { OrderTimeline } from "@/components/buyer/orders/order-timeline";
 import { ShipmentTracker } from "@/components/buyer/orders/shipment-tracker";
-import { orders } from "@/lib/mock/orders";
+import { getOrder } from "@/lib/api/buyer-api";
 
 type OrderDetailPageProps = {
   params: Promise<{ orderId: string }>;
@@ -13,7 +13,7 @@ type OrderDetailPageProps = {
 
 export default async function OrderDetailPage({ params }: OrderDetailPageProps) {
   const { orderId } = await params;
-  const order = orders.find((item) => item.id === orderId);
+  const order = await getOrder(orderId);
 
   if (!order) {
     return <div className="rounded-xl border border-border bg-card p-6 shadow-xs">Commande introuvable.</div>;

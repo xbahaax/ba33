@@ -4,6 +4,7 @@ import { Download, Globe, Receipt, ShieldCheck, Truck } from "lucide-react";
 import { Button } from "@ba33/ui-web";
 import type { OrderDocument } from "@/lib/types/document";
 import { DocumentPreviewModal } from "@/components/buyer/documents/document-preview-modal";
+import { getOrderDocumentText } from "@/lib/api/buyer-api";
 import { downloadTextFile } from "@/lib/download-file";
 
 const iconConfig: Record<string, { icon: React.ElementType; colorClass: string; bgClass: string; label: string }> = {
@@ -53,7 +54,7 @@ export function DocumentCard({ document }: { document: OrderDocument }) {
           size="sm"
           className="flex-1 text-xs"
           type="button"
-          onClick={() => downloadTextFile(`${document.id}.txt`, `${document.title}\nCommande: ${document.orderId}`)}
+          onClick={async () => downloadTextFile(`${document.id}.txt`, await getOrderDocumentText(document.orderId, document.id))}
         >
           <Download className="mr-1.5 h-3.5 w-3.5" />
           Télécharger
