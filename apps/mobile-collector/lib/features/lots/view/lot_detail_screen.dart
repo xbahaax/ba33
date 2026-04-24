@@ -159,6 +159,20 @@ class LotDetailScreen extends ConsumerWidget {
         LotStatus.collected => 'Collected',
         LotStatus.inTransit => 'In Transit',
         LotStatus.receivedDepot => 'Received at Depot',
+        LotStatus.preSorted => 'Pre-Sorted',
+        LotStatus.dispatched => 'Dispatched',
+        LotStatus.receivedLaverie => 'Received at Laverie',
+        LotStatus.washing => 'Washing',
+        LotStatus.washed => 'Washed',
+        LotStatus.qualified => 'Qualified',
+        LotStatus.dispatchedTransformer => 'Dispatched to Transformer',
+        LotStatus.inTransformation => 'In Transformation',
+        LotStatus.transformed => 'Transformed',
+        LotStatus.certified => 'Certified',
+        LotStatus.forSale => 'For Sale',
+        LotStatus.sold => 'Sold',
+        LotStatus.rejected => 'Rejected',
+        LotStatus.quarantined => 'Quarantined',
       };
 
   String _sourceLabel(SourceType type) => switch (type) {

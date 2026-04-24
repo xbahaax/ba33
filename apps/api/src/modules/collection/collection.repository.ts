@@ -11,7 +11,7 @@ import {
   shepherds,
   users,
 } from '../../common/database/schema';
-import { eq, and, desc } from 'drizzle-orm';
+import { eq, and, desc, lt, inArray } from 'drizzle-orm';
 
 @Injectable()
 export class CollectionRepository {
@@ -69,7 +69,28 @@ export class CollectionRepository {
     return row ?? null;
   }
 
+  async findStalePreLots(olderThan: Date) {
+    return this.db
+      .select()
+      .from(preLots)
+      .where(
+        and(
+          inArray(preLots.status, ['announced', 'assigned'] as any),
+          lt(preLots.createdAt, olderThan),
+        ),
+      );
+  }
+
   // ── Sources ──────────────────────────────────────────────
+
+  async findSourceById(sourceId: string) {
+    const [source] = await this.db
+      .select()
+      .from(sources)
+      .where(eq(sources.id, sourceId))
+      .limit(1);
+    return source ?? null;
+  }
 
   async findSourceByRegisteredBy(userId: string) {
     const [source] = await this.db

@@ -5,6 +5,7 @@ import {
 } from '@nestjs/common';
 import { CollectionRepository } from './collection.repository';
 import { EventsService } from '../events/events.service';
+import { NotificationsService } from '../notifications/notifications.service';
 import { v4 as uuid } from 'uuid';
 
 @Injectable()
@@ -12,6 +13,7 @@ export class CollectionService {
   constructor(
     private readonly collectionRepository: CollectionRepository,
     private readonly eventsService: EventsService,
+    private readonly notificationsService: NotificationsService,
   ) {}
 
   // ── Shepherd Declaration ─────────────────────────────────
@@ -188,6 +190,22 @@ export class CollectionService {
       version: 1,
     });
 
+    // Notify the shepherd about the scheduled pickup
+    const source = await this.collectionRepository.findSourceById(preLot.sourceId);
+    if (source?.registeredBy) {
+      await this.notificationsService.send({
+        userId: source.registeredBy,
+        type: 'prelot_assigned',
+        title: 'Collecte programmée',
+        body: `Un collecteur viendra récupérer votre laine le ${scheduledAt.toLocaleDateString('fr-DZ')}.`,
+        payload: {
+          preLotId,
+          collectorId,
+          scheduledAt: scheduledAt.toISOString(),
+        },
+      });
+    }
+
     return updated;
   }
 
@@ -337,5 +355,36 @@ export class CollectionService {
       serialEnd,
       issuedAt: new Date(),
     });
+  }
+
+  // ── Pre-Lot Expiration ─────────────────────────────────
+
+  async expireStalePreLots(maxAgeHours = 72) {
+    const cutoff = new Date(Date.now() - maxAgeHours * 60 * 60 * 1000);
+    const stale = await this.collectionRepository.findStalePreLots(cutoff);
+
+    const expired: string[] = [];
+    for (const preLot of stale) {
+      await this.collectionRepository.updatePreLot(preLot.id, {
+        status: 'expired' as any,
+      });
+
+      await this.eventsService.emit({
+        eventType: 'collection.prelot.expired',
+        aggregateType: 'prelot',
+        aggregateId: preLot.id,
+        actorType: 'system',
+        payload: {
+          reason: `Pre-lot exceeded ${maxAgeHours}h without completion`,
+          createdAt: preLot.createdAt,
+        },
+        occurredAt: new Date(),
+        version: 1,
+      });
+
+      expired.push(preLot.id);
+    }
+
+    return { expired, count: expired.length };
   }
 }

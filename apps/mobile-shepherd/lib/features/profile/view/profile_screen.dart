@@ -201,7 +201,7 @@ void _showNotificationSettings(BuildContext context, Ba33Colors colors) {
                   style: TextStyle(color: colors.mutedForeground),
                 ),
                 value: true,
-                activeColor: colors.primary,
+                activeTrackColor: colors.primary,
                 onChanged: (_) {},
               ),
               SwitchListTile.adaptive(
@@ -211,7 +211,7 @@ void _showNotificationSettings(BuildContext context, Ba33Colors colors) {
                   style: TextStyle(color: colors.mutedForeground),
                 ),
                 value: true,
-                activeColor: colors.primary,
+                activeTrackColor: colors.primary,
                 onChanged: (_) {},
               ),
               SwitchListTile.adaptive(
@@ -221,7 +221,7 @@ void _showNotificationSettings(BuildContext context, Ba33Colors colors) {
                   style: TextStyle(color: colors.mutedForeground),
                 ),
                 value: false,
-                activeColor: colors.primary,
+                activeTrackColor: colors.primary,
                 onChanged: (_) {},
               ),
               const SizedBox(height: Ba33Spacing.spacing4),

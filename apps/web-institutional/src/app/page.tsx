@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { Button, Card, CardHeader, CardTitle, CardDescription, Badge } from "@ba33/ui-web";
 import { Building2, BarChart3, FileText, Shield } from "lucide-react";
 
@@ -13,9 +14,11 @@ export default function InstitutionalHomePage() {
             <span className="font-semibold">ba33</span>
             <Badge variant="outline">Institutionnel</Badge>
           </div>
-          <Button variant="outline" size="sm">
-            Connexion
-          </Button>
+          <Link href="/login">
+            <Button variant="outline" size="sm">
+              Se connecter
+            </Button>
+          </Link>
         </div>
       </header>
 

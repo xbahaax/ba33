@@ -9,6 +9,7 @@ import pino from 'pino';
 import pinoHttp from 'pino-http';
 import { AppModule } from './app.module';
 import { AuditInterceptor } from './common/interceptors/audit.interceptor';
+import { HttpExceptionFilter } from './common/filters/http-exception.filter';
 
 async function bootstrap() {
   const logger = pino({ level: process.env.LOG_LEVEL || 'info' });
@@ -28,6 +29,7 @@ async function bootstrap() {
   );
 
   app.useGlobalInterceptors(new AuditInterceptor());
+  app.useGlobalFilters(new HttpExceptionFilter());
 
   const swaggerConfig = new DocumentBuilder()
     .setTitle('BA33 Platform API')
