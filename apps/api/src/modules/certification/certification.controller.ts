@@ -1,82 +1,54 @@
-import {
-  Controller,
-  Get,
-  Post,
-  Patch,
-  Param,
-  Body,
-  UseGuards,
-  Req,
-} from '@nestjs/common';
-import { ApiTags, ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
+import { Body, Controller, Get, Param, Post, UseGuards } from '@nestjs/common';
+import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
+import { CurrentUser, RequirePermissions } from '../../common/auth/decorators';
 import { JwtAuthGuard } from '../../common/auth/jwt-auth.guard';
-import { RolesGuard } from '../../common/auth/roles.guard';
-import { Roles } from '../../common/auth/roles.decorator';
+import { PermissionsGuard } from '../../common/auth/permissions.guard';
+import { IssueCertificationDto } from './dto/issue-certification.dto';
+import { RevokeCertificationDto } from './dto/revoke-certification.dto';
 import { CertificationService } from './certification.service';
 
 @ApiTags('certification')
+@ApiBearerAuth()
+@UseGuards(JwtAuthGuard, PermissionsGuard)
 @Controller('certification')
 export class CertificationController {
   constructor(private readonly certificationService: CertificationService) {}
 
-  // Public endpoint — no auth required
-  @Get('verify/:code')
-  @ApiOperation({ summary: 'Public certificate verification by product code' })
-  async verify(@Param('code') code: string) {
-    return this.certificationService.verify(code);
+  @RequirePermissions('certification.view')
+  @Get('overview')
+  getOverview() {
+    return this.certificationService.getOverview();
   }
 
-  @Post('certify')
-  @ApiBearerAuth()
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('central_admin')
-  @ApiOperation({ summary: 'Certify a product (validates all gates)' })
-  async certify(
-    @Body() dto: { productId: string; productCode: string },
-    @Req() req: any,
+  @RequirePermissions('certification.manage')
+  @Post(':certificationId/issue')
+  issue(
+    @Param('certificationId') certificationId: string,
+    @Body() input: IssueCertificationDto,
+    @CurrentUser('id') actorId: string,
+    @CurrentUser('userType') actorType: string,
   ) {
-    return this.certificationService.certifyProduct(
-      dto.productId, dto.productCode, req.user.id,
+    return this.certificationService.issue(
+      certificationId,
+      input,
+      actorId,
+      actorType,
     );
   }
 
-  @Post('validate-gates')
-  @ApiBearerAuth()
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('central_admin')
-  @ApiOperation({ summary: 'Check gate validation status without issuing' })
-  async validateGates(
-    @Body() dto: { productId: string; productCode: string },
+  @RequirePermissions('certification.manage')
+  @Post(':certificationId/revoke')
+  revoke(
+    @Param('certificationId') certificationId: string,
+    @Body() input: RevokeCertificationDto,
+    @CurrentUser('id') actorId: string,
+    @CurrentUser('userType') actorType: string,
   ) {
-    return this.certificationService.validateGates(dto.productId, dto.productCode);
-  }
-
-  @Patch(':id/revoke')
-  @ApiBearerAuth()
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('central_admin')
-  @ApiOperation({ summary: 'Revoke a certificate' })
-  async revoke(
-    @Param('id') id: string,
-    @Body() dto: { reason: string },
-    @Req() req: any,
-  ) {
-    return this.certificationService.revokeCertificate(id, dto.reason, req.user.id);
-  }
-
-  @Get(':id')
-  @ApiBearerAuth()
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @ApiOperation({ summary: 'Get certification by ID' })
-  async get(@Param('id') id: string) {
-    return this.certificationService.getCertification(id);
-  }
-
-  @Get('product/:code')
-  @ApiBearerAuth()
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @ApiOperation({ summary: 'Get certification by product code' })
-  async getByCode(@Param('code') code: string) {
-    return this.certificationService.getByProductCode(code);
+    return this.certificationService.revoke(
+      certificationId,
+      input,
+      actorId,
+      actorType,
+    );
   }
 }

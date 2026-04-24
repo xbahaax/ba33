@@ -1,261 +1,409 @@
-import { Injectable, Inject } from '@nestjs/common';
+import {
+  BadRequestException,
+  Inject,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
+import { and, desc, eq, inArray, isNull, sql } from 'drizzle-orm';
 import { DATABASE_TOKEN } from '../../common/database/database.module';
 import type { Database } from '../../common/database/client';
 import {
-  transformers,
   boms,
-  productionRuns,
-  productionRunLots,
+  certifications,
+  lots,
   products,
+  productionRunLots,
+  productionRuns,
+  transformers,
+  users,
   wasteRecords,
 } from '../../common/database/schema';
-import { eq, and, desc } from 'drizzle-orm';
+import { appendWorkflowEvent } from '../../common/workflow/workflow-events';
+import { CompleteProductionRunDto } from './dto/complete-production-run.dto';
+import { CreateProductionRunDto } from './dto/create-production-run.dto';
 
 @Injectable()
 export class TransformationRepository {
   constructor(@Inject(DATABASE_TOKEN) private readonly db: Database) {}
 
-  // --- Transformers ---
+  async getOverview() {
+    const [facilities, activeRuns, recentProducts, runCount, dispatchQueue, bomRows] =
+      await Promise.all([
+        this.db
+          .select({
+            id: transformers.id,
+            name: transformers.name,
+            track: transformers.track,
+            address: transformers.address,
+            dailyCapacityKg: transformers.dailyCapacityKg,
+            active: transformers.active,
+            managerName: users.fullName,
+          })
+          .from(transformers)
+          .leftJoin(users, eq(transformers.managerId, users.id))
+          .orderBy(desc(transformers.createdAt)),
+        this.db
+          .select({
+            id: productionRuns.id,
+            transformerName: transformers.name,
+            inputWeightKg: productionRuns.inputWeightKg,
+            outputWeightKg: productionRuns.outputWeightKg,
+            startedAt: productionRuns.startedAt,
+            operatorName: users.fullName,
+          })
+          .from(productionRuns)
+          .leftJoin(transformers, eq(productionRuns.transformerId, transformers.id))
+          .leftJoin(users, eq(productionRuns.operatedBy, users.id))
+          .where(isNull(productionRuns.completedAt))
+          .orderBy(desc(productionRuns.startedAt))
+          .limit(6),
+        this.db
+          .select({
+            id: products.id,
+            productCode: products.productCode,
+            productTypeCode: products.productTypeCode,
+            track: products.track,
+            quantity: products.quantity,
+            weightKg: products.weightKg,
+            status: products.status,
+            createdAt: products.createdAt,
+          })
+          .from(products)
+          .orderBy(desc(products.createdAt))
+          .limit(8),
+        this.db
+          .select({
+            count: sql<number>`count(*)::int`,
+          })
+          .from(productionRuns),
+        this.db
+          .select({
+            id: lots.id,
+            qrCode: lots.qrCode,
+            status: lots.status,
+            weightKg: lots.actualWeightKg,
+            transformerId: lots.currentLocationId,
+            transformerName: transformers.name,
+            track: transformers.track,
+          })
+          .from(lots)
+          .leftJoin(transformers, eq(lots.currentLocationId, transformers.id))
+          .where(inArray(lots.status, ['dispatched_to_d3', 'dispatched_to_d4']))
+          .orderBy(desc(lots.updatedAt))
+          .limit(8),
+        this.db
+          .select({
+            id: boms.id,
+            transformerId: boms.transformerId,
+            transformerName: transformers.name,
+            track: transformers.track,
+            productTypeCode: boms.productTypeCode,
+            productName: boms.productName,
+            version: boms.version,
+            inputWoolKgPerUnit: boms.inputWoolKgPerUnit,
+            expectedYieldPercent: boms.expectedYieldPercent,
+          })
+          .from(boms)
+          .leftJoin(transformers, eq(boms.transformerId, transformers.id))
+          .where(eq(boms.active, true))
+          .orderBy(transformers.name, boms.productName),
+      ]);
 
-  async createTransformer(data: {
-    name: string;
-    track: 'd3_textile' | 'd4_bio';
-    regionId: string;
-    address: string;
-    dailyCapacityKg: string;
-    managerId?: string;
-  }) {
-    const [transformer] = await this.db
-      .insert(transformers)
-      .values(data)
-      .returning();
-    return transformer;
+    return {
+      summary: {
+        totalTransformers: facilities.length,
+        activeTransformers: facilities.filter((facility) => facility.active).length,
+        activeRuns: activeRuns.length,
+        totalRuns: runCount[0]?.count ?? 0,
+        recentProducts: recentProducts.length,
+      },
+      transformers: facilities,
+      activeRuns,
+      recentProducts,
+      dispatchQueue,
+      boms: bomRows,
+    };
   }
 
-  async findTransformerById(id: string) {
-    const [transformer] = await this.db
-      .select()
-      .from(transformers)
-      .where(eq(transformers.id, id));
-    return transformer ?? null;
-  }
+  async startProductionRun(
+    input: CreateProductionRunDto,
+    actorId: string,
+    actorType: string,
+  ) {
+    const [lot] = await this.db
+      .select({
+        id: lots.id,
+        qrCode: lots.qrCode,
+        status: lots.status,
+      })
+      .from(lots)
+      .where(eq(lots.id, input.lotId))
+      .limit(1);
 
-  async findAllTransformers(track?: 'd3_textile' | 'd4_bio') {
-    const conditions = [];
-    if (track) {
-      conditions.push(eq(transformers.track, track));
+    if (!lot) {
+      throw new NotFoundException('Lot introuvable.');
     }
-    conditions.push(eq(transformers.active, true));
 
-    return this.db
-      .select()
-      .from(transformers)
-      .where(and(...conditions))
-      .orderBy(desc(transformers.createdAt));
-  }
+    if (!['dispatched_to_d3', 'dispatched_to_d4'].includes(lot.status)) {
+      throw new BadRequestException('Le lot n’est pas prêt pour une transformation.');
+    }
 
-  // --- BOMs ---
-
-  async createBom(data: {
-    transformerId: string;
-    productTypeCode: string;
-    productName: string;
-    inputWoolKgPerUnit: string;
-    additives?: unknown;
-    expectedYieldPercent: string;
-    version: number;
-  }) {
-    const [bom] = await this.db.insert(boms).values(data).returning();
-    return bom;
-  }
-
-  async findBomsByTransformer(transformerId: string) {
-    return this.db
-      .select()
-      .from(boms)
-      .where(
-        and(eq(boms.transformerId, transformerId), eq(boms.active, true)),
-      )
-      .orderBy(desc(boms.createdAt));
-  }
-
-  async findBomById(id: string) {
     const [bom] = await this.db
-      .select()
+      .select({
+        id: boms.id,
+        transformerId: boms.transformerId,
+        version: boms.version,
+      })
       .from(boms)
-      .where(eq(boms.id, id));
-    return bom ?? null;
+      .where(eq(boms.id, input.bomId))
+      .limit(1);
+
+    if (!bom || bom.transformerId !== input.transformerId) {
+      throw new BadRequestException('Le BOM sélectionné n’appartient pas au transformateur.');
+    }
+
+    const [existingRun] = await this.db
+      .select({ id: productionRuns.id })
+      .from(productionRuns)
+      .innerJoin(productionRunLots, eq(productionRuns.id, productionRunLots.runId))
+      .where(
+        and(
+          eq(productionRunLots.lotId, input.lotId),
+          isNull(productionRuns.completedAt),
+        ),
+      )
+      .limit(1);
+
+    if (existingRun) {
+      throw new BadRequestException('Un run actif utilise déjà ce lot.');
+    }
+
+    const startedAt = new Date();
+
+    return this.db.transaction(async (tx) => {
+      const [run] = await tx
+        .insert(productionRuns)
+        .values({
+          transformerId: input.transformerId,
+          bomId: input.bomId,
+          bomVersion: bom.version,
+          inputWeightKg: input.inputWeightKg.toFixed(2),
+          startedAt,
+          operatedBy: actorId,
+        })
+        .returning({
+          id: productionRuns.id,
+          startedAt: productionRuns.startedAt,
+        });
+
+      await tx.insert(productionRunLots).values({
+        runId: run.id,
+        lotId: input.lotId,
+        weightUsedKg: input.inputWeightKg.toFixed(2),
+      });
+
+      await tx
+        .update(lots)
+        .set({
+          currentLocationId: input.transformerId,
+          currentLocationType: 'transformer',
+          status: 'in_transformation',
+          updatedAt: startedAt,
+        })
+        .where(eq(lots.id, input.lotId));
+
+      await appendWorkflowEvent(tx, {
+        aggregateId: run.id,
+        aggregateType: 'production_run',
+        actorId,
+        actorType,
+        eventType: 'production_started',
+        occurredAt: startedAt,
+        payload: {
+          bomId: input.bomId,
+          inputWeightKg: input.inputWeightKg,
+          lotId: input.lotId,
+          lotQrCode: lot.qrCode,
+          transformerId: input.transformerId,
+        },
+      });
+
+      return {
+        id: run.id,
+        lotId: input.lotId,
+        status: 'in_transformation',
+        startedAt: run.startedAt,
+      };
+    });
   }
 
-  // --- Production Runs ---
-
-  async createProductionRun(data: {
-    transformerId: string;
-    bomId: string;
-    bomVersion: number;
-    inputWeightKg: string;
-    startedAt: Date;
-    operatedBy: string;
-  }) {
-    const [run] = await this.db
-      .insert(productionRuns)
-      .values(data)
-      .returning();
-    return run;
-  }
-
-  async updateProductionRun(
-    id: string,
-    data: {
-      inputWeightKg?: string;
-      outputWeightKg?: string;
-      wasteWeightKg?: string;
-      yieldPercent?: string;
-      completedAt?: Date;
-    },
+  async completeProductionRun(
+    runId: string,
+    input: CompleteProductionRunDto,
+    actorId: string,
+    actorType: string,
   ) {
     const [run] = await this.db
-      .update(productionRuns)
-      .set(data)
-      .where(eq(productionRuns.id, id))
-      .returning();
-    return run;
-  }
-
-  async findProductionRun(id: string) {
-    const [run] = await this.db
-      .select()
-      .from(productionRuns)
-      .where(eq(productionRuns.id, id));
-    return run ?? null;
-  }
-
-  async findProductionRunsByTransformer(transformerId: string) {
-    return this.db
-      .select()
-      .from(productionRuns)
-      .where(eq(productionRuns.transformerId, transformerId))
-      .orderBy(desc(productionRuns.startedAt));
-  }
-
-  // --- Production Run Lots ---
-
-  async addRunLot(runId: string, lotId: string, weightUsed: string) {
-    const [runLot] = await this.db
-      .insert(productionRunLots)
-      .values({
-        runId,
-        lotId,
-        weightUsedKg: weightUsed,
+      .select({
+        id: productionRuns.id,
+        transformerId: productionRuns.transformerId,
+        bomId: productionRuns.bomId,
+        inputWeightKg: productionRuns.inputWeightKg,
+        completedAt: productionRuns.completedAt,
+        track: transformers.track,
+        productTypeCode: boms.productTypeCode,
       })
-      .returning();
-    return runLot;
-  }
+      .from(productionRuns)
+      .leftJoin(transformers, eq(productionRuns.transformerId, transformers.id))
+      .leftJoin(boms, eq(productionRuns.bomId, boms.id))
+      .where(eq(productionRuns.id, runId))
+      .limit(1);
 
-  async findRunLots(runId: string) {
-    return this.db
-      .select()
+    if (!run) {
+      throw new NotFoundException('Run de transformation introuvable.');
+    }
+
+    if (run.completedAt) {
+      throw new BadRequestException('Ce run est déjà clôturé.');
+    }
+
+    if (!run.track || !run.productTypeCode) {
+      throw new BadRequestException('Le run est incomplet: track ou type produit manquant.');
+    }
+
+    const track = run.track;
+    const productTypeCode = run.productTypeCode;
+
+    const lotRows = await this.db
+      .select({
+        lotId: productionRunLots.lotId,
+      })
       .from(productionRunLots)
       .where(eq(productionRunLots.runId, runId));
-  }
 
-  // --- Products ---
+    const yieldPercent =
+      Number(run.inputWeightKg ?? 0) > 0
+        ? (input.outputWeightKg / Number(run.inputWeightKg)) * 100
+        : 0;
+    const completedAt = new Date();
+    const prefix = track === 'd4_bio' ? 'P2' : 'P1';
 
-  async createProduct(data: {
-    productionRunId: string;
-    productCode: string;
-    productTypeCode: string;
-    track: 'd3_textile' | 'd4_bio';
-    quantity: string;
-    unit: string;
-    weightKg: string;
-    status?: 'in_production' | 'produced' | 'certified' | 'sold' | 'shipped' | 'delivered' | 'rejected';
-    certificationId?: string;
-  }) {
-    const [product] = await this.db
-      .insert(products)
-      .values(data)
-      .returning();
-    return product;
-  }
-
-  async findProductById(id: string) {
-    const [product] = await this.db
-      .select()
+    const [productCount] = await this.db
+      .select({
+        count: sql<number>`count(*)::int`,
+      })
       .from(products)
-      .where(eq(products.id, id));
-    return product ?? null;
-  }
+      .where(eq(products.track, track));
 
-  async findProductByCode(code: string) {
-    const [product] = await this.db
-      .select()
-      .from(products)
-      .where(eq(products.productCode, code));
-    return product ?? null;
-  }
+    const generatedProductCode = `${prefix}-AUTO-${String(
+      (productCount?.count ?? 0) + 1,
+    ).padStart(4, '0')}`;
+    const productCode = input.productCode?.trim() || generatedProductCode;
 
-  async findProducts(filters?: {
-    track?: 'd3_textile' | 'd4_bio';
-    status?: string;
-    productionRunId?: string;
-  }) {
-    const conditions = [];
-    if (filters?.track) {
-      conditions.push(eq(products.track, filters.track));
-    }
-    if (filters?.status) {
-      conditions.push(eq(products.status, filters.status as any));
-    }
-    if (filters?.productionRunId) {
-      conditions.push(eq(products.productionRunId, filters.productionRunId));
-    }
+    return this.db.transaction(async (tx) => {
+      await tx
+        .update(productionRuns)
+        .set({
+          outputWeightKg: input.outputWeightKg.toFixed(2),
+          wasteWeightKg: input.wasteWeightKg.toFixed(2),
+          yieldPercent: yieldPercent.toFixed(2),
+          completedAt,
+        })
+        .where(eq(productionRuns.id, runId));
 
-    return this.db
-      .select()
-      .from(products)
-      .where(conditions.length > 0 ? and(...conditions) : undefined)
-      .orderBy(desc(products.createdAt));
-  }
+      const [product] = await tx
+        .insert(products)
+        .values({
+          productionRunId: runId,
+          productCode,
+          productTypeCode,
+          track,
+          quantity: input.quantity.toFixed(2),
+          unit: input.unit?.trim() || 'unités',
+          weightKg: input.outputWeightKg.toFixed(2),
+          status: 'produced',
+          createdAt: completedAt,
+          updatedAt: completedAt,
+        })
+        .returning({
+          id: products.id,
+          productCode: products.productCode,
+          createdAt: products.createdAt,
+        });
 
-  async updateProduct(
-    id: string,
-    data: {
-      status?: 'in_production' | 'produced' | 'certified' | 'sold' | 'shipped' | 'delivered' | 'rejected';
-      certificationId?: string;
-      updatedAt?: Date;
-    },
-  ) {
-    const [product] = await this.db
-      .update(products)
-      .set(data)
-      .where(eq(products.id, id))
-      .returning();
-    return product;
-  }
+      const [certification] = await tx
+        .insert(certifications)
+        .values({
+          productId: product.id,
+          productCode,
+          status: 'pending',
+          gatesPassed: {
+            traceability: true,
+            qualification: true,
+            packaging: false,
+          },
+          qrCodeUrl: `https://example.local/cert/${product.id}`,
+          createdAt: completedAt,
+          updatedAt: completedAt,
+        })
+        .returning({
+          id: certifications.id,
+        });
 
-  // --- Waste Records ---
+      await tx
+        .update(products)
+        .set({
+          certificationId: certification.id,
+          updatedAt: completedAt,
+        })
+        .where(eq(products.id, product.id));
 
-  async createWasteRecord(data: {
-    productionRunId?: string;
-    washingRunId?: string;
-    amountKg: string;
-    category: 'reusable' | 'recoverable' | 'disposal';
-    destination?: string;
-    recordedBy: string;
-    recordedAt: Date;
-  }) {
-    const [record] = await this.db
-      .insert(wasteRecords)
-      .values(data)
-      .returning();
-    return record;
-  }
+      if (input.wasteWeightKg > 0) {
+        await tx.insert(wasteRecords).values({
+          productionRunId: runId,
+          amountKg: input.wasteWeightKg.toFixed(2),
+          category: 'recoverable',
+          destination: 'Rework queue',
+          recordedBy: actorId,
+          recordedAt: completedAt,
+        });
+      }
 
-  async findWasteByRun(runId: string) {
-    return this.db
-      .select()
-      .from(wasteRecords)
-      .where(eq(wasteRecords.productionRunId, runId));
+      const lotIds = lotRows.map((row) => row.lotId);
+
+      if (lotIds.length > 0) {
+        await tx
+          .update(lots)
+          .set({
+            status: 'transformed',
+            updatedAt: completedAt,
+          })
+          .where(inArray(lots.id, lotIds));
+      }
+
+      await appendWorkflowEvent(tx, {
+        aggregateId: runId,
+        aggregateType: 'production_run',
+        actorId,
+        actorType,
+        eventType: 'production_completed',
+        occurredAt: completedAt,
+        payload: {
+          outputWeightKg: input.outputWeightKg,
+          productCode,
+          quantity: input.quantity,
+          wasteWeightKg: input.wasteWeightKg,
+          yieldPercent,
+        },
+      });
+
+      return {
+        id: product.id,
+        certificationId: certification.id,
+        productCode: product.productCode,
+        status: 'produced',
+        createdAt: product.createdAt,
+      };
+    });
   }
 }

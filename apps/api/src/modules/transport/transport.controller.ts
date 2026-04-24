@@ -26,6 +26,8 @@ import { DeliverLotDto } from './dto/deliver-lot.dto';
 import { AddGpsPointDto } from './dto/add-gps-point.dto';
 import { CreateTransporterDto } from './dto/create-transporter.dto';
 import { ConfirmPickupDto } from './dto/confirm-pickup.dto';
+import { AdvanceTransportJobDto } from './dto/advance-transport-job.dto';
+import { CurrentUser } from '../../common/auth/decorators';
 
 @ApiTags('transport')
 @ApiBearerAuth()
@@ -155,5 +157,24 @@ export class TransportController {
       dto.vehicleInfo,
       dto.certifications,
     );
+  }
+
+  // ── Web-ops endpoints ─────────────────────────────────────
+
+  @Get('overview')
+  @ApiOperation({ summary: 'Transport overview for operations dashboard' })
+  getOverview() {
+    return this.transportService.getOverview();
+  }
+
+  @Post('jobs/:jobId/actions')
+  @ApiOperation({ summary: 'Advance a transport job state (web-ops)' })
+  advanceJob(
+    @Param('jobId') jobId: string,
+    @Body() input: AdvanceTransportJobDto,
+    @CurrentUser('id') actorId: string,
+    @CurrentUser('userType') actorType: string,
+  ) {
+    return this.transportService.advanceJob(jobId, input, actorId, actorType);
   }
 }

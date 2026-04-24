@@ -1,8 +1,8 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { Injectable, NotFoundException, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
-import * as bcrypt from 'bcryptjs';
-import * as crypto from 'crypto';
 import { AuthRepository } from './auth.repository';
+import { getDefaultPermissionsForUserType, mergePermissions } from '../../common/auth/rbac';
+import type { DevLoginDto } from './dto/dev-login.dto';
 
 @Injectable()
 export class AuthService {
@@ -11,118 +11,81 @@ export class AuthService {
     private readonly jwtService: JwtService,
   ) {}
 
-  async login(password: string, email?: string, phone?: string) {
-    if (!email && !phone) {
-      throw new UnauthorizedException('Email or phone is required');
+  async loginDev(input: DevLoginDto) {
+    const candidate =
+      input.userId
+        ? await this.authRepository.findUserById(input.userId)
+        : input.email
+          ? await this.authRepository.findUserByEmail(input.email)
+          : await this.authRepository.findUserByEmail('admin@ba33.local');
+
+    if (!candidate) {
+      throw new NotFoundException('No matching development persona was found.');
     }
 
-    const user = phone
-      ? await this.authRepository.findUserByPhone(phone)
-      : await this.authRepository.findUserByEmail(email!);
+    if (candidate.status !== 'active') {
+      throw new UnauthorizedException('The selected user is not active.');
+    }
+
+    const session = this.buildSession(candidate);
+
+    return {
+      accessToken: this.jwtService.sign({
+        sub: session.user.id,
+        email: session.user.email,
+        type: session.user.userType,
+        fullName: session.user.fullName,
+        regionId: session.user.regionId,
+        permissions: session.permissions,
+      }),
+      session,
+    };
+  }
+
+  async getCurrentSession(userId: string) {
+    const user = await this.authRepository.findUserById(userId);
+
     if (!user) {
-      throw new UnauthorizedException('Invalid credentials');
+      throw new NotFoundException('The current user no longer exists.');
     }
 
     if (user.status !== 'active') {
-      throw new UnauthorizedException('Account is not active');
+      throw new UnauthorizedException('The current user is not active.');
     }
 
-    const isPasswordValid = await bcrypt.compare(password, user.passwordHash);
-    if (!isPasswordValid) {
-      throw new UnauthorizedException('Invalid credentials');
-    }
-
-    const payload = { sub: user.id, email: user.email, type: user.userType };
-
-    const accessToken = this.jwtService.sign(payload, { expiresIn: '15m' });
-    const refreshToken = this.jwtService.sign(
-      { ...payload, tokenType: 'refresh' },
-      { expiresIn: '7d' },
-    );
-
-    const refreshTokenHash = crypto
-      .createHash('sha256')
-      .update(refreshToken)
-      .digest('hex');
-
-    const expiresAt = new Date();
-    expiresAt.setDate(expiresAt.getDate() + 7);
-
-    await this.authRepository.createSession(
-      user.id,
-      refreshTokenHash,
-      null,
-      expiresAt,
-    );
-
-    return { accessToken, refreshToken };
+    return this.buildSession(user);
   }
 
-  async refresh(refreshToken: string) {
-    let decoded: { sub: string; email: string; type: string };
-    try {
-      decoded = this.jwtService.verify(refreshToken);
-    } catch {
-      throw new UnauthorizedException('Invalid or expired refresh token');
-    }
-
-    const refreshTokenHash = crypto
-      .createHash('sha256')
-      .update(refreshToken)
-      .digest('hex');
-
-    const session =
-      await this.authRepository.findSessionByToken(refreshTokenHash);
-    if (!session) {
-      throw new UnauthorizedException('Refresh token not found or revoked');
-    }
-
-    if (new Date() > session.expiresAt) {
-      await this.authRepository.revokeSession(session.id);
-      throw new UnauthorizedException('Refresh token expired');
-    }
-
-    // Revoke the old session (token rotation)
-    await this.authRepository.revokeSession(session.id);
-
-    const user = await this.authRepository.findUserById(decoded.sub);
-    if (!user || user.status !== 'active') {
-      throw new UnauthorizedException('User not found or inactive');
-    }
-
-    const payload = { sub: user.id, email: user.email, type: user.userType };
-
-    const newAccessToken = this.jwtService.sign(payload, { expiresIn: '15m' });
-    const newRefreshToken = this.jwtService.sign(
-      { ...payload, tokenType: 'refresh' },
-      { expiresIn: '7d' },
-    );
-
-    const newRefreshTokenHash = crypto
-      .createHash('sha256')
-      .update(newRefreshToken)
-      .digest('hex');
-
-    const expiresAt = new Date();
-    expiresAt.setDate(expiresAt.getDate() + 7);
-
-    await this.authRepository.createSession(
-      user.id,
-      newRefreshTokenHash,
-      null,
-      expiresAt,
-    );
-
-    return { accessToken: newAccessToken, refreshToken: newRefreshToken };
+  async listPersonas() {
+    return this.authRepository.listInternalPersonas();
   }
 
-  async getProfile(userId: string) {
-    const user = await this.authRepository.findUserById(userId);
+  private buildSession(user: Awaited<ReturnType<AuthRepository['findUserById']>>) {
     if (!user) {
-      throw new UnauthorizedException('User not found');
+      throw new UnauthorizedException('Unable to build a session.');
     }
 
-    const { passwordHash, ...profile } = user;
-    return profile;
+    const assignedPermissions = user.assignedRoles.flatMap((role) => role.permissions);
+    const effectivePermissions = mergePermissions(
+      getDefaultPermissionsForUserType(user.userType),
+      assignedPermissions,
+    );
+
+    return {
+      user: {
+        id: user.id,
+        email: user.email,
+        fullName: user.fullName,
+        phone: user.phone,
+        userType: user.userType,
+        status: user.status,
+        regionId: user.regionId,
+        regionName: user.regionName,
+        lastLoginAt: user.lastLoginAt?.toISOString() ?? null,
+      },
+      permissions: effectivePermissions,
+      assignedRoles: user.assignedRoles,
+      hasWebOperationsAccess: effectivePermissions.length > 0,
+    };
   }
 }

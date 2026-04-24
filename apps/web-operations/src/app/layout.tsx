@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Inter, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 import { AppSidebar } from "@/components/app-sidebar";
+import { SessionProvider } from "@/components/session-provider";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -25,11 +26,11 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="fr" className={`${inter.variable} ${jetbrainsMono.variable}`}>
-      <body className="flex h-screen overflow-hidden">
-        <AppSidebar />
-        <main className="flex-1 overflow-y-auto">
-          {children}
-        </main>
+      <body className="min-h-screen bg-background text-foreground">
+        <SessionProvider>
+          <AppSidebar />
+          <main className="min-w-0 lg:ml-72">{children}</main>
+        </SessionProvider>
       </body>
     </html>
   );

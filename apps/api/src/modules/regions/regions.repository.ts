@@ -1,67 +1,44 @@
-import { Injectable, Inject } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
+import { asc, sql } from 'drizzle-orm';
 import { DATABASE_TOKEN } from '../../common/database/database.module';
 import type { Database } from '../../common/database/client';
 import { regions } from '../../common/database/schema';
-import { eq } from 'drizzle-orm';
 
 @Injectable()
 export class RegionsRepository {
   constructor(@Inject(DATABASE_TOKEN) private readonly db: Database) {}
 
-  async findAll(type?: 'wilaya' | 'commune' | 'village') {
-    if (type) {
-      return this.db
-        .select()
-        .from(regions)
-        .where(eq(regions.type, type))
-        .orderBy(regions.code);
-    }
-    return this.db.select().from(regions).orderBy(regions.code);
-  }
-
-  async findById(id: string) {
-    const [region] = await this.db
-      .select()
+  async getOverview() {
+    const typeBreakdown = await this.db
+      .select({
+        type: regions.type,
+        count: sql<number>`count(*)::int`,
+      })
       .from(regions)
-      .where(eq(regions.id, id));
-    return region ?? null;
-  }
+      .groupBy(regions.type)
+      .orderBy(regions.type);
 
-  async findByCode(code: string) {
-    const [region] = await this.db
-      .select()
+    const regionRows = await this.db
+      .select({
+        id: regions.id,
+        name: regions.name,
+        code: regions.code,
+        parentId: regions.parentId,
+        type: regions.type,
+        latitude: regions.latitude,
+        longitude: regions.longitude,
+        createdAt: regions.createdAt,
+      })
       .from(regions)
-      .where(eq(regions.code, code));
-    return region ?? null;
-  }
+      .orderBy(asc(regions.type), asc(regions.name))
+      .limit(30);
 
-  async findChildren(parentId: string) {
-    return this.db
-      .select()
-      .from(regions)
-      .where(eq(regions.parentId, parentId))
-      .orderBy(regions.code);
-  }
-
-  async create(data: {
-    id: string;
-    name: string;
-    code: string;
-    type: 'wilaya' | 'commune' | 'village';
-    parentId?: string;
-    latitude?: string;
-    longitude?: string;
-  }) {
-    const [region] = await this.db.insert(regions).values(data).returning();
-    return region;
-  }
-
-  async seed(wilayaData: Array<{
-    id: string;
-    name: string;
-    code: string;
-    type: 'wilaya';
-  }>) {
-    return this.db.insert(regions).values(wilayaData).onConflictDoNothing().returning();
+    return {
+      summary: {
+        totalRegions: typeBreakdown.reduce((sum, row) => sum + row.count, 0),
+        typeBreakdown,
+      },
+      regions: regionRows,
+    };
   }
 }

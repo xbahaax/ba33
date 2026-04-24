@@ -6,6 +6,9 @@ export interface JwtPayload {
   sub: string;
   email: string;
   type: string;
+  fullName?: string;
+  regionId?: string | null;
+  permissions?: string[];
   iat?: number;
   exp?: number;
 }
@@ -21,6 +24,13 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
   }
 
   async validate(payload: JwtPayload) {
-    return { id: payload.sub, email: payload.email, type: payload.type };
+    return {
+      id: payload.sub,
+      email: payload.email,
+      type: payload.type,
+      fullName: payload.fullName,
+      regionId: payload.regionId ?? null,
+      permissions: payload.permissions ?? [],
+    };
   }
 }

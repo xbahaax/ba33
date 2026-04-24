@@ -1,4 +1,4 @@
-import { Injectable, Inject } from '@nestjs/common';
+import { BadRequestException, Injectable, Inject, NotFoundException } from '@nestjs/common';
 import { DATABASE_TOKEN } from '../../common/database/database.module';
 import type { Database } from '../../common/database/client';
 import {
@@ -8,8 +8,11 @@ import {
   transporters,
   users,
   preLots,
+  lots,
 } from '../../common/database/schema';
-import { eq, and, desc } from 'drizzle-orm';
+import { eq, and, desc, inArray, or, sql } from 'drizzle-orm';
+import { appendWorkflowEvent } from '../../common/workflow/workflow-events';
+import { AdvanceTransportJobDto } from './dto/advance-transport-job.dto';
 
 @Injectable()
 export class TransportRepository {
@@ -192,5 +195,106 @@ export class TransportRepository {
       .where(eq(preLots.id, preLotId))
       .returning();
     return row ?? null;
+  }
+
+  async getOverview() {
+    const statusBreakdown = await this.db
+      .select({ status: transportJobs.status, count: sql<number>`count(*)::int` })
+      .from(transportJobs)
+      .groupBy(transportJobs.status)
+      .orderBy(transportJobs.status);
+
+    const recentJobs = await this.db
+      .select({
+        id: transportJobs.id,
+        status: transportJobs.status,
+        lane: transportJobs.lane,
+        originType: transportJobs.originType,
+        destinationType: transportJobs.destinationType,
+        requestedAt: transportJobs.requestedAt,
+        acceptedAt: transportJobs.acceptedAt,
+        completedAt: transportJobs.completedAt,
+        slaDeadline: transportJobs.slaDeadline,
+        transporterName: users.fullName,
+      })
+      .from(transportJobs)
+      .leftJoin(users, eq(transportJobs.transporterId, users.id))
+      .orderBy(desc(transportJobs.requestedAt))
+      .limit(8);
+
+    const [urgentJobs] = await this.db
+      .select({ count: sql<number>`count(*)::int` })
+      .from(transportJobs)
+      .where(or(eq(transportJobs.lane, 'urgent_cold_chain'), eq(transportJobs.lane, 'urgent_standard')));
+
+    const jobIds = recentJobs.map((j) => j.id);
+    const lotCounts = jobIds.length === 0 ? [] : await this.db
+      .select({ jobId: transportJobLots.jobId, lotCount: sql<number>`count(*)::int` })
+      .from(transportJobLots)
+      .where(inArray(transportJobLots.jobId, jobIds))
+      .groupBy(transportJobLots.jobId);
+
+    const lotMap = new Map(lotCounts.map((r) => [r.jobId, r.lotCount]));
+    const breakdownMap = new Map(statusBreakdown.map((r) => [r.status, r.count]));
+
+    return {
+      summary: {
+        totalJobs: statusBreakdown.reduce((s, r) => s + r.count, 0),
+        pendingJobs: (breakdownMap.get('pending') ?? 0) + (breakdownMap.get('assigned') ?? 0) + (breakdownMap.get('accepted') ?? 0),
+        activeJobs: breakdownMap.get('in_progress') ?? 0,
+        deliveredJobs: breakdownMap.get('delivered') ?? 0,
+        cancelledJobs: breakdownMap.get('cancelled') ?? 0,
+        urgentJobs: urgentJobs?.count ?? 0,
+        statusBreakdown,
+      },
+      jobs: recentJobs.map((j) => ({ ...j, lotCount: lotMap.get(j.id) ?? 0 })),
+    };
+  }
+
+  async advanceJob(jobId: string, input: AdvanceTransportJobDto, actorId: string, actorType: string) {
+    const [job] = await this.db
+      .select({ id: transportJobs.id, status: transportJobs.status, destinationId: transportJobs.destinationId, destinationType: transportJobs.destinationType })
+      .from(transportJobs)
+      .where(eq(transportJobs.id, jobId))
+      .limit(1);
+
+    if (!job) throw new NotFoundException('Job transport introuvable.');
+
+    const now = new Date();
+
+    return this.db.transaction(async (tx) => {
+      if (input.action === 'accept') {
+        if (!['pending', 'assigned'].includes(job.status)) throw new BadRequestException('Le job ne peut pas être accepté.');
+        await tx.update(transportJobs).set({ status: 'accepted', acceptedAt: now, updatedAt: now }).where(eq(transportJobs.id, jobId));
+      }
+
+      if (input.action === 'start') {
+        if (!['pending', 'assigned', 'accepted'].includes(job.status)) throw new BadRequestException('Le job ne peut pas démarrer.');
+        await tx.update(transportJobs).set({ status: 'in_progress', updatedAt: now }).where(eq(transportJobs.id, jobId));
+      }
+
+      if (input.action === 'deliver') {
+        if (!['accepted', 'in_progress'].includes(job.status)) throw new BadRequestException('Le job ne peut pas être clôturé.');
+        const jobLots = await tx.select({ lotId: transportJobLots.lotId }).from(transportJobLots).where(eq(transportJobLots.jobId, jobId));
+        await tx.update(transportJobs).set({ status: 'delivered', completedAt: now, updatedAt: now }).where(eq(transportJobs.id, jobId));
+        await tx.update(transportJobLots).set({ deliveredAt: now, deliveredWeightKg: sql`coalesce(${transportJobLots.deliveredWeightKg}, ${transportJobLots.loadedWeightKg})` }).where(eq(transportJobLots.jobId, jobId));
+        const lotIds = jobLots.map((r) => r.lotId);
+        if (lotIds.length > 0) {
+          await tx.update(lots).set({ currentLocationId: job.destinationId, currentLocationType: job.destinationType, updatedAt: now }).where(inArray(lots.id, lotIds));
+        }
+      }
+
+      await appendWorkflowEvent(tx, {
+        aggregateId: jobId, aggregateType: 'transport_job',
+        actorId, actorType,
+        eventType: input.action === 'accept' ? 'transport_accepted' : input.action === 'start' ? 'transport_started' : 'transport_delivered',
+        payload: { action: input.action, destinationId: job.destinationId, destinationType: job.destinationType },
+      });
+
+      const [updated] = await tx
+        .select({ id: transportJobs.id, status: transportJobs.status, lane: transportJobs.lane, requestedAt: transportJobs.requestedAt, completedAt: transportJobs.completedAt })
+        .from(transportJobs).where(eq(transportJobs.id, jobId)).limit(1);
+      return updated;
+    });
   }
 }

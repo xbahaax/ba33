@@ -5,6 +5,7 @@ import {
   Logger,
 } from '@nestjs/common';
 import { TransportRepository } from './transport.repository';
+import { AdvanceTransportJobDto } from './dto/advance-transport-job.dto';
 import { EventsService } from '../events/events.service';
 import { RulesService } from '../rules/rules.service';
 import { NotificationsService } from '../notifications/notifications.service';
@@ -547,5 +548,13 @@ export class TransportService {
       certifications: certs,
       active: true,
     });
+  }
+
+  getOverview() {
+    return this.transportRepository.getOverview();
+  }
+
+  advanceJob(jobId: string, input: AdvanceTransportJobDto, actorId: string, actorType: string) {
+    return this.transportRepository.advanceJob(jobId, input, actorId, actorType);
   }
 }

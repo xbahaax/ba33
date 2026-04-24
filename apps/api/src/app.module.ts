@@ -1,5 +1,4 @@
 import { Module } from '@nestjs/common';
-import { ScheduleModule } from '@nestjs/schedule';
 import { DatabaseModule } from './common/database/database.module';
 import { QueueModule } from './common/queues/queue.module';
 import { AuthModule } from './modules/auth/auth.module';
@@ -21,12 +20,10 @@ import { SalesModule } from './modules/sales/sales.module';
 import { InstitutionalModule } from './modules/institutional/institutional.module';
 import { SyncModule } from './modules/sync/sync.module';
 import { NotificationsModule } from './modules/notifications/notifications.module';
-import { SeedModule } from './modules/seed/seed.module';
-import { TasksModule } from './common/tasks/tasks.module';
+import { OperationsModule } from './modules/operations/operations.module';
 
 @Module({
   imports: [
-    ScheduleModule.forRoot(),
     DatabaseModule,
     QueueModule,
     AuthModule,
@@ -48,8 +45,7 @@ import { TasksModule } from './common/tasks/tasks.module';
     InstitutionalModule,
     SyncModule,
     NotificationsModule,
-    SeedModule,
-    TasksModule,
+    OperationsModule,
   ],
 })
 export class AppModule {}
