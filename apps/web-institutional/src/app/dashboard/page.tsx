@@ -1,18 +1,15 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import Link from "next/link";
 import { Card, CardHeader, CardTitle, CardContent, Badge } from "@ba33/ui-web";
 import { BarChart3, Package, Users, MapPin, TrendingUp, ArrowRight, AlertCircle } from "lucide-react";
 import { NATIONAL_KPIS, MONTHLY_PRODUCTION, AUDIT_LOG } from "@/lib/mock-data";
-import { getSession, getInstitution } from "@/lib/auth";
+import { getSession } from "@/lib/auth";
 
 export default function DashboardOverviewPage() {
-  const [institution, setInstitution] = useState<ReturnType<typeof getInstitution>>(undefined);
-
   useEffect(() => {
-    const s = getSession();
-    if (s) setInstitution(getInstitution(s.institutionId));
+    getSession();
   }, []);
 
   const maxKg = Math.max(...MONTHLY_PRODUCTION.map((m) => m.kg));

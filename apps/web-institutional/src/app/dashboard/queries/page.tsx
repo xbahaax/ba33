@@ -1,8 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { Card, CardHeader, CardTitle, CardContent, Badge, Button, Input } from "@ba33/ui-web";
-import { Search, QrCode, Package, CheckCircle2, XCircle, Clock, AlertCircle } from "lucide-react";
+import { Card, CardHeader, CardTitle, CardContent, Badge, Button } from "@ba33/ui-web";
+import { Search, CheckCircle2, XCircle, AlertCircle } from "lucide-react";
 import { MOCK_LOTS, CERTIFICATES, type MockLot, type Certificate } from "@/lib/mock-data";
 
 type TabType = "lots" | "certificates";
@@ -23,8 +23,6 @@ export default function QueriesPage() {
   const [searchedLot, setSearchedLot] = useState<MockLot | null>(null);
   const [searchedCert, setSearchedCert] = useState<Certificate | null>(null);
   const [notFound, setNotFound] = useState(false);
-  const [justification, setJustification] = useState("");
-  const [showJustification, setShowJustification] = useState(false);
 
   const handleLotSearch = () => {
     setNotFound(false);
