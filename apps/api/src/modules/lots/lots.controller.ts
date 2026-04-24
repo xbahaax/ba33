@@ -127,4 +127,33 @@ export class LotsController {
   ) {
     return this.lotsService.addSignature(id, dto.type, dto.fileId, dto.signedByName);
   }
+
+  @Post(':id/split')
+  @Roles('depot_manager', 'central_admin')
+  @ApiOperation({ summary: 'Split a lot into multiple child lots' })
+  @ApiParam({ name: 'id', type: 'string', format: 'uuid' })
+  async split(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() dto: { splits: Array<{ weightKg: string; stateQuick?: 'clean' | 'dirty' | 'very_dirty' | 'contaminated' | 'with_meat'; notes?: string }> },
+    @Req() req: any,
+  ) {
+    return this.lotsService.splitLot(id, dto.splits, req.user.id);
+  }
+
+  @Post('merge')
+  @Roles('depot_manager', 'transformer_operator', 'central_admin')
+  @ApiOperation({ summary: 'Merge multiple lots into one' })
+  async merge(
+    @Body() dto: { parentLotIds: string[]; qrCode: string; notes?: string },
+    @Req() req: any,
+  ) {
+    return this.lotsService.mergeLots(dto.parentLotIds, { qrCode: dto.qrCode, notes: dto.notes }, req.user.id);
+  }
+
+  @Get(':id/lineage')
+  @ApiOperation({ summary: 'Get lot lineage (split/merge history)' })
+  @ApiParam({ name: 'id', type: 'string', format: 'uuid' })
+  async getLineage(@Param('id', ParseUUIDPipe) id: string) {
+    return this.lotsService.getLineage(id);
+  }
 }

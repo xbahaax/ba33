@@ -121,4 +121,10 @@ export class DepotController {
   async resolveAlert(@Param('id') alertId: string) {
     return this.depotService.resolveAlert(alertId);
   }
+
+  @Get(':id/aging')
+  @ApiOperation({ summary: 'FIFO aging report — lots sorted by age with degradation flags' })
+  async getAgingReport(@Param('id') depotId: string) {
+    return this.depotService.getAgingReport(depotId);
+  }
 }

@@ -470,7 +470,7 @@ export default function DashboardPage() {
                     >
                       <td className="py-3 px-2">
                         <code className="font-mono text-xs bg-muted px-2 py-1 rounded-md">
-                          {lot.qrCodeHash.substring(0, 12)}...
+                          {(lot.qrCode || lot.id || '—').substring(0, 16)}
                         </code>
                       </td>
                       <td className="py-3 px-2">

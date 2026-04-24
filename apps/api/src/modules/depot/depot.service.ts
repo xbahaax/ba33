@@ -393,4 +393,49 @@ export class DepotService {
       resolvedAt: new Date(),
     });
   }
+
+  // ── FIFO Aging ──────────────────────────────────────────
+
+  async getAgingReport(depotId: string) {
+    const receptions = await this.depotRepository.findReceptions(depotId);
+    const now = Date.now();
+
+    const DEGRADATION_WARNING_HOURS = 48;
+    const DEGRADATION_CRITICAL_HOURS = 96;
+
+    const report = receptions.map((r) => {
+      const receivedAt = new Date(r.receivedAt).getTime();
+      const ageHours = (now - receivedAt) / (1000 * 60 * 60);
+
+      let aging: 'fresh' | 'warning' | 'critical';
+      if (ageHours >= DEGRADATION_CRITICAL_HOURS) {
+        aging = 'critical';
+      } else if (ageHours >= DEGRADATION_WARNING_HOURS) {
+        aging = 'warning';
+      } else {
+        aging = 'fresh';
+      }
+
+      return {
+        lotId: r.lotId,
+        receivedAt: r.receivedAt,
+        ageHours: Math.round(ageHours * 10) / 10,
+        aging,
+        actualWeightKg: r.actualWeightKg,
+        zoneId: r.zoneId,
+      };
+    });
+
+    // Sort FIFO: oldest first
+    report.sort((a, b) => b.ageHours - a.ageHours);
+
+    return {
+      depotId,
+      totalLots: report.length,
+      critical: report.filter((r) => r.aging === 'critical').length,
+      warning: report.filter((r) => r.aging === 'warning').length,
+      fresh: report.filter((r) => r.aging === 'fresh').length,
+      lots: report,
+    };
+  }
 }

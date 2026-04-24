@@ -18,6 +18,7 @@ async function bootstrap() {
     logger: ['error', 'warn', 'log', 'debug', 'verbose'],
   });
 
+  app.enableCors();
   app.use(pinoHttp({ logger }));
 
   app.useGlobalPipes(
