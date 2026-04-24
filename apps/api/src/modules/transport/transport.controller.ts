@@ -1,8 +1,9 @@
-import { Controller, Get, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Param, Post, UseGuards } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
-import { RequirePermissions } from '../../common/auth/decorators';
+import { CurrentUser, RequirePermissions } from '../../common/auth/decorators';
 import { JwtAuthGuard } from '../../common/auth/jwt-auth.guard';
 import { PermissionsGuard } from '../../common/auth/permissions.guard';
+import { AdvanceTransportJobDto } from './dto/advance-transport-job.dto';
 import { TransportService } from './transport.service';
 
 @ApiTags('transport')
@@ -16,5 +17,16 @@ export class TransportController {
   @Get('overview')
   getOverview() {
     return this.transportService.getOverview();
+  }
+
+  @RequirePermissions('transport.manage')
+  @Post('jobs/:jobId/actions')
+  advanceJob(
+    @Param('jobId') jobId: string,
+    @Body() input: AdvanceTransportJobDto,
+    @CurrentUser('id') actorId: string,
+    @CurrentUser('userType') actorType: string,
+  ) {
+    return this.transportService.advanceJob(jobId, input, actorId, actorType);
   }
 }

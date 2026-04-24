@@ -206,6 +206,41 @@ export interface DepotOverviewResponse {
     firedAt: string;
     resolvedAt: string | null;
   }>;
+  intakeQueue: Array<{
+    id: string;
+    qrCode: string;
+    sourceType: string | null;
+    urgency: string | null;
+    status: string;
+    declaredWeightKg: string | null;
+    actualWeightKg: string | null;
+    collectedAt: string | null;
+    currentLocationType: string | null;
+  }>;
+  dispatchQueue: Array<{
+    id: string;
+    qrCode: string;
+    sourceType: string | null;
+    urgency: string | null;
+    status: string;
+    weightKg: string | null;
+    depotName: string | null;
+    zoneCode: string | null;
+  }>;
+  zones: Array<{
+    id: string;
+    depotId: string;
+    depotName: string | null;
+    code: string;
+    purpose: string;
+    capacityKg: string;
+    currentWeightKg: string;
+  }>;
+  laveries: Array<{
+    id: string;
+    name: string;
+    regionName: string | null;
+  }>;
 }
 
 export interface TransportOverviewResponse {
@@ -260,12 +295,46 @@ export interface LaverieOverviewResponse {
   }>;
   recentQualifications: Array<{
     id: string;
+    lotId: string;
     grade: string;
     safetyStatus: string;
     fiberLengthMm: string | null;
     fiberDiameterMicron: string | null;
     performedAt: string;
     analystName: string | null;
+  }>;
+  receptionQueue: Array<{
+    id: string;
+    qrCode: string;
+    sourceType: string | null;
+    urgency: string | null;
+    laverieId: string | null;
+    laverieName: string | null;
+    weightKg: string | null;
+  }>;
+  washQueue: Array<{
+    id: string;
+    qrCode: string;
+    laverieId: string | null;
+    laverieName: string | null;
+    weightKg: string | null;
+    receivedAt: string | null;
+  }>;
+  qualificationQueue: Array<{
+    id: string;
+    lotId: string;
+    lotQrCode: string | null;
+    laverieId: string;
+    laverieName: string | null;
+    dirtyWeightKg: string;
+    cleanWeightKg: string | null;
+    startedAt: string;
+    completedAt: string | null;
+  }>;
+  transformers: Array<{
+    id: string;
+    name: string;
+    track: string;
   }>;
 }
 
@@ -304,6 +373,26 @@ export interface TransformationOverviewResponse {
     status: string;
     createdAt: string;
   }>;
+  dispatchQueue: Array<{
+    id: string;
+    qrCode: string;
+    status: string;
+    weightKg: string | null;
+    transformerId: string | null;
+    transformerName: string | null;
+    track: string | null;
+  }>;
+  boms: Array<{
+    id: string;
+    transformerId: string;
+    transformerName: string | null;
+    track: string | null;
+    productTypeCode: string;
+    productName: string;
+    version: number;
+    inputWoolKgPerUnit: string;
+    expectedYieldPercent: string;
+  }>;
 }
 
 export interface SalesOverviewResponse {
@@ -324,6 +413,8 @@ export interface SalesOverviewResponse {
     currency: string;
     createdAt: string;
     confirmedAt: string | null;
+    shipmentStatus: string | null;
+    trackingReference: string | null;
     buyerCompanyName: string | null;
   }>;
 }
@@ -341,11 +432,73 @@ export interface CertificationOverviewResponse {
     productCode: string;
     status: string;
     qrCodeUrl: string;
+    gatesPassed: Record<string, boolean> | null;
     issuedAt: string | null;
     revokedAt: string | null;
+    revokedReason: string | null;
     createdAt: string;
     issuedByName: string | null;
   }>;
+}
+
+export interface DepotReceptionActionInput {
+  depotId: string;
+  lotId: string;
+  zoneId?: string;
+  actualWeightKg: number;
+  notes?: string;
+}
+
+export interface DepotDispatchActionInput {
+  depotId: string;
+  lotId: string;
+  destinationLaverieId: string;
+  manifestWeightKg?: number;
+}
+
+export interface LaverieReceptionActionInput {
+  laverieId: string;
+  lotId: string;
+  receivedWeightKg: number;
+}
+
+export interface WashingRunActionInput {
+  laverieId: string;
+  lotId: string;
+  dirtyWeightKg: number;
+  waterLiters?: number;
+  cycleDurationMinutes?: number;
+  waterTempC?: number;
+}
+
+export interface LaverieQualificationActionInput {
+  washingRunId: string;
+  cleanWeightKg: number;
+  grade: "A" | "B" | "C" | "reject";
+  safetyStatus: "clear" | "flagged" | "rejected";
+  fiberLengthMm?: number;
+  fiberDiameterMicron?: number;
+  moisturePercent?: number;
+  cleanlinessScore?: number;
+  color?: string;
+  contaminationNotes?: string;
+  dispatchTrack: "d3_textile" | "d4_bio" | "quarantine" | "reject";
+  targetTransformerId?: string;
+}
+
+export interface ProductionRunActionInput {
+  transformerId: string;
+  lotId: string;
+  bomId: string;
+  inputWeightKg: number;
+}
+
+export interface CompleteProductionRunActionInput {
+  outputWeightKg: number;
+  wasteWeightKg: number;
+  quantity: number;
+  productCode?: string;
+  unit?: string;
 }
 
 export interface UsersOverviewResponse {
@@ -765,6 +918,134 @@ export function updateA1AlertStatus(
 
 export function getUserAccessOverview() {
   return fetchApi<UserAccessOverviewResponse>("/users/access-overview");
+}
+
+export function createDepotReception(input: DepotReceptionActionInput) {
+  return mutateApi<{ id: string; lotId: string; status: string; receivedAt: string }>(
+    "/depot/receptions",
+    {
+      method: "POST",
+      body: input,
+    },
+  );
+}
+
+export function createDepotDispatch(input: DepotDispatchActionInput) {
+  return mutateApi<{ id: string; lotId: string; status: string; dispatchedAt: string }>(
+    "/depot/dispatches",
+    {
+      method: "POST",
+      body: input,
+    },
+  );
+}
+
+export function createLaverieReception(input: LaverieReceptionActionInput) {
+  return mutateApi<{ id: string; lotId: string; status: string; receivedAt: string }>(
+    "/laverie/receptions",
+    {
+      method: "POST",
+      body: input,
+    },
+  );
+}
+
+export function startWashingRun(input: WashingRunActionInput) {
+  return mutateApi<{ id: string; lotId: string; status: string; startedAt: string }>(
+    "/laverie/washing-runs",
+    {
+      method: "POST",
+      body: input,
+    },
+  );
+}
+
+export function createLaverieQualification(input: LaverieQualificationActionInput) {
+  return mutateApi<{ id: string; lotId: string; status: string; performedAt: string }>(
+    "/laverie/qualifications",
+    {
+      method: "POST",
+      body: input,
+    },
+  );
+}
+
+export function startProductionRun(input: ProductionRunActionInput) {
+  return mutateApi<{ id: string; lotId: string; status: string; startedAt: string }>(
+    "/transformation/runs",
+    {
+      method: "POST",
+      body: input,
+    },
+  );
+}
+
+export function completeProductionRun(
+  runId: string,
+  input: CompleteProductionRunActionInput,
+) {
+  return mutateApi<{
+    id: string;
+    certificationId: string;
+    productCode: string;
+    status: string;
+    createdAt: string;
+  }>(`/transformation/runs/${runId}/complete`, {
+    method: "PATCH",
+    body: input,
+  });
+}
+
+export function advanceTransportJob(
+  jobId: string,
+  action: "accept" | "start" | "deliver",
+) {
+  return mutateApi<TransportOverviewResponse["jobs"][number]>(
+    `/transport/jobs/${jobId}/actions`,
+    {
+      method: "POST",
+      body: { action },
+    },
+  );
+}
+
+export function advanceOrder(
+  orderId: string,
+  input: { action: "confirm" | "mark_paid" | "ship" | "deliver"; trackingReference?: string },
+) {
+  return mutateApi<SalesOverviewResponse["orders"][number]>(
+    `/sales/orders/${orderId}/actions`,
+    {
+      method: "POST",
+      body: input,
+    },
+  );
+}
+
+export function issueCertification(
+  certificationId: string,
+  input: { force?: boolean } = {},
+) {
+  return mutateApi<CertificationOverviewResponse["certifications"][number]>(
+    `/certification/${certificationId}/issue`,
+    {
+      method: "POST",
+      body: input,
+    },
+  );
+}
+
+export function revokeCertification(
+  certificationId: string,
+  input: { reason: string },
+) {
+  return mutateApi<CertificationOverviewResponse["certifications"][number]>(
+    `/certification/${certificationId}/revoke`,
+    {
+      method: "POST",
+      body: input,
+    },
+  );
 }
 
 export function updateUserAccess(

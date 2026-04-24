@@ -5,8 +5,8 @@ import {
   CardHeader,
   CardTitle,
 } from "@ba33/ui-web";
+import { CertificationWorkflowPage } from "@/components/certification-workflow-page";
 import { MetricCard } from "@/components/metric-card";
-import { OperationsRoutePage } from "@/components/operations-route-page";
 import { PageHeader } from "@/components/page-header";
 import { StatusBadge } from "@/components/status-badge";
 import { UnavailableState } from "@/components/unavailable-state";
@@ -15,7 +15,7 @@ import { formatDateTime } from "@/lib/format";
 
 
 export default function CertificationPage() {
-  return <OperationsRoutePage routeKey="certification" />;
+  return <CertificationWorkflowPage />;
 }
 
 void LegacyCertificationPage;

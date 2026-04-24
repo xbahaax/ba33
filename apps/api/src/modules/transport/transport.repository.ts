@@ -1,8 +1,15 @@
-import { Inject, Injectable } from '@nestjs/common';
+import {
+  BadRequestException,
+  Inject,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { desc, eq, inArray, or, sql } from 'drizzle-orm';
 import { DATABASE_TOKEN } from '../../common/database/database.module';
 import type { Database } from '../../common/database/client';
-import { transportJobs, transportJobLots, users } from '../../common/database/schema';
+import { lots, transportJobs, transportJobLots, users } from '../../common/database/schema';
+import { appendWorkflowEvent } from '../../common/workflow/workflow-events';
+import { AdvanceTransportJobDto } from './dto/advance-transport-job.dto';
 
 @Injectable()
 export class TransportRepository {
@@ -82,5 +89,147 @@ export class TransportRepository {
         lotCount: lotCountMap.get(job.id) ?? 0,
       })),
     };
+  }
+
+  async advanceJob(
+    jobId: string,
+    input: AdvanceTransportJobDto,
+    actorId: string,
+    actorType: string,
+  ) {
+    const [job] = await this.db
+      .select({
+        id: transportJobs.id,
+        status: transportJobs.status,
+        destinationId: transportJobs.destinationId,
+        destinationType: transportJobs.destinationType,
+      })
+      .from(transportJobs)
+      .where(eq(transportJobs.id, jobId))
+      .limit(1);
+
+    if (!job) {
+      throw new NotFoundException('Job transport introuvable.');
+    }
+
+    const now = new Date();
+
+    return this.db.transaction(async (tx) => {
+      if (input.action === 'accept') {
+        if (!['pending', 'assigned'].includes(job.status)) {
+          throw new BadRequestException('Le job ne peut pas être accepté.');
+        }
+
+        await tx
+          .update(transportJobs)
+          .set({
+            status: 'accepted',
+            acceptedAt: now,
+            updatedAt: now,
+          })
+          .where(eq(transportJobs.id, jobId));
+      }
+
+      if (input.action === 'start') {
+        if (!['pending', 'assigned', 'accepted'].includes(job.status)) {
+          throw new BadRequestException('Le job ne peut pas démarrer.');
+        }
+
+        await tx
+          .update(transportJobs)
+          .set({
+            status: 'in_progress',
+            acceptedAt: job.status === 'accepted' ? undefined : now,
+            updatedAt: now,
+          })
+          .where(eq(transportJobs.id, jobId));
+      }
+
+      if (input.action === 'deliver') {
+        if (!['accepted', 'in_progress'].includes(job.status)) {
+          throw new BadRequestException('Le job ne peut pas être clôturé.');
+        }
+
+        const jobLots = await tx
+          .select({
+            lotId: transportJobLots.lotId,
+            loadedWeightKg: transportJobLots.loadedWeightKg,
+          })
+          .from(transportJobLots)
+          .where(eq(transportJobLots.jobId, jobId));
+
+        await tx
+          .update(transportJobs)
+          .set({
+            status: 'delivered',
+            completedAt: now,
+            updatedAt: now,
+          })
+          .where(eq(transportJobs.id, jobId));
+
+        await tx
+          .update(transportJobLots)
+          .set({
+            deliveredAt: now,
+            deliveredWeightKg: sql`coalesce(${transportJobLots.deliveredWeightKg}, ${transportJobLots.loadedWeightKg})`,
+          })
+          .where(eq(transportJobLots.jobId, jobId));
+
+        const lotIds = jobLots.map((row) => row.lotId);
+
+        if (lotIds.length > 0) {
+          await tx
+            .update(lots)
+            .set({
+              currentLocationId: job.destinationId,
+              currentLocationType: job.destinationType,
+              updatedAt: now,
+            })
+            .where(inArray(lots.id, lotIds));
+        }
+      }
+
+      await appendWorkflowEvent(tx, {
+        aggregateId: jobId,
+        aggregateType: 'transport_job',
+        actorId,
+        actorType,
+        eventType:
+          input.action === 'accept'
+            ? 'transport_accepted'
+            : input.action === 'start'
+              ? 'transport_started'
+              : 'transport_delivered',
+        occurredAt: now,
+        payload: {
+          action: input.action,
+          destinationId: job.destinationId,
+          destinationType: job.destinationType,
+        },
+      });
+
+      const [updatedJob] = await tx
+        .select({
+          id: transportJobs.id,
+          status: transportJobs.status,
+          lane: transportJobs.lane,
+          originType: transportJobs.originType,
+          destinationType: transportJobs.destinationType,
+          requestedAt: transportJobs.requestedAt,
+          acceptedAt: transportJobs.acceptedAt,
+          completedAt: transportJobs.completedAt,
+          slaDeadline: transportJobs.slaDeadline,
+          transporterName: users.fullName,
+          lotCount: sql<number>`count(${transportJobLots.lotId})::int`,
+        })
+        .from(transportJobs)
+        .leftJoin(users, eq(transportJobs.transporterId, users.id))
+        .leftJoin(transportJobLots, eq(transportJobs.id, transportJobLots.jobId))
+        .where(eq(transportJobs.id, jobId))
+        .groupBy(transportJobs.id, users.fullName)
+        .limit(1);
+
+      return updatedJob;
+    });
   }
 }

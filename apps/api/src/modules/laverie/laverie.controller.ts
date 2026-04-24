@@ -1,8 +1,11 @@
-import { Controller, Get, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Post, UseGuards } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
-import { RequirePermissions } from '../../common/auth/decorators';
+import { CurrentUser, RequirePermissions } from '../../common/auth/decorators';
 import { JwtAuthGuard } from '../../common/auth/jwt-auth.guard';
 import { PermissionsGuard } from '../../common/auth/permissions.guard';
+import { CreateLaverieQualificationDto } from './dto/create-laverie-qualification.dto';
+import { CreateLaverieReceptionDto } from './dto/create-laverie-reception.dto';
+import { CreateWashingRunDto } from './dto/create-washing-run.dto';
 import { LaverieService } from './laverie.service';
 
 @ApiTags('laverie')
@@ -16,5 +19,35 @@ export class LaverieController {
   @Get('overview')
   getOverview() {
     return this.laverieService.getOverview();
+  }
+
+  @RequirePermissions('laverie.operate')
+  @Post('receptions')
+  receiveLot(
+    @Body() input: CreateLaverieReceptionDto,
+    @CurrentUser('id') actorId: string,
+    @CurrentUser('userType') actorType: string,
+  ) {
+    return this.laverieService.receiveLot(input, actorId, actorType);
+  }
+
+  @RequirePermissions('laverie.operate')
+  @Post('washing-runs')
+  startWash(
+    @Body() input: CreateWashingRunDto,
+    @CurrentUser('id') actorId: string,
+    @CurrentUser('userType') actorType: string,
+  ) {
+    return this.laverieService.startWash(input, actorId, actorType);
+  }
+
+  @RequirePermissions('laverie.operate')
+  @Post('qualifications')
+  qualifyLot(
+    @Body() input: CreateLaverieQualificationDto,
+    @CurrentUser('id') actorId: string,
+    @CurrentUser('userType') actorType: string,
+  ) {
+    return this.laverieService.qualifyLot(input, actorId, actorType);
   }
 }

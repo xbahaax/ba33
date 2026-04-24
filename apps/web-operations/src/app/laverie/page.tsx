@@ -1,9 +1,9 @@
 import { getLaverieOverview } from "@/lib/api";
 import { formatDateTime, formatNumber, formatWeight } from "@/lib/format";
-import { OperationsRoutePage } from "@/components/operations-route-page";
+import { LaverieWorkflowPage } from "@/components/laverie-workflow-page";
 
 export default function LaveriePage() {
-  return <OperationsRoutePage routeKey="laverie" />;
+  return <LaverieWorkflowPage />;
 }
 
 void LegacyLaveriePage;

@@ -6,15 +6,15 @@ import {
   CardTitle,
 } from "@ba33/ui-web";
 import { MetricCard } from "@/components/metric-card";
-import { OperationsRoutePage } from "@/components/operations-route-page";
 import { PageHeader } from "@/components/page-header";
+import { SalesWorkflowPage } from "@/components/sales-workflow-page";
 import { StatusBadge } from "@/components/status-badge";
 import { UnavailableState } from "@/components/unavailable-state";
 import { getSalesOverview } from "@/lib/api";
 import { formatCurrency, formatDateTime, formatEnumLabel } from "@/lib/format";
 
 export default function SalesPage() {
-  return <OperationsRoutePage routeKey="sales" />;
+  return <SalesWorkflowPage />;
 }
 
 void LegacySalesPage;
