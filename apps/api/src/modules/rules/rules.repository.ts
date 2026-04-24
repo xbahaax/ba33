@@ -1,8 +1,6 @@
 import { Injectable, Inject } from '@nestjs/common';
 import { DATABASE_TOKEN } from '../../common/database/database.module';
 import type { Database } from '../../common/database/client';
-import { rulesConfig } from '../../common/database/schema';
-import { eq, and, isNull, desc } from 'drizzle-orm';
 
 @Injectable()
 export class RulesRepository {

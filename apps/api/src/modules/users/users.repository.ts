@@ -2,41 +2,6 @@ import { Injectable, Inject } from '@nestjs/common';
 import { eq, and } from 'drizzle-orm';
 import { DATABASE_TOKEN } from '../../common/database/database.module';
 import type { Database } from '../../common/database/client';
-import { users } from '../../common/database/schema';
-
-export interface CreateUserData {
-  email: string;
-  passwordHash: string;
-  fullName: string;
-  phone?: string;
-  userType:
-    | 'collector'
-    | 'depot_manager'
-    | 'laverie_operator'
-    | 'transformer_operator'
-    | 'sales_agent'
-    | 'central_admin'
-    | 'regional_manager'
-    | 'buyer'
-    | 'institutional'
-    | 'system';
-  regionId?: string;
-}
-
-export interface UpdateUserData {
-  email?: string;
-  passwordHash?: string;
-  fullName?: string;
-  phone?: string;
-  userType?: CreateUserData['userType'];
-  status?: 'active' | 'suspended' | 'deleted';
-  regionId?: string;
-}
-
-export interface UserFilters {
-  userType?: string;
-  status?: string;
-}
 
 @Injectable()
 export class UsersRepository {

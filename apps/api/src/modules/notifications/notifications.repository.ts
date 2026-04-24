@@ -1,65 +1,45 @@
-import { Injectable, Inject } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
+import { eq, and } from 'drizzle-orm';
 import { DATABASE_TOKEN } from '../../common/database/database.module';
 import type { Database } from '../../common/database/client';
 import { notifications } from '../../common/database/schema';
-import { eq, and, isNull, desc } from 'drizzle-orm';
+
+export interface BuyerNotification {
+  id: string;
+  type: 'order' | 'delivery' | 'certificate' | 'complaint';
+  title: string;
+  description: string;
+  time: string;
+  read: boolean;
+}
 
 @Injectable()
 export class NotificationsRepository {
   constructor(@Inject(DATABASE_TOKEN) private readonly db: Database) {}
 
-  async create(data: {
-    id: string;
-    userId: string;
-    type: string;
-    title: string;
-    body: string;
-    payload?: unknown;
-    sentAt?: Date;
-  }) {
-    const [notification] = await this.db
-      .insert(notifications)
-      .values(data)
+  async list(userId: string): Promise<BuyerNotification[]> {
+    const rows = await this.db.select().from(notifications).where(eq(notifications.userId, userId));
+    return rows.map((row) => ({
+      id: row.id,
+      type: row.type as BuyerNotification['type'],
+      title: row.title,
+      description: row.body,
+      time: row.createdAt.toLocaleDateString('fr-FR'),
+      read: Boolean(row.readAt),
+    }));
+  }
+
+  async markAllRead(userId: string): Promise<BuyerNotification[]> {
+    await this.db.update(notifications).set({ readAt: new Date() }).where(eq(notifications.userId, userId));
+    return this.list(userId);
+  }
+
+  async dismiss(userId: string, notificationId: string): Promise<{ deleted: boolean }> {
+    const deleted = await this.db
+      .delete(notifications)
+      .where(and(eq(notifications.userId, userId), eq(notifications.id, notificationId)))
       .returning();
-    return notification;
-  }
 
-  async findById(id: string) {
-    const [notification] = await this.db
-      .select()
-      .from(notifications)
-      .where(eq(notifications.id, id))
-      .limit(1);
-    return notification ?? null;
-  }
-
-  async findByUserId(userId: string, unreadOnly?: boolean) {
-    const conditions = [eq(notifications.userId, userId)];
-    if (unreadOnly) {
-      conditions.push(isNull(notifications.readAt));
-    }
-    return this.db
-      .select()
-      .from(notifications)
-      .where(and(...conditions))
-      .orderBy(desc(notifications.createdAt));
-  }
-
-  async markAsRead(id: string) {
-    const [notification] = await this.db
-      .update(notifications)
-      .set({ readAt: new Date() })
-      .where(eq(notifications.id, id))
-      .returning();
-    return notification;
-  }
-
-  async markAllAsRead(userId: string) {
-    return this.db
-      .update(notifications)
-      .set({ readAt: new Date() })
-      .where(
-        and(eq(notifications.userId, userId), isNull(notifications.readAt)),
-      );
+    return { deleted: deleted.length > 0 };
   }
 }
