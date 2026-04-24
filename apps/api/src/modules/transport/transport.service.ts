@@ -45,6 +45,7 @@ export class TransportService {
           : 'sla.c2_pickup_hours';
       try {
         const slaHours = await this.rulesService.getRuleValue<number>(ruleKey);
+        if (slaHours == null) throw new Error('Rule value is null');
         slaDeadline = new Date(Date.now() + slaHours * 60 * 60 * 1000);
         this.logger.log(
           `SLA deadline computed: ${slaHours}h from now (${ruleKey}) → ${slaDeadline.toISOString()}`,

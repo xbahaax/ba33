@@ -241,6 +241,57 @@ export const fileKindEnum = pgEnum('file_kind', [
 // sync
 export const syncDirectionEnum = pgEnum('sync_direction', ['push', 'pull']);
 
+// ── Wool collection ────────────────────────────────────────────────────────
+
+export const woolTypeEnum = pgEnum('wool_type', [
+  'full_fleece',   // Toison entière
+  'fleece_pieces', // Toison morceaux
+  'tail_wool',     // Laine de queue
+]);
+
+export const extractionMethodEnum = pgEnum('extraction_method', [
+  'pelade',   // chimique
+  'echauffe', // naturelle
+]);
+
+export const bagTypeEnum = pgEnum('bag_type', ['PP', 'jute']);
+
+// ── Depot tri ──────────────────────────────────────────────────────────────
+
+export const lotClassificationEnum = pgEnum('lot_classification', [
+  'class_a', // Propre, isolation
+  'class_b', // Très souillée, compostage/engrais
+]);
+
+export const depotDestinationDirectEnum = pgEnum('depot_destination_direct', [
+  'laverie',
+  'transformer_direct',
+]);
+
+// ── Laverie ────────────────────────────────────────────────────────────────
+
+export const conditioningStateEnum = pgEnum('conditioning_state', [
+  'correct',
+  'torn',
+  'humid',
+]);
+
+export const unloadingModeEnum = pgEnum('unloading_mode', ['vrac', 'balles']);
+
+// ── Transformation ─────────────────────────────────────────────────────────
+
+export const productDestinationTypeEnum = pgEnum('product_destination_type', [
+  'flux_a1_panels',      // Panneaux isolants semi-rigides
+  'flux_a2_rolls',       // Rouleaux de laine à dérouler
+  'flux_a3_geotextile',  // Géotextiles / feutres acoustiques
+  'flux_b_engrais',      // Engrais (D4)
+]);
+
+export const antimitesTreatmentTypeEnum = pgEnum('antimites_treatment_type', [
+  'natural',    // sel de bore
+  'synthetic',
+]);
+
 export const syncBatchStatusEnum = pgEnum('sync_batch_status', [
   'pending',
   'completed',

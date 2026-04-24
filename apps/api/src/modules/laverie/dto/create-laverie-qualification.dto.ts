@@ -1,58 +1,50 @@
-import {
-  IsIn,
-  IsInt,
-  IsNumber,
-  IsOptional,
-  IsString,
-  IsUUID,
-  Min,
-} from 'class-validator';
+import { IsIn, IsInt, IsNumber, IsOptional, IsString, IsUUID, Min, Max } from 'class-validator';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 export class CreateLaverieQualificationDto {
-  @IsUUID()
-  washingRunId!: string;
+  @ApiProperty() @IsUUID() washingRunId!: string;
+  @ApiProperty({ minimum: 0.01, description: 'Poids Net Sec après séchage industriel' })
+  @IsNumber() @Min(0.01) cleanWeightKg!: number;
 
-  @IsNumber()
-  @Min(0.01)
-  cleanWeightKg!: number;
+  @ApiProperty({ enum: ['A', 'B', 'C', 'reject'] }) @IsIn(['A', 'B', 'C', 'reject']) grade!: 'A' | 'B' | 'C' | 'reject';
+  @ApiProperty({ enum: ['clear', 'flagged', 'rejected'] }) @IsIn(['clear', 'flagged', 'rejected']) safetyStatus!: 'clear' | 'flagged' | 'rejected';
 
-  @IsIn(['A', 'B', 'C', 'reject'])
-  grade!: 'A' | 'B' | 'C' | 'reject';
+  @ApiPropertyOptional({ description: 'Longueur de mèche (mm)' })
+  @IsOptional() @IsNumber() @Min(0) fiberLengthMm?: number;
 
-  @IsIn(['clear', 'flagged', 'rejected'])
-  safetyStatus!: 'clear' | 'flagged' | 'rejected';
+  @ApiPropertyOptional({ description: 'Finesse des fibres (microns)' })
+  @IsOptional() @IsNumber() @Min(0) fiberDiameterMicron?: number;
 
-  @IsOptional()
-  @IsNumber()
-  @Min(0)
-  fiberLengthMm?: number;
+  @ApiPropertyOptional({ description: 'Taux d\'humidité résiduelle % (cible 12–15%)' })
+  @IsOptional() @IsNumber() @Min(0) moisturePercent?: number;
 
-  @IsOptional()
-  @IsNumber()
-  @Min(0)
-  fiberDiameterMicron?: number;
+  @ApiPropertyOptional({ description: 'Note de propreté 1–5' })
+  @IsOptional() @IsInt() @Min(1) @Max(5) cleanlinessScore?: number;
 
-  @IsOptional()
-  @IsNumber()
-  @Min(0)
-  moisturePercent?: number;
+  @ApiPropertyOptional() @IsOptional() @IsString() color?: string;
+  @ApiPropertyOptional() @IsOptional() @IsString() contaminationNotes?: string;
 
-  @IsOptional()
-  @IsInt()
-  cleanlinessScore?: number;
+  @ApiProperty({ enum: ['d3_textile', 'd4_bio', 'quarantine', 'reject'] })
+  @IsIn(['d3_textile', 'd4_bio', 'quarantine', 'reject']) dispatchTrack!: 'd3_textile' | 'd4_bio' | 'quarantine' | 'reject';
 
-  @IsOptional()
-  @IsString()
-  color?: string;
+  @ApiPropertyOptional() @IsOptional() @IsUUID() targetTransformerId?: string;
 
-  @IsOptional()
-  @IsString()
-  contaminationNotes?: string;
+  // Stage 7 — Sortie laverie / Certificat de pureté
+  @ApiPropertyOptional({ description: 'Taux d\'humidité résiduelle % (cible 12–15%)' })
+  @IsOptional() @IsNumber() @Min(0) residualHumidityPercent?: number;
 
-  @IsIn(['d3_textile', 'd4_bio', 'quarantine', 'reject'])
-  dispatchTrack!: 'd3_textile' | 'd4_bio' | 'quarantine' | 'reject';
+  @ApiPropertyOptional({ description: 'Taux de suint résiduel (Lanoline) % (cible < 1%)' })
+  @IsOptional() @IsNumber() @Min(0) residualSuintPercent?: number;
 
-  @IsOptional()
-  @IsUUID()
-  targetTransformerId?: string;
+  @ApiPropertyOptional({ description: 'Blancheur — Indice de jaunissement' })
+  @IsOptional() @IsNumber() whitenessIndex?: number;
+
+  @ApiPropertyOptional({ description: 'pH de la laine (neutre pour fixations métalliques)' })
+  @IsOptional() @IsNumber() @Min(0) @Max(14) phLevel?: number;
+
+  @ApiPropertyOptional({ description: 'Énergie consommée pour le séchage (kWh)' })
+  @IsOptional() @IsNumber() @Min(0) energyKwhUsed?: number;
+
+  @ApiPropertyOptional({ description: 'Volume d\'eau utilisé par kg de laine (L/kg)' })
+  @IsOptional() @IsNumber() @Min(0) waterLitersPerKg?: number;
 }

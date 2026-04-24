@@ -56,6 +56,10 @@ export function LaverieWorkflowPage() {
   const [receiveLotId, setReceiveLotId] = useState("");
   const [receiveLaverieId, setReceiveLaverieId] = useState("");
   const [receiveWeightKg, setReceiveWeightKg] = useState("");
+  // Stage 5 — Entrée laverie
+  const [receiveConditioningState, setReceiveConditioningState] = useState<"correct"|"torn"|"humid"|"">("");
+  const [receiveRequiredWashTempC, setReceiveRequiredWashTempC] = useState("");
+  const [receiveRequiredDetergent, setReceiveRequiredDetergent] = useState("");
 
   const [washLotId, setWashLotId] = useState("");
   const [washLaverieId, setWashLaverieId] = useState("");
@@ -63,23 +67,29 @@ export function LaverieWorkflowPage() {
   const [waterLiters, setWaterLiters] = useState("");
   const [waterTempC, setWaterTempC] = useState("");
   const [cycleDurationMinutes, setCycleDurationMinutes] = useState("");
+  // Stage 5 — Lavage
+  const [washDetergentType, setWashDetergentType] = useState("");
+  const [washSuintRecovered, setWashSuintRecovered] = useState("");
 
   const [qualificationRunId, setQualificationRunId] = useState("");
   const [cleanWeightKg, setCleanWeightKg] = useState("");
   const [grade, setGrade] = useState<"A" | "B" | "C" | "reject">("A");
-  const [safetyStatus, setSafetyStatus] = useState<"clear" | "flagged" | "rejected">(
-    "clear",
-  );
+  const [safetyStatus, setSafetyStatus] = useState<"clear" | "flagged" | "rejected">("clear");
   const [fiberLengthMm, setFiberLengthMm] = useState("");
   const [fiberDiameterMicron, setFiberDiameterMicron] = useState("");
   const [moisturePercent, setMoisturePercent] = useState("");
   const [cleanlinessScore, setCleanlinessScore] = useState("");
   const [color, setColor] = useState("");
-  const [dispatchTrack, setDispatchTrack] = useState<
-    "d3_textile" | "d4_bio" | "quarantine" | "reject"
-  >("d3_textile");
+  const [dispatchTrack, setDispatchTrack] = useState<"d3_textile" | "d4_bio" | "quarantine" | "reject">("d3_textile");
   const [targetTransformerId, setTargetTransformerId] = useState("");
   const [contaminationNotes, setContaminationNotes] = useState("");
+  // Stage 7 — Sortie laverie / Certificat de pureté
+  const [residualHumidity, setResidualHumidity] = useState("");
+  const [residualSuint, setResidualSuint] = useState("");
+  const [whitenessIndex, setWhitenessIndex] = useState("");
+  const [phLevel, setPhLevel] = useState("");
+  const [energyKwh, setEnergyKwh] = useState("");
+  const [waterLitersPerKg, setWaterLitersPerKg] = useState("");
 
   useEffect(() => {
     if (!data) {
@@ -149,6 +159,9 @@ export function LaverieWorkflowPage() {
       laverieId: receiveLaverieId,
       lotId: receiveLotId,
       receivedWeightKg: Number(receiveWeightKg),
+      conditioningState: receiveConditioningState || undefined,
+      requiredWashTempC: receiveRequiredWashTempC ? Number(receiveRequiredWashTempC) : undefined,
+      requiredDetergentType: receiveRequiredDetergent || undefined,
     });
 
     if (!result) {
@@ -180,9 +193,9 @@ export function LaverieWorkflowPage() {
       dirtyWeightKg: Number(washWeightKg),
       waterLiters: waterLiters ? Number(waterLiters) : undefined,
       waterTempC: waterTempC ? Number(waterTempC) : undefined,
-      cycleDurationMinutes: cycleDurationMinutes
-        ? Number(cycleDurationMinutes)
-        : undefined,
+      cycleDurationMinutes: cycleDurationMinutes ? Number(cycleDurationMinutes) : undefined,
+      detergentType: washDetergentType || undefined,
+      suintRecoveredLiters: washSuintRecovered ? Number(washSuintRecovered) : undefined,
     });
 
     if (!result) {
@@ -226,6 +239,13 @@ export function LaverieWorkflowPage() {
         dispatchTrack === "d3_textile" || dispatchTrack === "d4_bio"
           ? targetTransformerId || undefined
           : undefined,
+      // Stage 7 — Sortie laverie / Certificat de pureté
+      residualHumidityPercent: residualHumidity ? Number(residualHumidity) : undefined,
+      residualSuintPercent: residualSuint ? Number(residualSuint) : undefined,
+      whitenessIndex: whitenessIndex ? Number(whitenessIndex) : undefined,
+      phLevel: phLevel ? Number(phLevel) : undefined,
+      energyKwhUsed: energyKwh ? Number(energyKwh) : undefined,
+      waterLitersPerKg: waterLitersPerKg ? Number(waterLitersPerKg) : undefined,
     });
 
     if (!result) {
@@ -306,6 +326,27 @@ export function LaverieWorkflowPage() {
                     onChange={(event) => setReceiveWeightKg(event.target.value)}
                     disabled={!canOperate}
                   />
+                </WorkflowField>
+                {/* Stage 5 — Contrôle de réception laverie */}
+                <WorkflowField label="État du conditionnement">
+                  <WorkflowSelect value={receiveConditioningState}
+                    onChange={(e) => setReceiveConditioningState(e.target.value as "correct"|"torn"|"humid"|"")}
+                    disabled={!canOperate}>
+                    <option value="">— Non renseigné</option>
+                    <option value="correct">Correct</option>
+                    <option value="torn">Déchiré</option>
+                    <option value="humid">Humide</option>
+                  </WorkflowSelect>
+                </WorkflowField>
+                <WorkflowField label="Température de lavage requise (°C)">
+                  <Input type="number" step="1" value={receiveRequiredWashTempC}
+                    onChange={(e) => setReceiveRequiredWashTempC(e.target.value)}
+                    disabled={!canOperate} placeholder="Kératine vs dégraissage isolation" />
+                </WorkflowField>
+                <WorkflowField label="Type de détergent requis">
+                  <Input type="text" value={receiveRequiredDetergent}
+                    onChange={(e) => setReceiveRequiredDetergent(e.target.value)}
+                    disabled={!canOperate} placeholder="Biodégradable si eau réutilisée en agriculture" />
                 </WorkflowField>
                 <Button onClick={() => void handleReceive()} disabled={!canOperate || submitting === "receive"}>
                   {submitting === "receive" ? "Réception..." : "Valider la réception"}
@@ -391,6 +432,16 @@ export function LaverieWorkflowPage() {
                     onChange={(event) => setCycleDurationMinutes(event.target.value)}
                     disabled={!canOperate}
                   />
+                </WorkflowField>
+                <WorkflowField label="Type de détergent utilisé">
+                  <Input type="text" value={washDetergentType}
+                    onChange={(e) => setWashDetergentType(e.target.value)}
+                    disabled={!canOperate} placeholder="ex: savon biodégradable" />
+                </WorkflowField>
+                <WorkflowField label="Suint récupéré (L)">
+                  <Input type="number" min="0" step="0.1" value={washSuintRecovered}
+                    onChange={(e) => setWashSuintRecovered(e.target.value)}
+                    disabled={!canOperate} placeholder="Poids/Volume de lanoline récupéré" />
                 </WorkflowField>
                 <Button onClick={() => void handleStartWash()} disabled={!canOperate || submitting === "wash"}>
                   {submitting === "wash" ? "Démarrage..." : "Démarrer le wash"}
@@ -569,6 +620,35 @@ export function LaverieWorkflowPage() {
                     placeholder="Résidus chimiques, fragments, quarantaine..."
                   />
                 </WorkflowField>
+
+                {/* Stage 7 — Sortie laverie / Certificat de pureté */}
+                <WorkflowField label="Humidité résiduelle % (cible 12–15%)">
+                  <Input type="number" min="0" max="100" step="0.1" value={residualHumidity}
+                    onChange={(e) => setResidualHumidity(e.target.value)} disabled={!canOperate}
+                    placeholder="Hors plage → moisissures dans murs" />
+                </WorkflowField>
+                <WorkflowField label="Suint résiduel / Lanoline % (cible < 1%)">
+                  <Input type="number" min="0" max="100" step="0.01" value={residualSuint}
+                    onChange={(e) => setResidualSuint(e.target.value)} disabled={!canOperate} />
+                </WorkflowField>
+                <WorkflowField label="Indice de blancheur (jaunissement)">
+                  <Input type="number" step="0.01" value={whitenessIndex}
+                    onChange={(e) => setWhitenessIndex(e.target.value)} disabled={!canOperate} />
+                </WorkflowField>
+                <WorkflowField label="pH de la laine (neutre = protège fixations métalliques)">
+                  <Input type="number" min="0" max="14" step="0.1" value={phLevel}
+                    onChange={(e) => setPhLevel(e.target.value)} disabled={!canOperate}
+                    placeholder="Cible pH neutre ≈ 7" />
+                </WorkflowField>
+                <WorkflowField label="Énergie consommée séchage (kWh)">
+                  <Input type="number" min="0" step="0.1" value={energyKwh}
+                    onChange={(e) => setEnergyKwh(e.target.value)} disabled={!canOperate} />
+                </WorkflowField>
+                <WorkflowField label="Eau utilisée par kg de laine (L/kg)">
+                  <Input type="number" min="0" step="0.001" value={waterLitersPerKg}
+                    onChange={(e) => setWaterLitersPerKg(e.target.value)} disabled={!canOperate} />
+                </WorkflowField>
+
                 <Button
                   onClick={() => void handleQualify()}
                   disabled={!canOperate || submitting === "qualify"}

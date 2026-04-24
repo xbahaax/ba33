@@ -190,6 +190,18 @@ export class TransformationRepository {
           inputWeightKg: input.inputWeightKg.toFixed(2),
           startedAt,
           operatedBy: actorId,
+          // Stage 6 — Entrée Transformateur 2 (Engrais direct)
+          drynessIndex: input.drynessIndex?.toFixed(2),
+          foreignBodyPresent: input.foreignBodyPresent,
+          foreignBodyNotes: input.foreignBodyNotes,
+          unloadingMode: input.unloadingMode,
+          // Stage 8 — Entrée Transformateur 1 (Isolants/Géotextiles)
+          productDestinationType: input.productDestinationType,
+          targetThicknessMm: input.targetThicknessMm?.toFixed(2),
+          targetDensityKgM3: input.targetDensityKgM3?.toFixed(3),
+          antimitesTreatmentType: input.antimitesTreatmentType,
+          bindingFiberPercent: input.bindingFiberPercent?.toFixed(2),
+          fireRetardantProduct: input.fireRetardantProduct,
         })
         .returning({
           id: productionRuns.id,

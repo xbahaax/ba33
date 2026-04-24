@@ -262,6 +262,12 @@ export class DepotRepository {
           receivedBy: actorId,
           receivedAt,
           notes: input.notes,
+          // Stage 3 fields
+          lotClassification: input.lotClassification,
+          stackTemperatureC: input.stackTemperatureC?.toFixed(2),
+          humidityEntryPercent: input.humidityEntryPercent?.toFixed(2),
+          vegetalMatterPercent: input.vegetalMatterPercent?.toFixed(2),
+          plannedExitDate: input.plannedExitDate,
         })
         .returning({
           id: depotReceptions.id,
@@ -372,14 +378,17 @@ export class DepotRepository {
       throw new NotFoundException('Dépôt introuvable.');
     }
 
-    const [laverie] = await this.db
-      .select({ id: laveries.id })
-      .from(laveries)
-      .where(eq(laveries.id, input.destinationLaverieId))
-      .limit(1);
+    if (!input.destinationLaverieId && !input.destinationTransformerId) {
+      throw new BadRequestException('Une destination (laverie ou transformateur) est requise.');
+    }
 
-    if (!laverie) {
-      throw new NotFoundException('Laverie introuvable.');
+    if (input.destinationLaverieId) {
+      const [laverie] = await this.db
+        .select({ id: laveries.id })
+        .from(laveries)
+        .where(eq(laveries.id, input.destinationLaverieId))
+        .limit(1);
+      if (!laverie) throw new NotFoundException('Laverie introuvable.');
     }
 
     const manifestWeightKg = Number(
@@ -421,9 +430,16 @@ export class DepotRepository {
         .values({
           depotId: input.depotId,
           destinationLaverieId: input.destinationLaverieId,
+          destinationTransformerId: input.destinationTransformerId,
           manifestWeightKg: manifestWeightKg.toFixed(2),
           dispatchedBy: actorId,
           dispatchedAt,
+          // Stage 4 fields
+          fluxAWeightKg: input.fluxAWeightKg?.toFixed(2),
+          fluxBWeightKg: input.fluxBWeightKg?.toFixed(2),
+          impurityRatePercent: input.impurityRatePercent?.toFixed(2),
+          humidityExitPercent: input.humidityExitPercent?.toFixed(2),
+          destinationDirect: input.destinationDirect,
         })
         .returning({
           id: depotDispatches.id,
@@ -439,9 +455,9 @@ export class DepotRepository {
       await tx
         .update(lots)
         .set({
-          currentLocationId: input.destinationLaverieId,
-          currentLocationType: 'laverie',
-          status: 'dispatched_to_laverie',
+          currentLocationId: input.destinationLaverieId ?? input.destinationTransformerId,
+          currentLocationType: input.destinationLaverieId ? 'laverie' : 'transformer',
+          status: input.destinationLaverieId ? 'dispatched_to_laverie' : 'dispatched_to_d4',
           updatedAt: dispatchedAt,
         })
         .where(eq(lots.id, input.lotId));

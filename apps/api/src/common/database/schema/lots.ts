@@ -6,6 +6,9 @@ import {
   decimal,
   boolean,
   unique,
+  integer,
+  jsonb,
+  date,
 } from 'drizzle-orm/pg-core';
 import {
   sourceTypeEnum,
@@ -16,6 +19,8 @@ import {
   signatureTypeEnum,
   lotLineageOperationEnum,
   weighSourceEnum,
+  woolTypeEnum,
+  extractionMethodEnum,
 } from './enums';
 import { sources } from './sources';
 import { users } from './users';
@@ -44,6 +49,22 @@ export const lots = pgTable('lots', {
   currentLocationType: text('current_location_type'),
   notes: text('notes'),
   voiceNoteId: uuid('voice_note_id'), // FK to files
+
+  // ── Stage 1 — Laine de tonte (C1 shepherd) ──────────────────────────────
+  woolType: woolTypeEnum('wool_type'),
+  cleanlinessScore: integer('cleanliness_score'),            // 1–5
+  cleanlinessAnnotations: jsonb('cleanliness_annotations'),  // {paille, foin, paintMarks}
+  stapleLengthMm: decimal('staple_length_mm', { precision: 7, scale: 2 }),
+  woolColor: text('wool_color'),
+  jarreRatePercent: decimal('jarre_rate_percent', { precision: 5, scale: 2 }),
+
+  // ── Stage 2 — Laine après abattage (C2 slaughterhouse) ──────────────────
+  extractionMethod: extractionMethodEnum('extraction_method'), // pelade | echauffe
+  humidityEntryPercent: decimal('humidity_entry_percent', { precision: 5, scale: 2 }),
+  skinResiduePercent: decimal('skin_residue_percent', { precision: 5, scale: 2 }),
+  qualityScore: integer('quality_score'),                     // 1–5
+  specialistNote: text('specialist_note'),
+
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
 });

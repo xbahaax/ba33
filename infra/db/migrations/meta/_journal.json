@@ -8,6 +8,13 @@
       "when": 1777038567504,
       "tag": "0000_dark_korvac",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1777071466677,
+      "tag": "0001_curly_hammerhead",
+      "breakpoints": true
     }
   ]
 }

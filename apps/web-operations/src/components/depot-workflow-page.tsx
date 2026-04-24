@@ -57,11 +57,23 @@ export function DepotWorkflowPage() {
   const [receiveZoneId, setReceiveZoneId] = useState("");
   const [receiveWeightKg, setReceiveWeightKg] = useState("");
   const [receiveNotes, setReceiveNotes] = useState("");
+  // Stage 3 — Dépositaire / Centre de tri
+  const [receiveLotClassification, setReceiveLotClassification] = useState<"class_a"|"class_b"|"">("");
+  const [receiveStackTempC, setReceiveStackTempC] = useState("");
+  const [receiveHumidityEntry, setReceiveHumidityEntry] = useState("");
+  const [receiveVegetalMatter, setReceiveVegetalMatter] = useState("");
+  const [receivePlannedExit, setReceivePlannedExit] = useState("");
 
   const [dispatchLotId, setDispatchLotId] = useState("");
   const [dispatchDepotId, setDispatchDepotId] = useState("");
   const [dispatchLaverieId, setDispatchLaverieId] = useState("");
   const [dispatchWeightKg, setDispatchWeightKg] = useState("");
+  // Stage 4 — Sortie dépositaire
+  const [dispatchDestinationType, setDispatchDestinationType] = useState<"laverie"|"transformer_direct">("laverie");
+  const [dispatchFluxAKg, setDispatchFluxAKg] = useState("");
+  const [dispatchFluxBKg, setDispatchFluxBKg] = useState("");
+  const [dispatchImpurityRate, setDispatchImpurityRate] = useState("");
+  const [dispatchHumidityExit, setDispatchHumidityExit] = useState("");
 
   useEffect(() => {
     if (!data) {
@@ -140,6 +152,11 @@ export function DepotWorkflowPage() {
       zoneId: receiveZoneId || undefined,
       actualWeightKg: Number(receiveWeightKg),
       notes: receiveNotes || undefined,
+      lotClassification: receiveLotClassification || undefined,
+      stackTemperatureC: receiveStackTempC ? Number(receiveStackTempC) : undefined,
+      humidityEntryPercent: receiveHumidityEntry ? Number(receiveHumidityEntry) : undefined,
+      vegetalMatterPercent: receiveVegetalMatter ? Number(receiveVegetalMatter) : undefined,
+      plannedExitDate: receivePlannedExit || undefined,
     });
 
     if (!result) {
@@ -168,8 +185,13 @@ export function DepotWorkflowPage() {
     const result = await createDepotDispatch({
       depotId: dispatchDepotId,
       lotId: dispatchLotId,
-      destinationLaverieId: dispatchLaverieId,
+      destinationLaverieId: dispatchDestinationType === "laverie" ? dispatchLaverieId : undefined,
       manifestWeightKg: dispatchWeightKg ? Number(dispatchWeightKg) : undefined,
+      destinationDirect: dispatchDestinationType || undefined,
+      fluxAWeightKg: dispatchFluxAKg ? Number(dispatchFluxAKg) : undefined,
+      fluxBWeightKg: dispatchFluxBKg ? Number(dispatchFluxBKg) : undefined,
+      impurityRatePercent: dispatchImpurityRate ? Number(dispatchImpurityRate) : undefined,
+      humidityExitPercent: dispatchHumidityExit ? Number(dispatchHumidityExit) : undefined,
     });
 
     if (!result) {
@@ -311,6 +333,40 @@ export function DepotWorkflowPage() {
                     placeholder="Anomalie, humidité, état du lot..."
                   />
                 </WorkflowField>
+
+                {/* Stage 3 — Dépositaire / Centre de tri */}
+                <WorkflowField label="Classification tri">
+                  <WorkflowSelect
+                    value={receiveLotClassification}
+                    onChange={(e) => setReceiveLotClassification(e.target.value as "class_a"|"class_b"|"")}
+                    disabled={!canReceive}
+                  >
+                    <option value="">— Non classifié</option>
+                    <option value="class_a">Classe A — Propre, isolation</option>
+                    <option value="class_b">Classe B — Très souillée, engrais/compostage</option>
+                  </WorkflowSelect>
+                </WorkflowField>
+                <WorkflowField label="Température du tas (°C)">
+                  <Input type="number" step="0.1" value={receiveStackTempC}
+                    onChange={(e) => setReceiveStackTempC(e.target.value)}
+                    disabled={!canReceive} placeholder="Auto-combustion si > 60°C" />
+                </WorkflowField>
+                <WorkflowField label="Taux d'humidité H% (entrée)">
+                  <Input type="number" step="0.1" min="0" max="100" value={receiveHumidityEntry}
+                    onChange={(e) => setReceiveHumidityEntry(e.target.value)}
+                    disabled={!canReceive} placeholder="Isolation : doit être < 15%" />
+                </WorkflowField>
+                <WorkflowField label="Taux matières végétales VM%">
+                  <Input type="number" step="0.1" min="0" max="100" value={receiveVegetalMatter}
+                    onChange={(e) => setReceiveVegetalMatter(e.target.value)}
+                    disabled={!canReceive} placeholder="> 5% → engrais" />
+                </WorkflowField>
+                <WorkflowField label="Date de sortie prévue">
+                  <Input type="date" value={receivePlannedExit}
+                    onChange={(e) => setReceivePlannedExit(e.target.value)}
+                    disabled={!canReceive} />
+                </WorkflowField>
+
                 <Button
                   className="w-full"
                   onClick={() => void handleReceive()}
@@ -363,30 +419,59 @@ export function DepotWorkflowPage() {
                     ))}
                   </WorkflowSelect>
                 </WorkflowField>
-                <WorkflowField label="Laverie cible">
+                {/* Stage 4 — Segmentation du flux */}
+                <WorkflowField label="Destination">
                   <WorkflowSelect
-                    value={dispatchLaverieId}
-                    onChange={(event) => setDispatchLaverieId(event.target.value)}
+                    value={dispatchDestinationType}
+                    onChange={(e) => setDispatchDestinationType(e.target.value as "laverie"|"transformer_direct")}
                     disabled={!canDispatch}
                   >
-                    <option value="">Sélectionner une laverie</option>
-                    {data.laveries.map((laverie) => (
-                      <option key={laverie.id} value={laverie.id}>
-                        {laverie.name} · {laverie.regionName ?? "—"}
-                      </option>
-                    ))}
+                    <option value="laverie">Laverie (Flux A — isolation/engrais propre)</option>
+                    <option value="transformer_direct">Transformateur direct (Flux B — engrais brut)</option>
                   </WorkflowSelect>
                 </WorkflowField>
+                {dispatchDestinationType === "laverie" && (
+                  <WorkflowField label="Laverie cible">
+                    <WorkflowSelect
+                      value={dispatchLaverieId}
+                      onChange={(event) => setDispatchLaverieId(event.target.value)}
+                      disabled={!canDispatch}
+                    >
+                      <option value="">Sélectionner une laverie</option>
+                      {data.laveries.map((laverie) => (
+                        <option key={laverie.id} value={laverie.id}>
+                          {laverie.name} · {laverie.regionName ?? "—"}
+                        </option>
+                      ))}
+                    </WorkflowSelect>
+                  </WorkflowField>
+                )}
                 <WorkflowField label="Poids manifeste (kg)">
-                  <Input
-                    type="number"
-                    min="0"
-                    step="0.01"
-                    value={dispatchWeightKg}
+                  <Input type="number" min="0" step="0.01" value={dispatchWeightKg}
                     onChange={(event) => setDispatchWeightKg(event.target.value)}
-                    disabled={!canDispatch}
-                  />
+                    disabled={!canDispatch} />
                 </WorkflowField>
+                <WorkflowField label="Volume Flux A — Isolation (kg)">
+                  <Input type="number" min="0" step="0.01" value={dispatchFluxAKg}
+                    onChange={(e) => setDispatchFluxAKg(e.target.value)}
+                    disabled={!canDispatch} placeholder="Laine longue, saine" />
+                </WorkflowField>
+                <WorkflowField label="Volume Flux B — Engrais (kg)">
+                  <Input type="number" min="0" step="0.01" value={dispatchFluxBKg}
+                    onChange={(e) => setDispatchFluxBKg(e.target.value)}
+                    disabled={!canDispatch} placeholder="Laine jarreuse, très souillée" />
+                </WorkflowField>
+                <WorkflowField label="Taux d'impuretés VM%">
+                  <Input type="number" min="0" max="100" step="0.1" value={dispatchImpurityRate}
+                    onChange={(e) => setDispatchImpurityRate(e.target.value)}
+                    disabled={!canDispatch} placeholder="> 5% → engrais direct" />
+                </WorkflowField>
+                <WorkflowField label="Degré d'humidité H% (sortie)">
+                  <Input type="number" min="0" max="100" step="0.1" value={dispatchHumidityExit}
+                    onChange={(e) => setDispatchHumidityExit(e.target.value)}
+                    disabled={!canDispatch} placeholder="Mesurer avant transport" />
+                </WorkflowField>
+
                 <Button
                   className="w-full"
                   onClick={() => void handleDispatch()}

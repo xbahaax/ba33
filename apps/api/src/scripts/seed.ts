@@ -950,9 +950,10 @@ async function seed() {
   await db.insert(orders).values([
     {
       id: ids.orders.quote,
+      orderCode: 'ORD-2026-0001',
       buyerId: ids.users.buyer,
-      channel: 'export',
-      status: 'quote',
+      channel: 'export' as const,
+      status: 'quote' as const,
       paymentStatus: 'pending',
       subtotal: '420000.00',
       tax: '79800.00',
@@ -963,10 +964,11 @@ async function seed() {
     },
     {
       id: ids.orders.preparing,
+      orderCode: 'ORD-2026-0002',
       buyerId: ids.users.buyer,
-      channel: 'national',
-      status: 'preparing',
-      paymentStatus: 'partial',
+      channel: 'national' as const,
+      status: 'preparing' as const,
+      paymentStatus: 'partial' as const,
       subtotal: '350000.00',
       tax: '66500.00',
       total: '416500.00',
@@ -977,10 +979,11 @@ async function seed() {
     },
     {
       id: ids.orders.delivered,
+      orderCode: 'ORD-2026-0003',
       buyerId: ids.users.buyer,
-      channel: 'institutional',
-      status: 'delivered',
-      paymentStatus: 'paid',
+      channel: 'institutional' as const,
+      status: 'delivered' as const,
+      paymentStatus: 'paid' as const,
       subtotal: '780000.00',
       tax: '148200.00',
       total: '928200.00',
@@ -1005,8 +1008,10 @@ async function seed() {
   await db.insert(salesDocuments).values([
     {
       orderId: ids.orders.delivered,
-      type: 'traceability_certificate',
+      type: 'traceability_certificate' as const,
       fileId: '00000000-0000-0000-0000-000000001601',
+      title: 'Certificat de traçabilité',
+      sizeLabel: '128 Ko',
       generatedAt: new Date('2026-04-20T11:00:00Z'),
     },
   ]);
