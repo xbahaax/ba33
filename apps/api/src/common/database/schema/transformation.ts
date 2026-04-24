@@ -1,5 +1,12 @@
 import { pgTable, uuid, text, timestamp, decimal, boolean, jsonb, integer, primaryKey } from 'drizzle-orm/pg-core';
-import { transformerTrackEnum, productStatusEnum, wasteCategoryEnum } from './enums';
+import {
+  transformerTrackEnum,
+  productStatusEnum,
+  wasteCategoryEnum,
+  productDestinationTypeEnum,
+  unloadingModeEnum,
+  antimitesTreatmentTypeEnum,
+} from './enums';
 import { regions } from './regions';
 import { users } from './users';
 import { lots } from './lots';
@@ -53,6 +60,20 @@ export const productionRuns = pgTable('production_runs', {
   operatedBy: uuid('operated_by')
     .notNull()
     .references(() => users.id),
+
+  // ── Stage 6 — Entrée Transformateur 2 (Engrais direct) ───────────────────
+  drynessIndex: decimal('dryness_index', { precision: 5, scale: 2 }),
+  foreignBodyPresent: boolean('foreign_body_present'),
+  foreignBodyNotes: text('foreign_body_notes'),
+  unloadingMode: unloadingModeEnum('unloading_mode'),
+
+  // ── Stage 8 — Entrée Transformateur 1 (Isolants/Géotextiles) ─────────────
+  productDestinationType: productDestinationTypeEnum('product_destination_type'),
+  targetThicknessMm: decimal('target_thickness_mm', { precision: 7, scale: 2 }),
+  targetDensityKgM3: decimal('target_density_kg_m3', { precision: 7, scale: 3 }),
+  antimitesTreatmentType: antimitesTreatmentTypeEnum('antimites_treatment_type'),
+  bindingFiberPercent: decimal('binding_fiber_percent', { precision: 5, scale: 2 }),
+  fireRetardantProduct: text('fire_retardant_product'),
 });
 
 export const productionRunLots = pgTable(

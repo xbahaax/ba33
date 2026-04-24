@@ -4,6 +4,7 @@ import {
   gradeEnum,
   safetyStatusEnum,
   dispatchTrackEnum,
+  conditioningStateEnum,
 } from './enums';
 import { regions } from './regions';
 import { users } from './users';
@@ -38,6 +39,11 @@ export const laverieReceptions = pgTable('laverie_receptions', {
     .notNull()
     .references(() => users.id),
   receivedAt: timestamp('received_at', { withTimezone: true }).notNull(),
+
+  // ── Stage 5 — Entrée laverie ─────────────────────────────────────────────
+  conditioningState: conditioningStateEnum('conditioning_state'), // correct | torn | humid
+  requiredWashTempC: decimal('required_wash_temp_c', { precision: 5, scale: 2 }),
+  requiredDetergentType: text('required_detergent_type'),
 });
 
 export const preWashChecks = pgTable('pre_wash_checks', {
@@ -70,6 +76,8 @@ export const washingRuns = pgTable('washing_runs', {
   chemicals: jsonb('chemicals'),
   cycleDurationMinutes: integer('cycle_duration_minutes'),
   waterTempC: decimal('water_temp_c', { precision: 5, scale: 2 }),
+  detergentType: text('detergent_type'),
+  suintRecoveredLiters: decimal('suint_recovered_liters', { precision: 10, scale: 2 }),
   startedAt: timestamp('started_at', { withTimezone: true }).notNull(),
   completedAt: timestamp('completed_at', { withTimezone: true }),
   operatedBy: uuid('operated_by')
@@ -93,6 +101,15 @@ export const qualifications = pgTable('qualifications', {
   grade: gradeEnum('grade').notNull(),
   safetyStatus: safetyStatusEnum('safety_status').notNull(),
   contaminationNotes: text('contamination_notes'),
+
+  // ── Stage 7 — Sortie laverie / Certificat de pureté ──────────────────────
+  residualHumidityPercent: decimal('residual_humidity_percent', { precision: 5, scale: 2 }), // target 12–15%
+  residualSuintPercent: decimal('residual_suint_percent', { precision: 5, scale: 2 }),       // target < 1%
+  whitenessIndex: decimal('whiteness_index', { precision: 7, scale: 2 }),
+  phLevel: decimal('ph_level', { precision: 4, scale: 2 }),
+  energyKwhUsed: decimal('energy_kwh_used', { precision: 10, scale: 2 }),
+  waterLitersPerKg: decimal('water_liters_per_kg', { precision: 7, scale: 3 }),
+
   performedBy: uuid('performed_by')
     .notNull()
     .references(() => users.id),

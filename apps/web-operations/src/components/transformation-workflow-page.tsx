@@ -56,6 +56,19 @@ export function TransformationWorkflowPage() {
   const [bomId, setBomId] = useState("");
   const [inputWeightKg, setInputWeightKg] = useState("");
 
+  // Stage 6 — Entrée Transformateur 2 (Engrais direct)
+  const [drynessIndex, setDrynessIndex] = useState("");
+  const [foreignBodyPresent, setForeignBodyPresent] = useState<"yes"|"no"|"">("");
+  const [foreignBodyNotes, setForeignBodyNotes] = useState("");
+  const [unloadingMode, setUnloadingMode] = useState<"vrac"|"balles"|"">("");
+  // Stage 8 — Entrée Transformateur 1 (Isolants/Géotextiles)
+  const [productDestinationType, setProductDestinationType] = useState<"flux_a1_panels"|"flux_a2_rolls"|"flux_a3_geotextile"|"flux_b_engrais"|"">("");
+  const [targetThicknessMm, setTargetThicknessMm] = useState("");
+  const [targetDensityKgM3, setTargetDensityKgM3] = useState("");
+  const [antimitesTreatment, setAntimitesTreatment] = useState<"natural"|"synthetic"|"">("");
+  const [bindingFiberPercent, setBindingFiberPercent] = useState("");
+  const [fireRetardantProduct, setFireRetardantProduct] = useState("");
+
   const [runId, setRunId] = useState("");
   const [outputWeightKg, setOutputWeightKg] = useState("");
   const [wasteWeightKg, setWasteWeightKg] = useState("0");
@@ -131,6 +144,18 @@ export function TransformationWorkflowPage() {
       lotId,
       bomId,
       inputWeightKg: Number(inputWeightKg),
+      // Stage 6 — Engrais direct
+      drynessIndex: drynessIndex ? Number(drynessIndex) : undefined,
+      foreignBodyPresent: foreignBodyPresent === "yes" ? true : foreignBodyPresent === "no" ? false : undefined,
+      foreignBodyNotes: foreignBodyNotes || undefined,
+      unloadingMode: unloadingMode || undefined,
+      // Stage 8 — Isolants/Géotextiles
+      productDestinationType: productDestinationType || undefined,
+      targetThicknessMm: targetThicknessMm ? Number(targetThicknessMm) : undefined,
+      targetDensityKgM3: targetDensityKgM3 ? Number(targetDensityKgM3) : undefined,
+      antimitesTreatmentType: antimitesTreatment || undefined,
+      bindingFiberPercent: bindingFiberPercent ? Number(bindingFiberPercent) : undefined,
+      fireRetardantProduct: fireRetardantProduct || undefined,
     });
 
     if (!result) {
@@ -264,6 +289,75 @@ export function TransformationWorkflowPage() {
                     disabled={!canOperate}
                   />
                 </WorkflowField>
+                {/* Stage 8 — Entrée Transformateur 1 (Isolants, Géotextiles, Feutres) */}
+                <WorkflowField label="Type de produit fini">
+                  <WorkflowSelect value={productDestinationType}
+                    onChange={(e) => setProductDestinationType(e.target.value as typeof productDestinationType)}
+                    disabled={!canOperate}>
+                    <option value="">— Non défini</option>
+                    <option value="flux_a1_panels">Flux A1 — Panneaux isolants semi-rigides</option>
+                    <option value="flux_a2_rolls">Flux A2 — Rouleaux de laine à dérouler</option>
+                    <option value="flux_a3_geotextile">Flux A3 — Géotextiles / feutres acoustiques</option>
+                    <option value="flux_b_engrais">Flux B — Engrais (D4)</option>
+                  </WorkflowSelect>
+                </WorkflowField>
+                <WorkflowField label="Épaisseur cible (mm)">
+                  <Input type="number" min="0" step="1" value={targetThicknessMm}
+                    onChange={(e) => setTargetThicknessMm(e.target.value)} disabled={!canOperate} />
+                </WorkflowField>
+                <WorkflowField label="Densité cible (kg/m³)">
+                  <Input type="number" min="0" step="0.1" value={targetDensityKgM3}
+                    onChange={(e) => setTargetDensityKgM3(e.target.value)} disabled={!canOperate} />
+                </WorkflowField>
+                <WorkflowField label="Traitement antimites">
+                  <WorkflowSelect value={antimitesTreatment}
+                    onChange={(e) => setAntimitesTreatment(e.target.value as "natural"|"synthetic"|"")}
+                    disabled={!canOperate}>
+                    <option value="">— Aucun</option>
+                    <option value="natural">Naturel (sel de bore)</option>
+                    <option value="synthetic">Synthétique</option>
+                  </WorkflowSelect>
+                </WorkflowField>
+                <WorkflowField label="Fibres de liaison (% biopolymère thermo-fusible)">
+                  <Input type="number" min="0" max="100" step="0.1" value={bindingFiberPercent}
+                    onChange={(e) => setBindingFiberPercent(e.target.value)} disabled={!canOperate} />
+                </WorkflowField>
+                <WorkflowField label="Traitement ignifuge (classement au feu)">
+                  <Input type="text" value={fireRetardantProduct}
+                    onChange={(e) => setFireRetardantProduct(e.target.value)} disabled={!canOperate} />
+                </WorkflowField>
+
+                {/* Stage 6 — Entrée Transformateur 2 (Engrais direct, sans lavage) */}
+                <WorkflowField label="Indice de sècheresse">
+                  <Input type="number" min="0" step="0.1" value={drynessIndex}
+                    onChange={(e) => setDrynessIndex(e.target.value)} disabled={!canOperate}
+                    placeholder="Doit être suffisant pour broyage sans bourrage" />
+                </WorkflowField>
+                <WorkflowField label="Présence de corps étrangers">
+                  <WorkflowSelect value={foreignBodyPresent}
+                    onChange={(e) => setForeignBodyPresent(e.target.value as "yes"|"no"|"")}
+                    disabled={!canOperate}>
+                    <option value="">— Non vérifié</option>
+                    <option value="no">Non — Aucun corps étranger</option>
+                    <option value="yes">Oui — Détecté (préciser ci-dessous)</option>
+                  </WorkflowSelect>
+                </WorkflowField>
+                {foreignBodyPresent === "yes" && (
+                  <WorkflowField label="Détail corps étrangers (métaux, cailloux, cuir)">
+                    <Input type="text" value={foreignBodyNotes}
+                      onChange={(e) => setForeignBodyNotes(e.target.value)} disabled={!canOperate} />
+                  </WorkflowField>
+                )}
+                <WorkflowField label="Mode de déchargement">
+                  <WorkflowSelect value={unloadingMode}
+                    onChange={(e) => setUnloadingMode(e.target.value as "vrac"|"balles"|"")}
+                    disabled={!canOperate}>
+                    <option value="">— Non défini</option>
+                    <option value="vrac">Vrac</option>
+                    <option value="balles">Balles</option>
+                  </WorkflowSelect>
+                </WorkflowField>
+
                 <Button
                   onClick={() => void handleStartRun()}
                   disabled={!canOperate || submitting === "start"}

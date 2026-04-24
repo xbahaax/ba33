@@ -7,8 +7,9 @@ import {
   integer,
   jsonb,
   boolean,
+  date,
 } from 'drizzle-orm/pg-core';
-import { preLotStatusEnum, routeStatusEnum, routeStopStatusEnum } from './enums';
+import { preLotStatusEnum, routeStatusEnum, routeStopStatusEnum, bagTypeEnum } from './enums';
 import { sources } from './sources';
 import { users } from './users';
 import { regions } from './regions';
@@ -50,6 +51,14 @@ export const preLots = pgTable('pre_lots', {
   assignedCollectorId: uuid('assigned_collector_id').references(() => collectors.userId),
   scheduledAt: timestamp('scheduled_at', { withTimezone: true }),
   lotId: uuid('lot_id'), // FK to lots — set when collected, plain uuid to avoid circular imports
+
+  // ── Stage 1 — Laine de tonte (C1) declaration fields ────────────────────
+  shearingDate: date('shearing_date'),
+  sheepBreed: text('sheep_breed'),
+  bagCount: integer('bag_count'),
+  bagType: bagTypeEnum('bag_type'),
+  lastParasiteTreatmentDate: date('last_parasite_treatment_date'),
+
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
 });

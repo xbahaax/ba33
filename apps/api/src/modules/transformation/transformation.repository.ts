@@ -50,6 +50,17 @@ export class TransformationRepository {
             outputWeightKg: productionRuns.outputWeightKg,
             startedAt: productionRuns.startedAt,
             operatorName: users.fullName,
+            // Stage 6 — Engrais direct
+            drynessIndex: productionRuns.drynessIndex,
+            foreignBodyPresent: productionRuns.foreignBodyPresent,
+            unloadingMode: productionRuns.unloadingMode,
+            // Stage 8 — Isolants/Géotextiles
+            productDestinationType: productionRuns.productDestinationType,
+            targetThicknessMm: productionRuns.targetThicknessMm,
+            targetDensityKgM3: productionRuns.targetDensityKgM3,
+            antimitesTreatmentType: productionRuns.antimitesTreatmentType,
+            bindingFiberPercent: productionRuns.bindingFiberPercent,
+            fireRetardantProduct: productionRuns.fireRetardantProduct,
           })
           .from(productionRuns)
           .leftJoin(transformers, eq(productionRuns.transformerId, transformers.id))
@@ -190,6 +201,18 @@ export class TransformationRepository {
           inputWeightKg: input.inputWeightKg.toFixed(2),
           startedAt,
           operatedBy: actorId,
+          // Stage 6 — Entrée Transformateur 2 (Engrais direct)
+          drynessIndex: input.drynessIndex?.toFixed(2),
+          foreignBodyPresent: input.foreignBodyPresent,
+          foreignBodyNotes: input.foreignBodyNotes,
+          unloadingMode: input.unloadingMode,
+          // Stage 8 — Entrée Transformateur 1 (Isolants/Géotextiles)
+          productDestinationType: input.productDestinationType,
+          targetThicknessMm: input.targetThicknessMm?.toFixed(2),
+          targetDensityKgM3: input.targetDensityKgM3?.toFixed(3),
+          antimitesTreatmentType: input.antimitesTreatmentType,
+          bindingFiberPercent: input.bindingFiberPercent?.toFixed(2),
+          fireRetardantProduct: input.fireRetardantProduct,
         })
         .returning({
           id: productionRuns.id,

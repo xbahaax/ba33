@@ -1,5 +1,5 @@
-import { pgTable, uuid, text, timestamp, decimal, boolean, jsonb, primaryKey } from 'drizzle-orm/pg-core';
-import { depotZonePurposeEnum, a1SeverityEnum, a1StatusEnum } from './enums';
+import { pgTable, uuid, text, timestamp, decimal, boolean, jsonb, primaryKey, integer, date } from 'drizzle-orm/pg-core';
+import { depotZonePurposeEnum, a1SeverityEnum, a1StatusEnum, lotClassificationEnum, depotDestinationDirectEnum } from './enums';
 import { regions } from './regions';
 import { users } from './users';
 import { lots } from './lots';
@@ -49,6 +49,13 @@ export const depotReceptions = pgTable('depot_receptions', {
     .references(() => users.id),
   receivedAt: timestamp('received_at', { withTimezone: true }).notNull(),
   notes: text('notes'),
+
+  // ── Stage 3 — Dépositaire tri fields ─────────────────────────────────────
+  lotClassification: lotClassificationEnum('lot_classification'),  // Classe A | B
+  stackTemperatureC: decimal('stack_temperature_c', { precision: 5, scale: 2 }),
+  humidityEntryPercent: decimal('humidity_entry_percent', { precision: 5, scale: 2 }),
+  vegetalMatterPercent: decimal('vegetal_matter_percent', { precision: 5, scale: 2 }), // VM%
+  plannedExitDate: date('planned_exit_date'),
 });
 
 export const depotDispatches = pgTable('depot_dispatches', {
@@ -56,13 +63,21 @@ export const depotDispatches = pgTable('depot_dispatches', {
   depotId: uuid('depot_id')
     .notNull()
     .references(() => depots.id),
-  destinationLaverieId: uuid('destination_laverie_id').notNull(),
+  destinationLaverieId: uuid('destination_laverie_id'),         // nullable: either laverie or transformer
+  destinationTransformerId: uuid('destination_transformer_id'), // for direct Flux B route
   manifestWeightKg: decimal('manifest_weight_kg', { precision: 10, scale: 2 }).notNull(),
   dispatchedBy: uuid('dispatched_by')
     .notNull()
     .references(() => users.id),
   dispatchedAt: timestamp('dispatched_at', { withTimezone: true }).notNull(),
   transportJobId: uuid('transport_job_id').references(() => transportJobs.id),
+
+  // ── Stage 4 — Sortie dépositaire fields ──────────────────────────────────
+  fluxAWeightKg: decimal('flux_a_weight_kg', { precision: 10, scale: 2 }),   // Isolation volume
+  fluxBWeightKg: decimal('flux_b_weight_kg', { precision: 10, scale: 2 }),   // Engrais volume
+  impurityRatePercent: decimal('impurity_rate_percent', { precision: 5, scale: 2 }), // VM%
+  humidityExitPercent: decimal('humidity_exit_percent', { precision: 5, scale: 2 }), // H%
+  destinationDirect: depotDestinationDirectEnum('destination_direct'),
 });
 
 export const depotDispatchLots = pgTable(
