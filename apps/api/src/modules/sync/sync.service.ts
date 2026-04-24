@@ -192,7 +192,7 @@ export class SyncService {
     // This would be called by a cron job
     const allDevices = await this.syncRepository.findDevicesByUserId(''); // needs a findAll method
     const cutoff = new Date(Date.now() - maxHours * 60 * 60 * 1000);
-    const stale = [];
+    const stale: string[] = [];
 
     // For now, this is a placeholder — would need a findAllDevices repo method
     // and would notify central operations about stale collectors
