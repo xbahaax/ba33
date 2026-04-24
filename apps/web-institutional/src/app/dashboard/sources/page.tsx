@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { Card, CardHeader, CardTitle, CardContent, Badge } from '@ba33/ui-web';
 import { Building2, RefreshCw } from 'lucide-react';
 
-const API = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3100';
+const API = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3100/api/v1';
 
 const SOURCE_LABELS: Record<string, string> = {
   c1_shepherd: 'Berger (C1)', c2_slaughterhouse: 'Abattoir (C2)', c3_aggregator: 'Agrégateur (C3)',

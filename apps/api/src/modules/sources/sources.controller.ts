@@ -26,7 +26,7 @@ import { UpdateSourceDto } from './dto/update-source.dto';
 @ApiTags('sources')
 @ApiBearerAuth()
 @UseGuards(JwtAuthGuard, RolesGuard)
-@Roles('collector', 'central_admin', 'regional_manager')
+@Roles('collector', 'central_admin', 'regional_manager', 'institutional')
 @Controller('sources')
 export class SourcesController {
   constructor(private readonly sourcesService: SourcesService) {}

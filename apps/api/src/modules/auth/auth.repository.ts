@@ -114,6 +114,17 @@ export class AuthRepository {
     return rows[0]?.buyer ? this.toBuyerAuthUser(rows[0].user, rows[0].buyer) : undefined;
   }
 
+  async findBuyerByPhone(phone: string): Promise<BuyerAuthUser | undefined> {
+    const rows = await this.db
+      .select({ user: users, buyer: buyers })
+      .from(users)
+      .leftJoin(buyers, eq(users.id, buyers.userId))
+      .where(eq(users.phone, phone))
+      .limit(1);
+
+    return rows[0]?.buyer ? this.toBuyerAuthUser(rows[0].user, rows[0].buyer) : undefined;
+  }
+
   async findBuyerById(userId: string): Promise<BuyerAuthUser | undefined> {
     const rows = await this.db
       .select({ user: users, buyer: buyers })

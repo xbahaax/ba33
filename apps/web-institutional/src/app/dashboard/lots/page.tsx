@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { Card, CardHeader, CardTitle, CardContent, Badge } from '@ba33/ui-web';
 import { Package, RefreshCw } from 'lucide-react';
 
-const API = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3100';
+const API = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3100/api/v1';
 
 const STATUS_LABELS: Record<string, string> = {
   announced: 'Annoncé', collected: 'Collecté', in_transit: 'En transit',

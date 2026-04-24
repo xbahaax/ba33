@@ -18,6 +18,7 @@ import {
 
 export interface LoginInput {
   email?: string;
+  phone?: string;
   password: string;
 }
 
@@ -51,11 +52,15 @@ export class AuthService {
   ) {}
 
   async login(input: LoginInput): Promise<AuthResponse> {
-    if (!input.email) {
-      throw new BadRequestException('Email login is required.');
+    if (!input.email && !input.phone) {
+      throw new BadRequestException('Email or phone login is required.');
     }
 
-    const user = await this.authRepository.findBuyerByEmail(input.email);
+    const user = input.email
+      ? await this.authRepository.findBuyerByEmail(input.email)
+      : input.phone
+        ? await this.authRepository.findBuyerByPhone(input.phone)
+        : undefined;
 
     if (!user) {
       throw new NotFoundException('The current user no longer exists.');

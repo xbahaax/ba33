@@ -16,7 +16,7 @@ import {
   ClipboardList,
 } from 'lucide-react';
 
-const API = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3100';
+const API = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3100/api/v1';
 
 const STATUS_LABELS: Record<string, string> = {
   announced: 'Annoncé',
@@ -72,7 +72,7 @@ interface DashboardData {
   regions: { total: number };
   recentLots: Array<{
     id: string;
-    qrCodeHash: string;
+    qrCode: string;
     status: string;
     sourceType: string;
     declaredWeightKg: string;

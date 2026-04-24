@@ -1,4 +1,4 @@
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3100';
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3100/api/v1';
 
 export async function apiFetch(path: string, token?: string) {
   const headers: Record<string, string> = { 'Content-Type': 'application/json' };

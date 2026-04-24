@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { Card, CardHeader, CardTitle, CardContent, CardDescription, Badge } from '@ba33/ui-web';
 import { Shield, CheckCircle, AlertTriangle, XCircle, Search } from 'lucide-react';
 
-const API = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3100';
+const API = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3100/api/v1';
 
 export default function ConformitePage() {
   const router = useRouter();
