@@ -30,6 +30,13 @@ class JobListScreen extends ConsumerWidget {
 
     return Scaffold(
       backgroundColor: colors.background,
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: () => context.push('/farmer-declare'),
+        icon: const Icon(Icons.add_circle_outline),
+        label: const Text('صرح على فلاح'),
+        backgroundColor: colors.primary,
+        foregroundColor: colors.primaryForeground,
+      ),
       body: SafeArea(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
