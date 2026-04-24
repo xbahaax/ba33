@@ -67,9 +67,13 @@ class DeclarationsScreen extends ConsumerWidget {
                         child: DeclarationCard(
                           declaration: d,
                           onSchedule: () => ref
-                              .read(
-                                  declarationsViewModelProvider.notifier)
-                              .schedulePickup(d.id),
+                              .read(declarationsViewModelProvider.notifier)
+                              .schedulePickup(d.id)
+                              .catchError((e) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(content: Text('Failed to schedule: $e')),
+                            );
+                          }),
                         ),
                       )),
                 ],

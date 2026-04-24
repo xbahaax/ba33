@@ -3,8 +3,9 @@ SHELL := /bin/bash
 
 # ── Config ────────────────────────────────────────────────────────────────────
 COMPOSE  := docker compose -f infra/docker/docker-compose.yml
-API_PORT ?= 3333
-API_URL  := http://localhost:$(API_PORT)
+API_PORT ?= 3100
+HOST     := $(shell ipconfig getifaddr en0 2>/dev/null || ipconfig getifaddr en1 2>/dev/null || echo localhost)
+API_URL  := http://$(HOST):$(API_PORT)
 
 # ── Colors ────────────────────────────────────────────────────────────────────
 CYAN  := \033[0;36m
@@ -96,13 +97,17 @@ reset:
 	@$(MAKE) dev
 
 # ── Mobile ────────────────────────────────────────────────────────────────────
-SIMULATOR_ID := EAE5F417-BD42-42FA-BDF3-9E7610AC0FB9
+SIMULATOR_ID := RFCT605TZDK
+
+.PHONY: collector
+collector:
+	$(call log,"Launching collector app → $(API_URL)")
+	@cd apps/mobile-collector && flutter run -d $(SIMULATOR_ID) --dart-define=API_URL=$(API_URL)
 
 .PHONY: transporter
 transporter:
-	$(call log,"Launching transporter app on iPhone 16e simulator (iOS 26.2)...")
-	@xcrun simctl boot $(SIMULATOR_ID) 2>/dev/null || true
-	@cd apps/mobile-transporter && flutter run -d $(SIMULATOR_ID) --dart-define=API_URL=http://localhost:3333
+	$(call log,"Launching transporter app → $(API_URL)")
+	@cd apps/mobile-transporter && flutter run -d $(SIMULATOR_ID) --dart-define=API_URL=$(API_URL)
 
 # ── Utilities ─────────────────────────────────────────────────────────────────
 .PHONY: logs

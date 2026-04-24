@@ -10,7 +10,7 @@ class Auth extends _$Auth {
   @override
   User? build() => null;
 
-  Future<bool> login(String phone, String password) async {
+  Future<String?> login(String phone, String password) async {
     try {
       final authSvc = ref.read(authServiceProvider);
       final apiClient = ref.read(apiClientProvider);
@@ -28,9 +28,9 @@ class Auth extends _$Auth {
         name: profile['fullName'] as String?,
         email: profile['email'] as String?,
       );
-      return true;
+      return null; // null = success
     } catch (e) {
-      return false;
+      return e.toString(); // return actual error message
     }
   }
 

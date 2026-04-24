@@ -7,6 +7,8 @@ import {
 import { LotsRepository } from './lots.repository';
 import { EventsService } from '../events/events.service';
 import { NotificationsService } from '../notifications/notifications.service';
+import { TransportRepository } from '../transport/transport.repository';
+import { DepotRepository } from '../depot/depot.repository';
 import { v4 as uuid } from 'uuid';
 
 const CRITICAL_LOT_STATUSES = new Set([
@@ -23,6 +25,8 @@ export class LotsService {
     private readonly lotsRepository: LotsRepository,
     private readonly eventsService: EventsService,
     private readonly notificationsService: NotificationsService,
+    private readonly transportRepository: TransportRepository,
+    private readonly depotRepository: DepotRepository,
   ) {}
 
   async createLot(
@@ -84,6 +88,39 @@ export class LotsService {
       occurredAt: now,
       version: 1,
     });
+
+    // Auto-create a transport job for this lot so it appears in the transporter app
+    try {
+      const depots = await this.depotRepository.findAllDepots();
+      if (depots.length > 0) {
+        const depot = depots[0];
+        const lane = (data.isUrgent ?? false) ? 'urgent_cold_chain' : 'normal';
+        const slaHours = lane === 'normal' ? 24 : 6;
+        const slaDeadline = new Date(Date.now() + slaHours * 60 * 60 * 1000);
+
+        const job = await this.transportRepository.createJob({
+          id: uuid(),
+          originType: 'collector',
+          originId: data.collectorId ?? actorId,
+          destinationType: 'depot',
+          destinationId: depot.id,
+          lane,
+          status: 'pending',
+          slaDeadline,
+          requestedAt: new Date(),
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        });
+
+        await this.transportRepository.addJobLot(job.id, lotId);
+
+        this.logger.log(
+          `Auto-created transport job ${job.id} for lot ${lotId} (lane: ${lane})`,
+        );
+      }
+    } catch (err) {
+      this.logger.warn(`Failed to auto-create transport job for lot ${lotId}: ${err}`);
+    }
 
     // Add initial weigh record if provided
     if (data.initialWeigh) {

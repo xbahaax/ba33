@@ -22,7 +22,8 @@ class AuthState extends _$AuthState {
   AuthInfo build() => const AuthInfo();
 
   /// Login with phone number and password via the real API.
-  Future<bool> login(String phone, String password) async {
+  /// Returns null on success, or the error message on failure.
+  Future<String?> login(String phone, String password) async {
     try {
       final authSvc = ref.read(authServiceProvider);
       final apiClient = ref.read(apiClientProvider);
@@ -36,9 +37,9 @@ class AuthState extends _$AuthState {
         userId: profile['id'] as String?,
         userName: profile['fullName'] as String?,
       );
-      return true;
-    } catch (_) {
-      return false;
+      return null;
+    } catch (e) {
+      return e.toString();
     }
   }
 
