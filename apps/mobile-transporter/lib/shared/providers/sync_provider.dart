@@ -65,8 +65,8 @@ class SyncQueue extends _$SyncQueue {
 
     final db = ref.read(appDatabaseProvider);
     final pending = await db.getPendingEvents();
-    for (final event in pending) {
-      await db.markEventSynced(event.id);
+    for (final e in pending) {
+      await db.markEventSynced(e.id);
     }
 
     state = state.copyWith(

@@ -17,13 +17,13 @@ class ActiveTrip extends _$ActiveTrip {
   // ── Initialise from Drift on app start ───────────────
 
   Future<void> restoreFromDb() async {
-    final cached = await ref.read(appDatabaseProvider).getActiveTrip();
+    final db = ref.read(appDatabaseProvider);
+    final cached = await db.getActiveTrip();
     if (cached == null) return;
 
-    final db = ref.read(appDatabaseProvider);
-    final gpsRows = await db.getGpsPoints(
-      ActiveTripState.fromJsonString(cached.stateJson).job.id,
-    );
+    final jobId =
+        ActiveTripState.fromJsonString(cached.stateJson).job.id;
+    final gpsRows = await db.getGpsRecords(jobId);
     final gpsPoints = gpsRows
         .map((r) => GpsPoint(
               lat: r.lat,

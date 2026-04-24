@@ -86,7 +86,7 @@ class GpsService {
   }
 
   Future<List<GpsPoint>> getRecordedPoints(String jobId) async {
-    final rows = await _db.getGpsPoints(jobId);
+    final rows = await _db.getGpsRecords(jobId);
     return rows
         .map((r) => GpsPoint(
               lat: r.lat,
