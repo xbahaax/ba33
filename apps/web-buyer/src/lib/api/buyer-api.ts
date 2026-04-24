@@ -1,52 +1,152 @@
-import { addresses as fallbackAddresses, complaints as fallbackComplaints, orders as fallbackOrders } from '@/lib/mock/orders';
-import { products as fallbackProducts } from '@/lib/mock/products';
-import type { OrderDocument } from '@/lib/types/document';
-import type { Product } from '@/lib/types/product';
-import type { Address, Complaint, ComplaintType, Order } from '@/lib/types/order';
-import type { TraceabilityChain } from '@/lib/types/traceability';
+import { products as fallbackProducts } from "@/lib/mock/products";
+import type { OrderDocument } from "@/lib/types/document";
+import type { Product } from "@/lib/types/product";
+import type { Address, Complaint, ComplaintType, Order } from "@/lib/types/order";
+import type { TraceabilityChain } from "@/lib/types/traceability";
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_BA33_API_URL ?? process.env.BA33_API_URL ?? 'http://localhost:3000/api/v1';
+export const AUTH_COOKIE_NAME = "ba33_buyer_token";
+const API_BASE_URL = process.env.NEXT_PUBLIC_BA33_API_URL ?? process.env.BA33_API_URL ?? "http://localhost:3000/api/v1";
 
-type ProductPayload = Omit<Product, 'nfnCertifiedAt' | 'createdAt' | 'traceability'> & {
+export interface SessionUser {
+  id: string;
+  email: string;
+  fullName: string;
+  userType: "buyer";
+  profile: {
+    companyName: string;
+    registrationNumber: string;
+    sector: string;
+    website: string;
+    firstName: string;
+    lastName: string;
+    phone: string;
+    preferredChannel: "national" | "export" | "institutional";
+    language: "fr" | "ar" | "en";
+    currency: "DZD" | "EUR" | "USD";
+    twoFactorEnabled: boolean;
+    notifications: {
+      orderConfirmations: boolean;
+      shipments: boolean;
+      newAvailability: boolean;
+      offers: boolean;
+    };
+  };
+}
+
+export interface AuthResponse {
+  accessToken: string;
+  tokenType: "Bearer";
+  expiresInSeconds: number;
+  user: SessionUser;
+}
+
+export interface BuyerNotification {
+  id: string;
+  type: "order" | "delivery" | "certificate" | "complaint";
+  title: string;
+  description: string;
+  time: string;
+  read: boolean;
+}
+
+export interface CertificationVerification {
+  code: string;
+  status: "valid" | "revoked" | "not_found";
+  productId?: string;
+  productType?: "P1" | "P2";
+  grade?: "A" | "B" | "C";
+  originRegion?: string;
+  certifiedAt?: string;
+  nfnSealId?: string;
+  traceabilitySummary?: {
+    sourceCount: number;
+    collectionDate: string;
+    washingYieldPercent: number;
+    auditsPassed: string[];
+  };
+}
+
+type ProductPayload = Omit<Product, "nfnCertifiedAt" | "createdAt" | "traceability"> & {
   nfnCertifiedAt?: string;
   createdAt: string;
   traceability: TraceabilityPayload;
 };
 
 type TraceabilityPayload = {
-  collectionEvent: Omit<TraceabilityChain['collectionEvent'], 'collectedAt'> & { collectedAt: string };
-  depotD1Event: Omit<TraceabilityChain['depotD1Event'], 'receivedAt'> & { receivedAt: string };
-  transportEvent: Omit<TraceabilityChain['transportEvent'], 'departedAt' | 'arrivedAt'> & { departedAt: string; arrivedAt: string };
-  laverieD2Event: Omit<TraceabilityChain['laverieD2Event'], 'processedAt'> & { processedAt: string };
-  transformationEvent: Omit<TraceabilityChain['transformationEvent'], 'processedAt'> & { processedAt: string };
-  certificationEvent: Omit<TraceabilityChain['certificationEvent'], 'certifiedAt'> & { certifiedAt: string };
+  collectionEvent: Omit<TraceabilityChain["collectionEvent"], "collectedAt"> & { collectedAt: string };
+  depotD1Event: Omit<TraceabilityChain["depotD1Event"], "receivedAt"> & { receivedAt: string };
+  transportEvent: Omit<TraceabilityChain["transportEvent"], "departedAt" | "arrivedAt"> & { departedAt: string; arrivedAt: string };
+  laverieD2Event: Omit<TraceabilityChain["laverieD2Event"], "processedAt"> & { processedAt: string };
+  transformationEvent: Omit<TraceabilityChain["transformationEvent"], "processedAt"> & { processedAt: string };
+  certificationEvent: Omit<TraceabilityChain["certificationEvent"], "certifiedAt"> & { certifiedAt: string };
 };
 
-type OrderDocumentPayload = Omit<OrderDocument, 'createdAt'> & { createdAt: string };
+type OrderDocumentPayload = Omit<OrderDocument, "createdAt"> & { createdAt: string };
 
-type OrderPayload = Omit<Order, 'placedAt' | 'estimatedDelivery' | 'deliveredAt' | 'documents'> & {
+type OrderPayload = Omit<Order, "placedAt" | "estimatedDelivery" | "deliveredAt" | "documents"> & {
   placedAt: string;
   estimatedDelivery?: string;
   deliveredAt?: string;
   documents: OrderDocumentPayload[];
 };
 
-type ComplaintPayload = Omit<Complaint, 'submittedAt'> & { submittedAt: string };
+type ComplaintPayload = Omit<Complaint, "submittedAt"> & { submittedAt: string };
 
 type PaginatedPayload<T> = {
   items: T[];
 };
 
-type CreateAddressInput = Omit<Address, 'id' | 'isDefault'>;
+type CreateAddressInput = Omit<Address, "id" | "isDefault">;
 
-async function apiFetch<T>(path: string, init?: RequestInit): Promise<T> {
+type CreateOrderInput = {
+  channel?: "national" | "export" | "institutional";
+  shippingAddressId?: string;
+  items?: Array<{
+    productId: string;
+    productCode: string;
+    productName: string;
+    grade: "A" | "B" | "C";
+    quantityKg: number;
+    unitPriceDzd: number;
+  }>;
+};
+
+function readClientAuthToken(): string | undefined {
+  if (typeof document === "undefined") {
+    return undefined;
+  }
+
+  const tokenChunk = document.cookie
+    .split(";")
+    .map((part) => part.trim())
+    .find((part) => part.startsWith(`${AUTH_COOKIE_NAME}=`));
+
+  if (!tokenChunk) {
+    return undefined;
+  }
+
+  return decodeURIComponent(tokenChunk.slice(AUTH_COOKIE_NAME.length + 1));
+}
+
+function createHeaders(init?: RequestInit, token?: string): Headers {
+  const headers = new Headers(init?.headers);
+  if (!headers.has("Content-Type")) {
+    headers.set("Content-Type", "application/json");
+  }
+
+  const resolvedToken = token ?? readClientAuthToken();
+  if (resolvedToken) {
+    headers.set("Authorization", `Bearer ${resolvedToken}`);
+  }
+
+  return headers;
+}
+
+async function apiFetch<T>(path: string, init?: RequestInit, token?: string): Promise<T> {
   const response = await fetch(`${API_BASE_URL}${path}`, {
     ...init,
-    cache: 'no-store',
-    headers: {
-      'Content-Type': 'application/json',
-      ...init?.headers,
-    },
+    cache: "no-store",
+    headers: createHeaders(init, token),
   });
 
   if (!response.ok) {
@@ -56,8 +156,11 @@ async function apiFetch<T>(path: string, init?: RequestInit): Promise<T> {
   return response.json() as Promise<T>;
 }
 
-async function apiFetchText(path: string): Promise<string> {
-  const response = await fetch(`${API_BASE_URL}${path}`, { cache: 'no-store' });
+async function apiFetchText(path: string, token?: string): Promise<string> {
+  const response = await fetch(`${API_BASE_URL}${path}`, {
+    cache: "no-store",
+    headers: createHeaders(undefined, token),
+  });
 
   if (!response.ok) {
     throw new Error(`BA33 API ${response.status} for ${path}`);
@@ -122,77 +225,194 @@ function toComplaint(payload: ComplaintPayload): Complaint {
   };
 }
 
+export async function loginBuyer(input: { email: string; password: string }): Promise<AuthResponse> {
+  return apiFetch<AuthResponse>("/auth/login", {
+    method: "POST",
+    body: JSON.stringify(input),
+  });
+}
+
+export async function registerBuyer(input: {
+  email: string;
+  password: string;
+  fullName: string;
+  companyName: string;
+  registrationNumber: string;
+}): Promise<AuthResponse> {
+  return apiFetch<AuthResponse>("/auth/register", {
+    method: "POST",
+    body: JSON.stringify(input),
+  });
+}
+
+export async function getMe(token: string): Promise<SessionUser> {
+  return apiFetch<SessionUser>("/auth/me", undefined, token);
+}
+
+export async function updateMyProfile(
+  token: string,
+  updates: Partial<SessionUser["profile"]>,
+): Promise<SessionUser> {
+  return apiFetch<SessionUser>(
+    "/auth/profile",
+    {
+      method: "PATCH",
+      body: JSON.stringify(updates),
+    },
+    token,
+  );
+}
+
+export async function changeMyPassword(
+  token: string,
+  payload: { currentPassword: string; nextPassword: string },
+): Promise<{ updated: true }> {
+  return apiFetch<{ updated: true }>(
+    "/auth/password",
+    {
+      method: "PATCH",
+      body: JSON.stringify(payload),
+    },
+    token,
+  );
+}
+
 export async function getProducts(query?: URLSearchParams): Promise<Product[]> {
-  const suffix = query && query.size > 0 ? `?${query.toString()}` : '';
-  const payload = await withFallback(apiFetch<PaginatedPayload<ProductPayload>>(`/products${suffix}`), { items: fallbackProducts as unknown as ProductPayload[] });
+  const suffix = query && query.size > 0 ? `?${query.toString()}` : "";
+  const payload = await withFallback(apiFetch<PaginatedPayload<ProductPayload>>(`/products${suffix}`), {
+    items: fallbackProducts as unknown as ProductPayload[],
+  });
   return payload.items.map(toProduct);
 }
 
 export async function getProduct(productId: string): Promise<Product | undefined> {
   const fallback = fallbackProducts.find((product) => product.id === productId);
-  const payload = await withFallback(apiFetch<ProductPayload>(`/products/${encodeURIComponent(productId)}`), fallback as unknown as ProductPayload | undefined);
+  const payload = await withFallback(
+    apiFetch<ProductPayload>(`/products/${encodeURIComponent(productId)}`),
+    fallback as unknown as ProductPayload | undefined,
+  );
   return payload ? toProduct(payload) : undefined;
 }
 
-export async function getOrders(query?: URLSearchParams): Promise<Order[]> {
-  const suffix = query && query.size > 0 ? `?${query.toString()}` : '';
-  const payload = await withFallback(apiFetch<PaginatedPayload<OrderPayload>>(`/orders${suffix}`), { items: fallbackOrders as unknown as OrderPayload[] });
+export async function verifyCertificate(
+  value: string,
+  mode: "code" | "qr" = "code",
+): Promise<CertificationVerification> {
+  const endpoint = mode === "qr" ? `/certification/verify/qr/${encodeURIComponent(value)}` : `/certification/verify/${encodeURIComponent(value)}`;
+  return apiFetch<CertificationVerification>(endpoint);
+}
+
+export async function getOrders(query?: URLSearchParams, token?: string): Promise<Order[]> {
+  const suffix = query && query.size > 0 ? `?${query.toString()}` : "";
+  const payload = await apiFetch<PaginatedPayload<OrderPayload>>(`/orders${suffix}`, undefined, token);
   return payload.items.map(toOrder);
 }
 
-export async function getOrder(orderId: string): Promise<Order | undefined> {
-  const fallback = fallbackOrders.find((order) => order.id === orderId);
-  const payload = await withFallback(apiFetch<OrderPayload>(`/orders/${encodeURIComponent(orderId)}`), fallback as unknown as OrderPayload | undefined);
-  return payload ? toOrder(payload) : undefined;
+export async function getOrder(orderId: string, token?: string): Promise<Order | undefined> {
+  try {
+    const payload = await apiFetch<OrderPayload>(`/orders/${encodeURIComponent(orderId)}`, undefined, token);
+    return toOrder(payload);
+  } catch {
+    return undefined;
+  }
 }
 
-export async function getDocuments(type?: string): Promise<OrderDocument[]> {
-  const suffix = type && type !== 'all' ? `?type=${encodeURIComponent(type)}` : '';
-  const fallback = fallbackOrders.flatMap((order) => order.documents);
-  const payload = await withFallback(apiFetch<OrderDocumentPayload[]>(`/documents${suffix}`), fallback as unknown as OrderDocumentPayload[]);
+export async function createOrder(input: CreateOrderInput, token?: string): Promise<Order> {
+  const payload = await apiFetch<OrderPayload>(
+    "/orders",
+    {
+      method: "POST",
+      body: JSON.stringify(input),
+    },
+    token,
+  );
+  return toOrder(payload);
+}
+
+export async function getDocuments(type?: string, token?: string): Promise<OrderDocument[]> {
+  const suffix = type && type !== "all" ? `?type=${encodeURIComponent(type)}` : "";
+  const payload = await apiFetch<OrderDocumentPayload[]>(`/documents${suffix}`, undefined, token);
   return payload.map(toDocument);
 }
 
-export async function getOrderDocumentText(orderId: string, documentId: string): Promise<string> {
-  return withFallback(
-    apiFetchText(`/orders/${encodeURIComponent(orderId)}/documents/${encodeURIComponent(documentId)}/download`),
-    `${documentId}\nCommande: ${orderId}`,
-  );
+export async function getOrderDocumentText(orderId: string, documentId: string, token?: string): Promise<string> {
+  return apiFetchText(`/orders/${encodeURIComponent(orderId)}/documents/${encodeURIComponent(documentId)}/download`, token);
 }
 
-export async function getComplaints(): Promise<Complaint[]> {
-  const payload = await withFallback(apiFetch<ComplaintPayload[]>('/complaints'), fallbackComplaints as unknown as ComplaintPayload[]);
+export async function getComplaints(token?: string): Promise<Complaint[]> {
+  const payload = await apiFetch<ComplaintPayload[]>("/complaints", undefined, token);
   return payload.map(toComplaint);
 }
 
-export async function createComplaint(input: { orderId: string; type: ComplaintType }): Promise<Complaint> {
-  const payload = await apiFetch<ComplaintPayload>('/complaints', {
-    method: 'POST',
-    body: JSON.stringify(input),
-  });
+export async function createComplaint(
+  input: { orderId: string; type: ComplaintType },
+  token?: string,
+): Promise<Complaint> {
+  const payload = await apiFetch<ComplaintPayload>(
+    "/complaints",
+    {
+      method: "POST",
+      body: JSON.stringify(input),
+    },
+    token,
+  );
   return toComplaint(payload);
 }
 
-export async function getAddresses(): Promise<Address[]> {
-  return withFallback(apiFetch<Address[]>('/buyer/addresses'), fallbackAddresses);
+export async function getAddresses(token?: string): Promise<Address[]> {
+  return apiFetch<Address[]>("/buyer/addresses", undefined, token);
 }
 
-export async function createAddress(input: CreateAddressInput): Promise<Address> {
-  return apiFetch<Address>('/buyer/addresses', {
-    method: 'POST',
-    body: JSON.stringify(input),
-  });
+export async function createAddress(input: CreateAddressInput, token?: string): Promise<Address> {
+  return apiFetch<Address>(
+    "/buyer/addresses",
+    {
+      method: "POST",
+      body: JSON.stringify(input),
+    },
+    token,
+  );
 }
 
-export async function updateAddress(addressId: string, input: Partial<CreateAddressInput> & { isDefault?: boolean }): Promise<Address> {
-  return apiFetch<Address>(`/buyer/addresses/${encodeURIComponent(addressId)}`, {
-    method: 'PATCH',
-    body: JSON.stringify(input),
-  });
+export async function updateAddress(
+  addressId: string,
+  input: Partial<CreateAddressInput> & { isDefault?: boolean },
+  token?: string,
+): Promise<Address> {
+  return apiFetch<Address>(
+    `/buyer/addresses/${encodeURIComponent(addressId)}`,
+    {
+      method: "PATCH",
+      body: JSON.stringify(input),
+    },
+    token,
+  );
 }
 
-export async function deleteAddress(addressId: string): Promise<void> {
-  await apiFetch<{ deleted: true }>(`/buyer/addresses/${encodeURIComponent(addressId)}`, {
-    method: 'DELETE',
-  });
+export async function deleteAddress(addressId: string, token?: string): Promise<void> {
+  await apiFetch<{ deleted: true }>(
+    `/buyer/addresses/${encodeURIComponent(addressId)}`,
+    {
+      method: "DELETE",
+    },
+    token,
+  );
+}
+
+export async function getNotifications(token?: string): Promise<BuyerNotification[]> {
+  return apiFetch<BuyerNotification[]>("/notifications", undefined, token);
+}
+
+export async function markAllNotificationsRead(token?: string): Promise<BuyerNotification[]> {
+  return apiFetch<BuyerNotification[]>(
+    "/notifications/read-all",
+    {
+      method: "PATCH",
+    },
+    token,
+  );
+}
+
+export async function dismissNotification(notificationId: string, token?: string): Promise<{ deleted: boolean }> {
+  return apiFetch<{ deleted: boolean }>(`/notifications/${encodeURIComponent(notificationId)}`, { method: "DELETE" }, token);
 }

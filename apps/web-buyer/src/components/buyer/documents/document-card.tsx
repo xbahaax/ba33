@@ -54,7 +54,14 @@ export function DocumentCard({ document }: { document: OrderDocument }) {
           size="sm"
           className="flex-1 text-xs"
           type="button"
-          onClick={async () => downloadTextFile(`${document.id}.txt`, await getOrderDocumentText(document.orderId, document.id))}
+          onClick={async () => {
+            try {
+              const content = await getOrderDocumentText(document.orderId, document.id);
+              downloadTextFile(`${document.id}.txt`, content);
+            } catch {
+              downloadTextFile(`${document.id}.txt`, `${document.title}\nCommande: ${document.orderId}`);
+            }
+          }}
         >
           <Download className="mr-1.5 h-3.5 w-3.5" />
           Télécharger

@@ -1,5 +1,6 @@
 import { ComplaintForm } from "@/components/buyer/complaints/complaint-form";
 import { getOrders } from "@/lib/api/buyer-api";
+import { requireServerAuthToken } from "@/lib/auth/server-session";
 
 type ComplaintSearchParams = Promise<Record<string, string | string[] | undefined>>;
 
@@ -10,7 +11,8 @@ function getParam(value: string | string[] | undefined) {
 export default async function NewComplaintPage({ searchParams }: { searchParams: ComplaintSearchParams }) {
   const params = await searchParams;
   const orderId = getParam(params.orderId);
-  const orders = await getOrders();
+  const token = await requireServerAuthToken();
+  const orders = await getOrders(undefined, token);
 
   return (
     <div className="mx-auto max-w-180 space-y-6">

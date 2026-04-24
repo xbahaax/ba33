@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import {
   ClipboardCheck,
   FileText,
@@ -18,6 +18,8 @@ import {
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { cn } from "@ba33/ui-web/cn";
+import type { SessionUser } from "@/lib/api/buyer-api";
+import { clearAuthToken } from "@/lib/auth/client-session";
 import { useCartEntries } from "@/lib/cart-store";
 
 const navigationGroups = [
@@ -47,10 +49,17 @@ const navigationGroups = [
   },
 ];
 
-export function BuyerSidebar() {
+function toInitials(fullName: string) {
+  const [first, second] = fullName.split(" ").filter(Boolean);
+  return `${first?.[0] ?? "B"}${second?.[0] ?? "A"}`.toUpperCase();
+}
+
+export function BuyerSidebar({ session }: { session: SessionUser }) {
+  const router = useRouter();
   const pathname = usePathname();
   const [isDark, setIsDark] = useState(false);
   const cartEntries = useCartEntries();
+  const initials = toInitials(session.fullName);
 
   useEffect(() => {
     const savedTheme = window.localStorage.getItem("ba33-theme");
@@ -147,15 +156,15 @@ export function BuyerSidebar() {
         {/* User card */}
         <div className="mb-2 flex items-center gap-3 rounded-xl bg-sidebar-accent px-3 py-2.5 text-sidebar-accent-foreground">
           <div className="relative">
-            <div className="flex h-9 w-9 items-center justify-center rounded-full bg-primary font-mono text-sm font-bold text-primary-foreground">
-              NF
-            </div>
+              <div className="flex h-9 w-9 items-center justify-center rounded-full bg-primary font-mono text-sm font-bold text-primary-foreground">
+                {initials}
+              </div>
             {/* Online dot */}
             <span className="absolute bottom-0 right-0 h-2.5 w-2.5 rounded-full border-2 border-sidebar-accent bg-chart-1" />
           </div>
           <div className="min-w-0 flex-1">
-            <p className="truncate text-sm font-semibold">Noura Fibres</p>
-            <p className="truncate font-mono text-[11px] text-muted-foreground">contact@nourafibres.dz</p>
+            <p className="truncate text-sm font-semibold">{session.profile.companyName}</p>
+            <p className="truncate font-mono text-[11px] text-muted-foreground">{session.email}</p>
           </div>
         </div>
 
@@ -171,13 +180,17 @@ export function BuyerSidebar() {
             {isDark ? "Clair" : "Sombre"}
           </button>
 
-          <Link
-            href="/login"
+          <button
+            type="button"
+            onClick={() => {
+              clearAuthToken();
+              router.push("/login");
+            }}
             className="inline-flex flex-1 items-center justify-center gap-2 rounded-lg px-3 py-2 text-xs text-destructive transition-colors hover:bg-destructive/10"
           >
             <LogOut className="h-3.5 w-3.5" />
             Déconnexion
-          </Link>
+          </button>
         </div>
       </div>
     </aside>

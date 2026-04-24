@@ -3,17 +3,11 @@
 import { useState, useRef, useEffect } from "react";
 import { Bell, CheckCheck, Package, Truck, ShieldCheck, AlertCircle, X } from "lucide-react";
 import { cn } from "@ba33/ui-web/cn";
+import { dismissNotification, getNotifications, markAllNotificationsRead, type BuyerNotification } from "@/lib/api/buyer-api";
 
 type NotificationType = "order" | "delivery" | "certificate" | "complaint";
 
-type Notification = {
-  id: string;
-  type: NotificationType;
-  title: string;
-  description: string;
-  time: string;
-  read: boolean;
-};
+type Notification = BuyerNotification;
 
 const initialNotifications: Notification[] = [
   {
@@ -72,20 +66,48 @@ export function NotificationPanel() {
   const unreadCount = notifications.filter((n) => !n.read).length;
 
   useEffect(() => {
+    let active = true;
+
     function handleClickOutside(event: MouseEvent) {
       if (panelRef.current && !panelRef.current.contains(event.target as Node)) {
         setOpen(false);
       }
     }
+
+    void getNotifications()
+      .then((items) => {
+        if (active) {
+          setNotifications(items);
+        }
+      })
+      .catch(() => {
+        if (active) {
+          setNotifications(initialNotifications);
+        }
+      });
+
     document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
+    return () => {
+      active = false;
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
   }, []);
 
-  const markAllRead = () => {
-    setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
+  const markAllRead = async () => {
+    try {
+      const updated = await markAllNotificationsRead();
+      setNotifications(updated);
+    } catch {
+      setNotifications((prev) => prev.map((notification) => ({ ...notification, read: true })));
+    }
   };
 
-  const dismiss = (id: string) => {
+  const dismiss = async (id: string) => {
+    try {
+      await dismissNotification(id);
+    } catch {
+      // no-op
+    }
     setNotifications((prev) => prev.filter((n) => n.id !== id));
   };
 

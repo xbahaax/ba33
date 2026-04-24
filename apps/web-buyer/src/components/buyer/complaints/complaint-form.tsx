@@ -14,12 +14,14 @@ const complaintTypes: Array<{ value: ComplaintType; label: string }> = [
 
 export function ComplaintForm({ orders, selectedOrderId }: { orders: Order[]; selectedOrderId?: string }) {
   const [createdComplaintId, setCreatedComplaintId] = useState<string | null>(null);
+  const [submissionError, setSubmissionError] = useState<string | null>(null);
 
   return (
     <form
       className="space-y-8 rounded-xl border border-border bg-card p-6 text-card-foreground shadow-xs"
       onSubmit={async (event) => {
         event.preventDefault();
+        setSubmissionError(null);
         const formData = new FormData(event.currentTarget);
         const orderId = String(formData.get("orderId") ?? selectedOrderId ?? orders[0]?.id ?? "");
         const type = String(formData.get("type") ?? "other") as ComplaintType;
@@ -28,8 +30,13 @@ export function ComplaintForm({ orders, selectedOrderId }: { orders: Order[]; se
           return;
         }
 
-        const complaint = await createComplaint({ orderId, type });
-        setCreatedComplaintId(complaint.id);
+        try {
+          const complaint = await createComplaint({ orderId, type });
+          setCreatedComplaintId(complaint.id);
+        } catch (error) {
+          const message = error instanceof Error ? error.message : "Impossible de soumettre la réclamation.";
+          setSubmissionError(message);
+        }
       }}
     >
       <div className="grid gap-3 md:grid-cols-3">
@@ -103,6 +110,12 @@ export function ComplaintForm({ orders, selectedOrderId }: { orders: Order[]; se
         <div className="rounded-xl border border-chart-1/30 bg-chart-1/10 p-4 text-center">
           <p className="font-mono font-bold text-foreground">{createdComplaintId}</p>
           <p className="mt-1 text-sm text-muted-foreground">Réclamation transmise à l&apos;API ba33.</p>
+        </div>
+      ) : null}
+
+      {submissionError ? (
+        <div className="rounded-xl border border-destructive/40 bg-destructive/10 p-4 text-sm text-destructive">
+          {submissionError}
         </div>
       ) : null}
 

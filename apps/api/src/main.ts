@@ -2,17 +2,23 @@ import { NestFactory } from '@nestjs/core';
 import { ValidationPipe } from '@nestjs/common';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import pino from 'pino';
-import pinoHttp from 'pino-http';
+import pinoHttp from 'pino-http'; 
 import { AppModule } from './app.module';
 
 async function bootstrap() {
   const logger = pino({ level: process.env.LOG_LEVEL || 'info' });
+  const defaultCorsOrigins = Array.from({ length: 21 }, (_, index) => `http://localhost:${3000 + index}`);
 
   const app = await NestFactory.create(AppModule, {
     logger: ['error', 'warn', 'log', 'debug', 'verbose'],
   });
 
   app.use(pinoHttp({ logger }));
+  app.enableCors({
+    origin: process.env.CORS_ORIGIN?.split(',') ?? defaultCorsOrigins,
+    credentials: true,
+  });
+  app.setGlobalPrefix('api/v1');
 
   app.useGlobalPipes(
     new ValidationPipe({

@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { Menu, Package, ShoppingCart, ClipboardCheck, FileText, ShieldCheck, User, MapPin, Settings, MessageSquareWarning } from "lucide-react";
 import { useState } from "react";
 import { cn } from "@ba33/ui-web/cn";
+import { useCartEntries } from "@/lib/cart-store";
 
 const navigationGroups = [
   {
@@ -36,6 +37,7 @@ const navigationGroups = [
 export function BuyerMobileNav() {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
+  const cartEntries = useCartEntries();
 
   return (
     <>
@@ -102,9 +104,9 @@ export function BuyerMobileNav() {
                           <Icon className="h-[18px] w-[18px]" />
                           {item.label}
                         </span>
-                        {item.badge && (
+                        {(item.href === "/cart" ? cartEntries.length : item.badge) && (
                           <span className="rounded-full bg-primary/15 px-2 py-0.5 font-mono text-xs font-bold text-primary">
-                            {item.badge}
+                            {item.href === "/cart" ? cartEntries.length : item.badge}
                           </span>
                         )}
                       </Link>

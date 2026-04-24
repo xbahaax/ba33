@@ -5,6 +5,7 @@ import { useState } from "react";
 import { Clock, FileText, ShieldCheck } from "lucide-react";
 import { Button } from "@ba33/ui-web";
 import type { Product } from "@/lib/types/product";
+import { createOrder } from "@/lib/api/buyer-api";
 import { addProductToCart } from "@/lib/cart-store";
 
 const channels = [
@@ -12,6 +13,8 @@ const channels = [
   "🌍 Export (EUR/USD)",
   "🏛 Institutionnel (contrat cadre)",
 ];
+
+const channelValues: Array<"national" | "export" | "institutional"> = ["national", "export", "institutional"];
 
 export function ProductPurchasePanel({ product }: { product: Product }) {
   const [quantityKg, setQuantityKg] = useState(50);
@@ -83,7 +86,26 @@ export function ProductPurchasePanel({ product }: { product: Product }) {
               variant="outline"
               className="w-full"
               type="button"
-              onClick={() => setFeedback("Demande de devis enregistrée en brouillon.")}
+              onClick={async () => {
+                try {
+                  const order = await createOrder({
+                    channel: channelValues[selectedChannel],
+                    items: [
+                      {
+                        productId: product.id,
+                        productCode: product.code,
+                        productName: product.name,
+                        grade: product.grade,
+                        quantityKg: safeQuantity,
+                        unitPriceDzd: product.pricePerKgDzd,
+                      },
+                    ],
+                  });
+                  setFeedback(`Demande de devis creee: ${order.id}`);
+                } catch {
+                  setFeedback("Impossible de creer la demande de devis.");
+                }
+              }}
             >
               <FileText className="h-4 w-4" />
               Demander un devis

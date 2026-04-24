@@ -6,6 +6,7 @@ import { CheckoutAddressSelection } from "@/components/buyer/checkout/checkout-a
 import { OrderSummaryPanel } from "@/components/buyer/checkout/order-summary-panel";
 import { PaymentMethodSelector } from "@/components/buyer/checkout/payment-method-selector";
 import { getAddresses, getOrders } from "@/lib/api/buyer-api";
+import { requireServerAuthToken } from "@/lib/auth/server-session";
 import type { SalesChannel } from "@/lib/types/order";
 
 type CheckoutSearchParams = Promise<Record<string, string | string[] | undefined>>;
@@ -18,8 +19,9 @@ export default async function CheckoutPage({ searchParams }: { searchParams: Che
   const params = await searchParams;
   const step = Math.max(1, Math.min(3, Number(getParam(params.step) ?? "1"))) as 1 | 2 | 3;
   const channel = ((getParam(params.channel) ?? "national") as SalesChannel);
-  const [addresses, orders] = await Promise.all([getAddresses(), getOrders()]);
-  const items = orders[1].items;
+  const token = await requireServerAuthToken();
+  const [addresses, orders] = await Promise.all([getAddresses(token), getOrders(undefined, token)]);
+  const items = orders[0]?.items ?? [];
 
   return (
     <div className="space-y-6">

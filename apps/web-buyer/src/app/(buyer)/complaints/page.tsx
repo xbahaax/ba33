@@ -2,6 +2,7 @@ import Link from "next/link";
 import { Plus, Clock, CheckCircle, XCircle, MessageSquareWarning, AlertCircle } from "lucide-react";
 import { Button, Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@ba33/ui-web";
 import { getComplaints } from "@/lib/api/buyer-api";
+import { requireServerAuthToken } from "@/lib/auth/server-session";
 
 const statusConfig: Record<string, { label: string; className: string; icon: React.ElementType }> = {
   review: {
@@ -29,7 +30,8 @@ const typeLabels: Record<string, string> = {
 };
 
 export default async function ComplaintsPage() {
-  const complaints = await getComplaints();
+  const token = await requireServerAuthToken();
+  const complaints = await getComplaints(token);
   const inReview = complaints.filter((c) => c.status === "review").length;
 
   return (

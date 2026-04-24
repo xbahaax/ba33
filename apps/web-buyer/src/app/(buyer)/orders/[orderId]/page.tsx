@@ -6,6 +6,7 @@ import { OrderStatusBadge } from "@/components/buyer/orders/order-status-badge";
 import { OrderTimeline } from "@/components/buyer/orders/order-timeline";
 import { ShipmentTracker } from "@/components/buyer/orders/shipment-tracker";
 import { getOrder } from "@/lib/api/buyer-api";
+import { requireServerAuthToken } from "@/lib/auth/server-session";
 
 type OrderDetailPageProps = {
   params: Promise<{ orderId: string }>;
@@ -13,7 +14,8 @@ type OrderDetailPageProps = {
 
 export default async function OrderDetailPage({ params }: OrderDetailPageProps) {
   const { orderId } = await params;
-  const order = await getOrder(orderId);
+  const token = await requireServerAuthToken();
+  const order = await getOrder(orderId, token);
 
   if (!order) {
     return <div className="rounded-xl border border-border bg-card p-6 shadow-xs">Commande introuvable.</div>;

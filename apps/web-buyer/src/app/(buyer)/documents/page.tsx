@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { DocumentCard } from "@/components/buyer/documents/document-card";
 import { getDocuments } from "@/lib/api/buyer-api";
+import { requireServerAuthToken } from "@/lib/auth/server-session";
 import { FileText, Receipt, ShieldCheck, Globe, Truck, Search } from "lucide-react";
 
 type DocumentsSearchParams = Promise<Record<string, string | string[] | undefined>>;
@@ -21,7 +22,8 @@ export default async function DocumentsPage({ searchParams }: { searchParams: Do
   const params = await searchParams;
   const type = getParam(params.type);
   const query = getParam(params.q)?.toLowerCase() ?? "";
-  const flatDocuments = await getDocuments(type);
+  const token = await requireServerAuthToken();
+  const flatDocuments = await getDocuments(type, token);
   const filteredDocuments = flatDocuments.filter((document) => {
     const typeMatch = !type || type === "all" ? true : document.type === type;
     const queryMatch = query ? document.orderId.toLowerCase().includes(query) : true;

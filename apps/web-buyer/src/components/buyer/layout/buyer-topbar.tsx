@@ -9,6 +9,7 @@ import { LanguageSwitcher } from "@/components/buyer/shared/language-switcher";
 import { NotificationPanel } from "@/components/buyer/layout/notification-panel";
 import { UserMenu } from "@/components/buyer/layout/user-menu";
 import { cn } from "@ba33/ui-web/cn";
+import type { SessionUser } from "@/lib/api/buyer-api";
 
 type BreadcrumbSegment = { label: string; href?: string };
 
@@ -28,7 +29,7 @@ const breadcrumbMap: Array<{ match: RegExp; segments: BreadcrumbSegment[] }> = [
   { match: /^\/account$/, segments: [{ label: "Mon Profil" }] },
 ];
 
-export function BuyerTopbar() {
+export function BuyerTopbar({ session }: { session: SessionUser }) {
   const pathname = usePathname();
   const [searchFocused, setSearchFocused] = useState(false);
 
@@ -91,7 +92,7 @@ export function BuyerTopbar() {
       <NotificationPanel />
 
       {/* User avatar menu */}
-      <UserMenu />
+      <UserMenu session={session} />
     </header>
   );
 }

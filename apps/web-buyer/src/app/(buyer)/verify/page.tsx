@@ -1,5 +1,4 @@
 import { VerifyCertificateClient } from "@/components/buyer/verify/verify-certificate-client";
-import { getProducts } from "@/lib/api/buyer-api";
 
 type VerifySearchParams = Promise<Record<string, string | string[] | undefined>>;
 
@@ -11,7 +10,6 @@ export default async function VerifyPage({ searchParams }: { searchParams: Verif
   const params = await searchParams;
   const mode = getParam(params.mode) === "qr" ? "qr" : "code";
   const code = getParam(params.code) ?? "";
-  const products = await getProducts();
 
-  return <VerifyCertificateClient initialMode={mode} initialCode={code} products={products} />;
+  return <VerifyCertificateClient initialMode={mode} initialCode={code} />;
 }

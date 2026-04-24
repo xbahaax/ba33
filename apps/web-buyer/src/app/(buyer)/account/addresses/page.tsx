@@ -36,11 +36,17 @@ export default function AddressesPage() {
   useEffect(() => {
     let active = true;
 
-    void getAddresses().then((items) => {
-      if (active) {
-        setAddresses(items);
-      }
-    });
+    void getAddresses()
+      .then((items) => {
+        if (active) {
+          setAddresses(items);
+        }
+      })
+      .catch(() => {
+        if (active) {
+          setAddresses([]);
+        }
+      });
 
     return () => {
       active = false;
