@@ -5,7 +5,6 @@ import { JwtStrategy } from '../../common/auth/jwt.strategy';
 import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
 import { AuthRepository } from './auth.repository';
-import { JwtStrategy } from '../../common/auth/jwt.strategy';
 
 @Module({
   imports: [

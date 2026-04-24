@@ -1,7 +1,3 @@
-import { config } from 'dotenv';
-import { resolve } from 'path';
-config({ path: resolve(process.cwd(), '../../.env') });
-
 import { NestFactory } from '@nestjs/core';
 import { ValidationPipe } from '@nestjs/common';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
@@ -9,6 +5,8 @@ import pino from 'pino';
 import pinoHttp from 'pino-http';
 import { AppModule } from './app.module';
 import { loadEnvFile } from './common/env/load-env';
+import { AuditInterceptor } from './common/interceptors/audit.interceptor';
+import { HttpExceptionFilter } from './common/filters/http-exception.filter';
 
 loadEnvFile();
 
