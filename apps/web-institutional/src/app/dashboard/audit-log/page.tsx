@@ -1,7 +1,10 @@
 "use client";
 
 import { useState } from "react";
-import { Card, CardContent, Badge } from "@ba33/ui-web";
+import {
+  Card, CardContent, Badge, Input,
+  Table, TableHeader, TableBody, TableHead, TableRow, TableCell,
+} from "@ba33/ui-web";
 import { Shield, Search, Download } from "lucide-react";
 import { AUDIT_LOG, type AuditEntry } from "@/lib/mock-data";
 
@@ -81,9 +84,9 @@ export default function AuditLogPage() {
       {/* Filters */}
       <div className="flex gap-3 flex-wrap">
         <div className="relative flex-1 min-w-48">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <input
-            className="w-full pl-9 pr-4 py-2 rounded-lg border border-input bg-background text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
+          <Input
+            className="pl-9"
             placeholder="Rechercher par institution, utilisateur…"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
@@ -106,45 +109,45 @@ export default function AuditLogPage() {
       {/* Table */}
       <Card>
         <CardContent className="pt-0">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b border-border text-xs text-muted-foreground uppercase">
-                <th className="text-left py-3 pr-4">Horodatage</th>
-                <th className="text-left py-3 px-4">Institution</th>
-                <th className="text-left py-3 px-4">Utilisateur</th>
-                <th className="text-left py-3 px-4">Type</th>
-                <th className="text-left py-3 px-4">Paramètres</th>
-                <th className="text-right py-3 px-4">Résultats</th>
-                <th className="text-left py-3 pl-4">Justif.</th>
-              </tr>
-            </thead>
-            <tbody>
+          <Table>
+            <TableHeader>
+              <TableRow className="hover:bg-transparent">
+                <TableHead className="text-xs uppercase">Horodatage</TableHead>
+                <TableHead className="text-xs uppercase">Institution</TableHead>
+                <TableHead className="text-xs uppercase">Utilisateur</TableHead>
+                <TableHead className="text-xs uppercase">Type</TableHead>
+                <TableHead className="text-xs uppercase">Paramètres</TableHead>
+                <TableHead className="text-xs uppercase text-right">Résultats</TableHead>
+                <TableHead className="text-xs uppercase">Justif.</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
               {filtered.map((entry) => (
-                <tr key={entry.id} className="border-b border-border/50 hover:bg-muted/20 transition-colors">
-                  <td className="py-3 pr-4 font-mono text-xs text-muted-foreground whitespace-nowrap">
+                <TableRow key={entry.id}>
+                  <TableCell className="py-3 font-mono text-xs text-muted-foreground whitespace-nowrap">
                     {entry.timestamp}
-                  </td>
-                  <td className="py-3 px-4">
+                  </TableCell>
+                  <TableCell className="py-3">
                     <Badge variant="outline" className="text-xs">{entry.institution}</Badge>
-                  </td>
-                  <td className="py-3 px-4 font-mono text-xs text-muted-foreground truncate max-w-32">
+                  </TableCell>
+                  <TableCell className="py-3 font-mono text-xs text-muted-foreground max-w-32 truncate">
                     {entry.user}
-                  </td>
-                  <td className="py-3 px-4">
+                  </TableCell>
+                  <TableCell className="py-3">
                     <Badge
                       variant="outline"
                       className={`text-xs ${QUERY_TYPE_COLORS[entry.queryType]}`}
                     >
                       {QUERY_TYPE_LABELS[entry.queryType]}
                     </Badge>
-                  </td>
-                  <td className="py-3 px-4 text-xs text-muted-foreground max-w-48 truncate">
+                  </TableCell>
+                  <TableCell className="py-3 text-xs text-muted-foreground max-w-48 truncate">
                     {entry.queryParams}
-                  </td>
-                  <td className="py-3 px-4 text-right font-mono text-xs">
+                  </TableCell>
+                  <TableCell className="py-3 text-right font-mono text-xs">
                     {entry.resultCount}
-                  </td>
-                  <td className="py-3 pl-4 text-xs">
+                  </TableCell>
+                  <TableCell className="py-3 text-xs">
                     {entry.justification ? (
                       <span className="text-foreground" title={entry.justification}>
                         ✓ {entry.justification.slice(0, 20)}…
@@ -152,18 +155,18 @@ export default function AuditLogPage() {
                     ) : (
                       <span className="text-muted-foreground">—</span>
                     )}
-                  </td>
-                </tr>
+                  </TableCell>
+                </TableRow>
               ))}
               {filtered.length === 0 && (
-                <tr>
-                  <td colSpan={7} className="text-center py-8 text-muted-foreground text-sm">
+                <TableRow>
+                  <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
                     Aucune entrée correspondant aux filtres.
-                  </td>
-                </tr>
+                  </TableCell>
+                </TableRow>
               )}
-            </tbody>
-          </table>
+            </TableBody>
+          </Table>
         </CardContent>
       </Card>
     </div>

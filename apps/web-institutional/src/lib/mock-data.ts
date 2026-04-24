@@ -7,7 +7,6 @@ export interface Institution {
   shortName: string;
   mandate: InstitutionMandate;
   allowedModules: string[];
-  color: string;
 }
 
 export const INSTITUTIONS: Institution[] = [
@@ -17,7 +16,6 @@ export const INSTITUTIONS: Institution[] = [
     shortName: "Agriculture",
     mandate: "agriculture",
     allowedModules: ["statistics", "queries", "audit-log", "exports", "filings"],
-    color: "text-success",
   },
   {
     id: "min-com",
@@ -25,7 +23,6 @@ export const INSTITUTIONS: Institution[] = [
     shortName: "Commerce",
     mandate: "commerce",
     allowedModules: ["statistics", "queries", "audit-log", "exports", "filings"],
-    color: "text-primary",
   },
   {
     id: "dgd",
@@ -33,7 +30,6 @@ export const INSTITUTIONS: Institution[] = [
     shortName: "Douanes",
     mandate: "douanes",
     allowedModules: ["statistics", "queries", "audit-log", "exports"],
-    color: "text-warning",
   },
   {
     id: "ons",
@@ -41,7 +37,6 @@ export const INSTITUTIONS: Institution[] = [
     shortName: "ONS",
     mandate: "ons",
     allowedModules: ["statistics", "exports"],
-    color: "text-info",
   },
 ];
 

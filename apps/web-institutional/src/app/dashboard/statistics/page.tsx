@@ -1,8 +1,11 @@
 "use client";
 
 import { useState } from "react";
-import { Card, CardHeader, CardTitle, CardContent, Badge } from "@ba33/ui-web";
-import { MapPin, TrendingUp, Package, Users } from "lucide-react";
+import {
+  Card, CardHeader, CardTitle, CardContent, Badge,
+  Table, TableHeader, TableBody, TableFooter, TableHead, TableRow, TableCell,
+} from "@ba33/ui-web";
+import { MapPin, TrendingUp, Package, Users, AlertTriangle } from "lucide-react";
 import { ACTIVE_WILAYAS, MONTHLY_PRODUCTION, NATIONAL_KPIS } from "@/lib/mock-data";
 
 const PERIODS = ["2025", "T2 2025", "T1 2025", "2024"];
@@ -117,7 +120,7 @@ export default function StatisticsPage() {
               { season: "Printemps (Mar–Mai)", kg: 200_160, pct: 43.9, color: "bg-success" },
               { season: "Été (Juin–Août)", kg: 150_470, pct: 33.0, color: "bg-warning" },
               { season: "Automne (Sep–Nov)", kg: 59_030, pct: 12.9, color: "bg-info" },
-              { season: "Hiver (Déc–Fév)", kg: 46_770, pct: 10.2, color: "bg-muted-foreground" },
+              { season: "Hiver (Déc–Fév)", kg: 46_770, pct: 10.2, color: "bg-muted" },
             ].map((s) => (
               <div key={s.season} className="space-y-1">
                 <div className="flex justify-between text-xs">
@@ -141,60 +144,58 @@ export default function StatisticsPage() {
           <Badge variant="outline" className="text-xs">8 wilayas actives / 58</Badge>
         </CardHeader>
         <CardContent>
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-border text-xs text-muted-foreground uppercase">
-                  <th className="text-left py-2 pr-4">Wilaya</th>
-                  <th className="text-right py-2 px-4">Volume (kg)</th>
-                  <th className="text-right py-2 px-4">Lots</th>
-                  <th className="text-right py-2 px-4">Éleveurs</th>
-                  <th className="text-left py-2 pl-4">Part nationale</th>
-                </tr>
-              </thead>
-              <tbody>
-                {ACTIVE_WILAYAS.map((w) => {
-                  const pct = ((w.kg / NATIONAL_KPIS.totalKg) * 100).toFixed(1);
-                  return (
-                    <tr key={w.code} className="border-b border-border/50 hover:bg-muted/30 transition-colors">
-                      <td className="py-3 pr-4">
-                        <div className="flex items-center gap-2">
-                          <MapPin className="h-3.5 w-3.5 text-muted-foreground" />
-                          <span className="font-medium">{w.name}</span>
-                          <span className="font-mono text-xs text-muted-foreground">{w.code}</span>
+          <Table>
+            <TableHeader>
+              <TableRow className="hover:bg-transparent">
+                <TableHead className="text-xs uppercase">Wilaya</TableHead>
+                <TableHead className="text-xs uppercase text-right">Volume (kg)</TableHead>
+                <TableHead className="text-xs uppercase text-right">Lots</TableHead>
+                <TableHead className="text-xs uppercase text-right">Éleveurs</TableHead>
+                <TableHead className="text-xs uppercase">Part nationale</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {ACTIVE_WILAYAS.map((w) => {
+                const pct = ((w.kg / NATIONAL_KPIS.totalKg) * 100).toFixed(1);
+                return (
+                  <TableRow key={w.code}>
+                    <TableCell className="py-3">
+                      <div className="flex items-center gap-2">
+                        <MapPin className="h-3.5 w-3.5 text-muted-foreground" />
+                        <span className="font-medium">{w.name}</span>
+                        <span className="font-mono text-xs text-muted-foreground">{w.code}</span>
+                      </div>
+                    </TableCell>
+                    <TableCell className="text-right py-3 font-mono">{w.kg.toLocaleString()}</TableCell>
+                    <TableCell className="text-right py-3 font-mono">{w.lots}</TableCell>
+                    <TableCell className="text-right py-3 font-mono">{w.shepherds}</TableCell>
+                    <TableCell className="py-3">
+                      <div className="flex items-center gap-2">
+                        <div className="w-20 h-1.5 bg-muted rounded-full overflow-hidden">
+                          <div
+                            className="h-full bg-primary rounded-full"
+                            style={{ width: `${(w.kg / maxWilayaKg) * 100}%` }}
+                          />
                         </div>
-                      </td>
-                      <td className="text-right py-3 px-4 font-mono">{w.kg.toLocaleString()}</td>
-                      <td className="text-right py-3 px-4 font-mono">{w.lots}</td>
-                      <td className="text-right py-3 px-4 font-mono">{w.shepherds}</td>
-                      <td className="py-3 pl-4">
-                        <div className="flex items-center gap-2">
-                          <div className="w-20 h-1.5 bg-muted rounded-full overflow-hidden">
-                            <div
-                              className="h-full bg-primary rounded-full"
-                              style={{ width: `${(w.kg / maxWilayaKg) * 100}%` }}
-                            />
-                          </div>
-                          <span className="text-xs font-mono text-muted-foreground">{pct}%</span>
-                        </div>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-              <tfoot>
-                <tr className="border-t border-border bg-muted/20 text-xs font-semibold">
-                  <td className="py-2 pr-4 text-muted-foreground">TOTAL</td>
-                  <td className="text-right py-2 px-4 font-mono">{NATIONAL_KPIS.totalKg.toLocaleString()}</td>
-                  <td className="text-right py-2 px-4 font-mono">{NATIONAL_KPIS.totalLots}</td>
-                  <td className="text-right py-2 px-4 font-mono">{NATIONAL_KPIS.totalShepherds}</td>
-                  <td className="py-2 pl-4 text-muted-foreground">100%</td>
-                </tr>
-              </tfoot>
-            </table>
-          </div>
-          <p className="text-xs text-muted-foreground mt-4 flex items-center gap-1">
-            <span className="text-warning">⚠</span>
+                        <span className="text-xs font-mono text-muted-foreground">{pct}%</span>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                );
+              })}
+            </TableBody>
+            <TableFooter>
+              <TableRow>
+                <TableCell className="text-xs text-muted-foreground py-2">TOTAL</TableCell>
+                <TableCell className="text-right text-xs font-mono py-2">{NATIONAL_KPIS.totalKg.toLocaleString()}</TableCell>
+                <TableCell className="text-right text-xs font-mono py-2">{NATIONAL_KPIS.totalLots}</TableCell>
+                <TableCell className="text-right text-xs font-mono py-2">{NATIONAL_KPIS.totalShepherds}</TableCell>
+                <TableCell className="text-xs text-muted-foreground py-2">100%</TableCell>
+              </TableRow>
+            </TableFooter>
+          </Table>
+          <p className="text-xs text-muted-foreground mt-4 flex items-center gap-1.5">
+            <AlertTriangle className="h-3.5 w-3.5 text-warning shrink-0" />
             Les données individuelles des éleveurs sont abstrayées — seules les agrégations par commune sont visibles.
           </p>
         </CardContent>

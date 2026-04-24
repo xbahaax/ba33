@@ -1,7 +1,10 @@
 "use client";
 
 import { useState } from "react";
-import { Card, CardHeader, CardTitle, CardContent, Badge, Button } from "@ba33/ui-web";
+import {
+  Card, CardHeader, CardTitle, CardContent, Badge, Button, Input,
+  Table, TableHeader, TableBody, TableHead, TableRow, TableCell,
+} from "@ba33/ui-web";
 import { Search, CheckCircle2, XCircle, AlertCircle } from "lucide-react";
 import { MOCK_LOTS, CERTIFICATES, type MockLot, type Certificate } from "@/lib/mock-data";
 
@@ -98,9 +101,9 @@ export default function QueriesPage() {
         <CardContent className="pt-6">
           <div className="flex gap-2">
             <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <input
-                className="w-full pl-9 pr-4 py-2 rounded-lg border border-input bg-background text-sm font-mono placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
+              <Input
+                className="pl-9 font-mono text-sm"
                 placeholder={
                   tab === "lots"
                     ? "Code lot ex: L-C1-TZ-00312 ou QR ex: C1-00312-X7K"
@@ -162,53 +165,53 @@ export default function QueriesPage() {
           </CardHeader>
           <CardContent>
             {tab === "lots" ? (
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="border-b border-border text-xs text-muted-foreground uppercase">
-                    <th className="text-left py-2 pr-4">ID Lot</th>
-                    <th className="text-left py-2 px-4">Source</th>
-                    <th className="text-left py-2 px-4">Région</th>
-                    <th className="text-right py-2 px-4">Poids</th>
-                    <th className="text-left py-2 pl-4">Statut</th>
-                  </tr>
-                </thead>
-                <tbody>
+              <Table>
+                <TableHeader>
+                  <TableRow className="hover:bg-transparent">
+                    <TableHead className="text-xs uppercase">ID Lot</TableHead>
+                    <TableHead className="text-xs uppercase">Source</TableHead>
+                    <TableHead className="text-xs uppercase">Région</TableHead>
+                    <TableHead className="text-xs uppercase text-right">Poids</TableHead>
+                    <TableHead className="text-xs uppercase">Statut</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
                   {MOCK_LOTS.map((lot) => {
                     const st = STATUS_CONFIG[lot.status];
                     return (
-                      <tr key={lot.id} className="border-b border-border/50 hover:bg-muted/30">
-                        <td className="py-2.5 pr-4 font-mono text-xs">{lot.id}</td>
-                        <td className="py-2.5 px-4">
+                      <TableRow key={lot.id}>
+                        <TableCell className="py-2.5 font-mono text-xs">{lot.id}</TableCell>
+                        <TableCell className="py-2.5">
                           <Badge variant="outline" className="text-xs font-mono">{lot.sourceType}</Badge>
                           {lot.isUrgent && <Badge variant="outline" className="text-xs ml-1 border-destructive text-destructive">URGENT</Badge>}
-                        </td>
-                        <td className="py-2.5 px-4 text-muted-foreground text-xs">{lot.region}</td>
-                        <td className="py-2.5 px-4 text-right font-mono text-xs">{lot.actualWeightKg} kg</td>
-                        <td className={`py-2.5 pl-4 text-xs font-medium ${st.color}`}>{st.label}</td>
-                      </tr>
+                        </TableCell>
+                        <TableCell className="py-2.5 text-muted-foreground text-xs">{lot.region}</TableCell>
+                        <TableCell className="py-2.5 text-right font-mono text-xs">{lot.actualWeightKg} kg</TableCell>
+                        <TableCell className={`py-2.5 text-xs font-medium ${st.color}`}>{st.label}</TableCell>
+                      </TableRow>
                     );
                   })}
-                </tbody>
-              </table>
+                </TableBody>
+              </Table>
             ) : (
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="border-b border-border text-xs text-muted-foreground uppercase">
-                    <th className="text-left py-2 pr-4">Code produit</th>
-                    <th className="text-left py-2 px-4">Grade</th>
-                    <th className="text-left py-2 px-4">Origine</th>
-                    <th className="text-right py-2 px-4">Poids</th>
-                    <th className="text-left py-2 pl-4">Statut</th>
-                  </tr>
-                </thead>
-                <tbody>
+              <Table>
+                <TableHeader>
+                  <TableRow className="hover:bg-transparent">
+                    <TableHead className="text-xs uppercase">Code produit</TableHead>
+                    <TableHead className="text-xs uppercase">Grade</TableHead>
+                    <TableHead className="text-xs uppercase">Origine</TableHead>
+                    <TableHead className="text-xs uppercase text-right">Poids</TableHead>
+                    <TableHead className="text-xs uppercase">Statut</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
                   {CERTIFICATES.map((c) => (
-                    <tr key={c.id} className="border-b border-border/50 hover:bg-muted/30">
-                      <td className="py-2.5 pr-4 font-mono text-xs">{c.productCode}</td>
-                      <td className="py-2.5 px-4"><Badge variant="outline" className="text-xs">{c.grade}</Badge></td>
-                      <td className="py-2.5 px-4 text-muted-foreground text-xs">{c.originRegion}</td>
-                      <td className="py-2.5 px-4 text-right font-mono text-xs">{c.weightKg} kg</td>
-                      <td className="py-2.5 pl-4">
+                    <TableRow key={c.id}>
+                      <TableCell className="py-2.5 font-mono text-xs">{c.productCode}</TableCell>
+                      <TableCell className="py-2.5"><Badge variant="outline" className="text-xs">{c.grade}</Badge></TableCell>
+                      <TableCell className="py-2.5 text-muted-foreground text-xs">{c.originRegion}</TableCell>
+                      <TableCell className="py-2.5 text-right font-mono text-xs">{c.weightKg} kg</TableCell>
+                      <TableCell className="py-2.5">
                         {c.status === "valid" ? (
                           <span className="flex items-center gap-1 text-xs text-success">
                             <CheckCircle2 className="h-3.5 w-3.5" /> Valide
@@ -218,11 +221,11 @@ export default function QueriesPage() {
                             <XCircle className="h-3.5 w-3.5" /> Révoqué
                           </span>
                         )}
-                      </td>
-                    </tr>
+                      </TableCell>
+                    </TableRow>
                   ))}
-                </tbody>
-              </table>
+                </TableBody>
+              </Table>
             )}
           </CardContent>
         </Card>
