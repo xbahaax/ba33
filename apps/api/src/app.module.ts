@@ -20,6 +20,7 @@ import { SalesModule } from './modules/sales/sales.module';
 import { InstitutionalModule } from './modules/institutional/institutional.module';
 import { SyncModule } from './modules/sync/sync.module';
 import { NotificationsModule } from './modules/notifications/notifications.module';
+import { SeedModule } from './modules/seed/seed.module';
 
 @Module({
   imports: [
@@ -44,6 +45,7 @@ import { NotificationsModule } from './modules/notifications/notifications.modul
     InstitutionalModule,
     SyncModule,
     NotificationsModule,
+    SeedModule,
   ],
 })
 export class AppModule {}

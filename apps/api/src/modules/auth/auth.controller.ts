@@ -16,11 +16,11 @@ export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
   @Post('login')
-  @ApiOperation({ summary: 'Login with email and password' })
+  @ApiOperation({ summary: 'Login with phone or email and password' })
   @ApiResponse({ status: 200, description: 'Returns access and refresh tokens' })
   @ApiResponse({ status: 401, description: 'Invalid credentials' })
   async login(@Body() dto: LoginDto) {
-    return this.authService.login(dto.email, dto.password);
+    return this.authService.login(dto.password, dto.email, dto.phone);
   }
 
   @Post('refresh')

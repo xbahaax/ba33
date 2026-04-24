@@ -1,13 +1,23 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, Logger } from '@nestjs/common';
 import { LotsRepository } from './lots.repository';
 import { EventsService } from '../events/events.service';
+import { NotificationsService } from '../notifications/notifications.service';
 import { v4 as uuid } from 'uuid';
+
+const CRITICAL_LOT_STATUSES = new Set([
+  'quarantined',
+  'rejected',
+  'lost',
+]);
 
 @Injectable()
 export class LotsService {
+  private readonly logger = new Logger(LotsService.name);
+
   constructor(
     private readonly lotsRepository: LotsRepository,
     private readonly eventsService: EventsService,
+    private readonly notificationsService: NotificationsService,
   ) {}
 
   async createLot(
@@ -135,6 +145,22 @@ export class LotsService {
       occurredAt: now,
       version: 1,
     });
+
+    // Notify the collector on critical status changes
+    if (CRITICAL_LOT_STATUSES.has(newStatus) && lot.collectorId) {
+      await this.notificationsService.send({
+        userId: lot.collectorId,
+        type: 'lot_status_change',
+        title: `Lot ${newStatus}`,
+        body: `Lot ${id} (QR: ${lot.qrCode}) has been marked as "${newStatus}" (was "${lot.status}").`,
+        payload: {
+          lotId: id,
+          qrCode: lot.qrCode,
+          previousStatus: lot.status,
+          newStatus,
+        },
+      });
+    }
 
     return updated;
   }

@@ -1,5 +1,6 @@
 import 'package:ba33_ui/ba33_ui.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
@@ -13,23 +14,23 @@ class LoginScreen extends ConsumerStatefulWidget {
 }
 
 class _LoginScreenState extends ConsumerState<LoginScreen> {
-  final _emailController = TextEditingController();
+  final _phoneController = TextEditingController();
   final _passwordController = TextEditingController();
   bool _isLoading = false;
   String? _errorMessage;
 
   @override
   void dispose() {
-    _emailController.dispose();
+    _phoneController.dispose();
     _passwordController.dispose();
     super.dispose();
   }
 
   Future<void> _login() async {
-    final email = _emailController.text.trim();
+    final phone = _phoneController.text.trim();
     final password = _passwordController.text;
-    if (email.isEmpty || password.isEmpty) {
-      setState(() => _errorMessage = 'ادخل الإيميل و كلمة السر');
+    if (phone.isEmpty || password.isEmpty) {
+      setState(() => _errorMessage = 'ادخل رقم الهاتف و كلمة السر');
       return;
     }
 
@@ -39,7 +40,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     });
 
     final success =
-        await ref.read(authStateProvider.notifier).login(email, password);
+        await ref.read(authStateProvider.notifier).login(phone, password);
 
     if (!mounted) return;
 
@@ -48,7 +49,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     } else {
       setState(() {
         _isLoading = false;
-        _errorMessage = 'الإيميل ولا كلمة السر غالطة';
+        _errorMessage = 'رقم الهاتف ولا كلمة السر غالطة';
       });
     }
   }
@@ -99,14 +100,17 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
               ),
               const SizedBox(height: Ba33Spacing.spacing8),
 
-              Text('الإيميل', style: textTheme.labelLarge),
+              Text('رقم الهاتف', style: textTheme.labelLarge),
               const SizedBox(height: Ba33Spacing.spacing2),
               TextField(
-                controller: _emailController,
-                keyboardType: TextInputType.emailAddress,
+                controller: _phoneController,
+                keyboardType: TextInputType.phone,
                 textInputAction: TextInputAction.next,
+                inputFormatters: [
+                  FilteringTextInputFormatter.digitsOnly,
+                ],
                 decoration: const InputDecoration(
-                  hintText: 'transporter@ba33.dz',
+                  hintText: '0555123456',
                 ),
               ),
               const SizedBox(height: Ba33Spacing.spacing4),

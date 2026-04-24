@@ -17,6 +17,15 @@ export class AuthRepository {
     return result[0] ?? null;
   }
 
+  async findUserByPhone(phone: string) {
+    const result = await this.db
+      .select()
+      .from(users)
+      .where(eq(users.phone, phone))
+      .limit(1);
+    return result[0] ?? null;
+  }
+
   async createSession(
     userId: string,
     refreshTokenHash: string,

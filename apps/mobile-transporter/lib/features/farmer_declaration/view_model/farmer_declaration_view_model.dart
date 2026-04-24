@@ -1,6 +1,8 @@
 import 'package:ba33_domain/ba33_domain.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
+import '../../../shared/providers/api_provider.dart';
+
 part 'farmer_declaration_view_model.g.dart';
 
 class FarmerDeclarationFormState {
@@ -121,29 +123,48 @@ class FarmerDeclarationViewModel extends _$FarmerDeclarationViewModel {
 
     state = state.copyWith(isSubmitting: true);
 
-    // TODO(BA33-030): submit farmer declaration to API
-    await Future<void>.delayed(const Duration(seconds: 1));
+    try {
+      final collectionSvc = ref.read(collectionServiceProvider);
 
-    final idGen = IdGenerator(namespace: 'transporter-declared');
+      // Upload photo if present
+      String? photoUrl;
+      if (state.photoPath != null) {
+        try {
+          final filesSvc = ref.read(filesServiceProvider);
+          final uploaded =
+              await filesSvc.upload(state.photoPath!, 'declaration-photo');
+          photoUrl = uploaded['url'] as String?;
+        } catch (_) {
+          // Photo upload failure is non-blocking
+        }
+      }
 
-    Declaration(
-      id: idGen.nextLotId(),
-      shepherdId: 'farmer-${state.farmerName}',
-      weightCategory: state.weightCategory!,
-      status: DeclarationStatus.announced,
-      createdAt: DateTime.now(),
-      latitude: state.latitude!,
-      longitude: state.longitude!,
-      notes: [
+      final noteParts = <String>[
         if (state.farmerPhone.isNotEmpty) 'tel: ${state.farmerPhone}',
         if (state.surnom.isNotEmpty) 'surnom: ${state.surnom}',
         if (state.mazraa.isNotEmpty) 'mazraa: ${state.mazraa}',
         if (state.notes.isNotEmpty) state.notes,
-      ].join(' | '),
-      photoUrl: state.photoPath,
-    );
+      ];
 
-    state = state.copyWith(isSubmitting: false, isSubmitted: true);
+      await collectionSvc.createPreLot({
+        'farmerName': state.farmerName,
+        'farmerPhone': state.farmerPhone.isNotEmpty ? state.farmerPhone : null,
+        'weightCategory': state.weightCategory!.name,
+        'latitude': state.latitude,
+        'longitude': state.longitude,
+        'locationName': state.locationName,
+        'notes': noteParts.isNotEmpty ? noteParts.join(' | ') : null,
+        'photoUrl': photoUrl,
+        'source': 'transporter-declaration',
+      });
+
+      state = state.copyWith(isSubmitting: false, isSubmitted: true);
+    } catch (_) {
+      state = state.copyWith(
+        isSubmitting: false,
+        error: 'ما قدرناش نبعثو التصريح، عاود حاول',
+      );
+    }
   }
 
   void reset() {

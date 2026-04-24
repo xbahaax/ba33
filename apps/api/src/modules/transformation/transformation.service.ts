@@ -1,13 +1,19 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException, Logger } from '@nestjs/common';
 import { TransformationRepository } from './transformation.repository';
 import { EventsService } from '../events/events.service';
+import { NotificationsService } from '../notifications/notifications.service';
 import { v4 as uuid } from 'uuid';
+
+const YIELD_DEVIATION_THRESHOLD_PERCENT = 10;
 
 @Injectable()
 export class TransformationService {
+  private readonly logger = new Logger(TransformationService.name);
+
   constructor(
     private readonly transformationRepository: TransformationRepository,
     private readonly eventsService: EventsService,
+    private readonly notificationsService: NotificationsService,
   ) {}
 
   // --- Transformers ---
@@ -158,17 +164,56 @@ export class TransformationService {
         completedAt: new Date(),
       });
 
+    // Check yield against BOM expected yield
+    const bom = await this.transformationRepository.findBomById(run.bomId);
+    const expectedYield = bom ? parseFloat(bom.expectedYieldPercent) : 0;
+    const yieldDeviation = Math.abs(yieldPercent - expectedYield);
+    const yieldAnomalous = expectedYield > 0 && yieldDeviation > YIELD_DEVIATION_THRESHOLD_PERCENT;
+
+    const eventPayload: Record<string, unknown> = {
+      outputWeightKg: outputWeight,
+      wasteWeightKg: wasteWeight,
+      yieldPercent: yieldPercent.toFixed(2),
+    };
+
+    if (yieldAnomalous) {
+      eventPayload.yieldAnomaly = true;
+      eventPayload.expectedYieldPercent = expectedYield;
+      eventPayload.deviationPercent = yieldDeviation.toFixed(2);
+
+      this.logger.warn(
+        `Yield anomaly on run ${runId}: actual ${yieldPercent.toFixed(1)}% vs expected ${expectedYield}% (deviation: ${yieldDeviation.toFixed(1)}%)`,
+      );
+
+      // Notify the transformer manager
+      const transformer = await this.transformationRepository.findTransformerById(run.transformerId);
+      if (transformer?.managerId) {
+        await this.notificationsService.send({
+          userId: transformer.managerId,
+          type: 'a1_alert',
+          title: 'Production yield anomaly detected',
+          body: `Production run ${runId} at "${transformer.name}" yielded ${yieldPercent.toFixed(1)}% (expected ${expectedYield}%). Deviation of ${yieldDeviation.toFixed(1)}% exceeds ${YIELD_DEVIATION_THRESHOLD_PERCENT}% threshold. Input: ${inputWeight}kg, Output: ${outputWeight}kg, Waste: ${wasteWeight}kg.`,
+          payload: {
+            productionRunId: runId,
+            transformerId: run.transformerId,
+            yieldPercent,
+            expectedYieldPercent: expectedYield,
+            deviationPercent: yieldDeviation,
+            inputWeightKg: inputWeight,
+            outputWeightKg: outputWeight,
+            wasteWeightKg: wasteWeight,
+          },
+        });
+      }
+    }
+
     await this.eventsService.emit({
       eventType: 'production_run.completed',
       aggregateType: 'production_run',
       aggregateId: runId,
       actorId: run.operatedBy,
       actorType: 'user',
-      payload: {
-        outputWeightKg: outputWeight,
-        wasteWeightKg: wasteWeight,
-        yieldPercent: yieldPercent.toFixed(2),
-      },
+      payload: eventPayload,
       occurredAt: new Date(),
       version: 2,
     });

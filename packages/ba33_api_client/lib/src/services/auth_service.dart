@@ -4,8 +4,17 @@ class AuthService {
   AuthService(this._client);
   final Ba33ApiClient _client;
 
+  /// Login with phone and password. Returns {accessToken, refreshToken}.
+  Future<Map<String, dynamic>> loginWithPhone(String phone, String password) async {
+    final response = await _client.dio.post('/auth/login', data: {
+      'phone': phone,
+      'password': password,
+    });
+    return response.data as Map<String, dynamic>;
+  }
+
   /// Login with email and password. Returns {accessToken, refreshToken}.
-  Future<Map<String, dynamic>> login(String email, String password) async {
+  Future<Map<String, dynamic>> loginWithEmail(String email, String password) async {
     final response = await _client.dio.post('/auth/login', data: {
       'email': email,
       'password': password,

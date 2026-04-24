@@ -55,14 +55,14 @@ class LoginScreen extends ConsumerWidget {
               ),
               const SizedBox(height: Ba33Spacing.spacing6),
 
-              // Email
+              // Phone
               Ba33Input(
-                label: 'Email',
-                hint: 'collector@example.com',
-                prefixIcon: Icons.email_rounded,
-                keyboardType: TextInputType.emailAddress,
+                label: 'رقم الهاتف',
+                hint: '0555123456',
+                prefixIcon: Icons.phone_rounded,
+                keyboardType: TextInputType.phone,
                 autofocus: true,
-                onChanged: vm.setEmail,
+                onChanged: vm.setPhone,
               ),
 
               const SizedBox(height: Ba33Spacing.spacing4),

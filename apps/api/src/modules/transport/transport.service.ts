@@ -2,16 +2,23 @@ import {
   Injectable,
   NotFoundException,
   BadRequestException,
+  Logger,
 } from '@nestjs/common';
 import { TransportRepository } from './transport.repository';
 import { EventsService } from '../events/events.service';
+import { RulesService } from '../rules/rules.service';
+import { NotificationsService } from '../notifications/notifications.service';
 import { v4 as uuid } from 'uuid';
 
 @Injectable()
 export class TransportService {
+  private readonly logger = new Logger(TransportService.name);
+
   constructor(
     private readonly transportRepository: TransportRepository,
     private readonly eventsService: EventsService,
+    private readonly rulesService: RulesService,
+    private readonly notificationsService: NotificationsService,
   ) {}
 
   // ── Jobs ──────────────────────────────────────────────────
@@ -24,9 +31,29 @@ export class TransportService {
     lane: 'normal' | 'urgent_cold_chain' | 'urgent_standard';
     slaDeadline?: Date;
   }) {
+    // Compute SLA deadline from rules if not explicitly provided
+    let slaDeadline = data.slaDeadline;
+    if (!slaDeadline) {
+      const ruleKey =
+        data.lane === 'normal'
+          ? 'sla.c1_pickup_hours'
+          : 'sla.c2_pickup_hours';
+      try {
+        const slaHours = await this.rulesService.getRuleValue<number>(ruleKey);
+        slaDeadline = new Date(Date.now() + slaHours * 60 * 60 * 1000);
+        this.logger.log(
+          `SLA deadline computed: ${slaHours}h from now (${ruleKey}) → ${slaDeadline.toISOString()}`,
+        );
+      } catch {
+        // Rule not seeded yet — proceed without SLA
+        this.logger.warn(`SLA rule "${ruleKey}" not found, skipping deadline`);
+      }
+    }
+
     const job = await this.transportRepository.createJob({
       id: uuid(),
       ...data,
+      slaDeadline,
       status: 'pending',
       requestedAt: new Date(),
       createdAt: new Date(),
@@ -38,7 +65,7 @@ export class TransportService {
       aggregateType: 'transport_job',
       aggregateId: job.id,
       actorType: 'system',
-      payload: { lane: data.lane },
+      payload: { lane: data.lane, slaDeadline: slaDeadline?.toISOString() },
       occurredAt: new Date(),
       version: 1,
     });
@@ -201,6 +228,23 @@ export class TransportService {
     if (mismatchPct > 0.02) {
       payload.weightMismatch = true;
       payload.mismatchPercent = (mismatchPct * 100).toFixed(2);
+
+      // Notify transporter about weight mismatch
+      if (job.transporterId) {
+        await this.notificationsService.send({
+          userId: job.transporterId,
+          type: 'weight_mismatch',
+          title: 'Weight mismatch detected on delivery',
+          body: `Lot ${lotId} in job ${jobId}: loaded ${loadedWeight}kg but delivered ${deliveredWeight}kg (${(mismatchPct * 100).toFixed(2)}% discrepancy, exceeds 2% tolerance).`,
+          payload: {
+            jobId,
+            lotId,
+            loadedWeightKg: loadedWeight,
+            deliveredWeightKg: deliveredWeight,
+            mismatchPercent: mismatchPct * 100,
+          },
+        });
+      }
     }
 
     await this.eventsService.emit({
@@ -229,10 +273,41 @@ export class TransportService {
       );
     }
 
+    const completedAt = new Date();
+    const slaBreached =
+      job.slaDeadline != null ? completedAt > new Date(job.slaDeadline as string | Date) : false;
+
     const updated = await this.transportRepository.updateJob(jobId, {
       status: 'delivered',
-      completedAt: new Date(),
+      completedAt,
     });
+
+    const payload: Record<string, unknown> = {};
+    if (slaBreached) {
+      payload.slaBreached = true;
+      payload.slaDeadline = job.slaDeadline;
+      payload.completedAt = completedAt.toISOString();
+
+      this.logger.warn(
+        `SLA breached for job ${jobId}: deadline was ${job.slaDeadline}, completed at ${completedAt.toISOString()}`,
+      );
+
+      // Notify the transporter about SLA breach
+      if (job.transporterId) {
+        await this.notificationsService.send({
+          userId: job.transporterId,
+          type: 'sla_warning',
+          title: 'SLA deadline breached',
+          body: `Transport job ${jobId} was completed after the SLA deadline. Deadline: ${new Date(job.slaDeadline!).toISOString()}, Completed: ${completedAt.toISOString()}.`,
+          payload: {
+            jobId,
+            slaDeadline: job.slaDeadline,
+            completedAt: completedAt.toISOString(),
+            lane: job.lane,
+          },
+        });
+      }
+    }
 
     await this.eventsService.emit({
       eventType: 'transport.job.completed',
@@ -240,12 +315,12 @@ export class TransportService {
       aggregateId: jobId,
       actorId: job.transporterId ?? undefined,
       actorType: 'transporter',
-      payload: {},
-      occurredAt: new Date(),
+      payload,
+      occurredAt: completedAt,
       version: 1,
     });
 
-    return updated;
+    return { ...updated, slaBreached };
   }
 
   // ── GPS ───────────────────────────────────────────────────
@@ -256,7 +331,7 @@ export class TransportService {
     lng: string,
     temperatureC?: string,
   ) {
-    return this.transportRepository.addGpsPoint({
+    const point = await this.transportRepository.addGpsPoint({
       id: uuid(),
       jobId,
       lat,
@@ -264,6 +339,47 @@ export class TransportService {
       temperatureC: temperatureC ?? null,
       recordedAt: new Date(),
     });
+
+    // Cold chain temperature breach detection
+    if (temperatureC != null) {
+      const temp = parseFloat(temperatureC);
+      const job = await this.transportRepository.findJobById(jobId);
+
+      if (job && job.lane === 'urgent_cold_chain' && (temp > 8 || temp < 0)) {
+        this.logger.warn(
+          `Cold chain breach on job ${jobId}: ${temp}°C (safe range: 0-8°C)`,
+        );
+
+        if (job.transporterId) {
+          await this.notificationsService.send({
+            userId: job.transporterId,
+            type: 'a1_alert',
+            title: 'Cold chain temperature breach',
+            body: `Transport job ${jobId}: temperature recorded at ${temp}°C, outside safe range (0-8°C). Check refrigeration immediately.`,
+            payload: {
+              jobId,
+              temperatureC: temp,
+              lat,
+              lng,
+              safeRangeMin: 0,
+              safeRangeMax: 8,
+            },
+          });
+        }
+
+        await this.eventsService.emit({
+          eventType: 'transport.cold_chain.breach',
+          aggregateType: 'transport_job',
+          aggregateId: jobId,
+          actorType: 'system',
+          payload: { temperatureC: temp, lat, lng },
+          occurredAt: new Date(),
+          version: 1,
+        });
+      }
+    }
+
+    return point;
   }
 
   async getGpsTrail(jobId: string) {

@@ -21,14 +21,13 @@ class AuthState extends _$AuthState {
   @override
   AuthInfo build() => const AuthInfo();
 
-  /// Login with email and password via the real API.
-  /// Returns true on success, false on failure.
-  Future<bool> login(String email, String password) async {
+  /// Login with phone number and password via the real API.
+  Future<bool> login(String phone, String password) async {
     try {
       final authSvc = ref.read(authServiceProvider);
       final apiClient = ref.read(apiClientProvider);
 
-      final tokens = await authSvc.login(email, password);
+      final tokens = await authSvc.loginWithPhone(phone, password);
       apiClient.setAccessToken(tokens['accessToken'] as String);
 
       final profile = await authSvc.me();

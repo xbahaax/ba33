@@ -266,6 +266,59 @@ export class DepotService {
         }
       }
     }
+
+    // Check urgent lot count threshold
+    try {
+      const urgentCountThreshold = await this.rulesService.getRuleValue<number>(
+        'a1.depot_urgent_count_threshold',
+      );
+      const urgentLotCount = await this.depotRepository.countUrgentLots(depotId);
+
+      if (urgentLotCount >= urgentCountThreshold) {
+        const existingAlerts = await this.depotRepository.findActiveAlerts(depotId);
+        const hasUrgentCountAlert = existingAlerts.some(
+          (a) =>
+            a.triggerCondition &&
+            typeof a.triggerCondition === 'object' &&
+            (a.triggerCondition as Record<string, unknown>).type === 'urgent_lot_count',
+        );
+
+        if (!hasUrgentCountAlert) {
+          await this.depotRepository.createA1Alert({
+            id: uuid(),
+            depotId,
+            triggerCondition: {
+              type: 'urgent_lot_count',
+              urgentLotCount,
+              thresholdCount: urgentCountThreshold,
+            },
+            severity: 'critical',
+            status: 'open',
+            firedAt: new Date(),
+          });
+
+          this.logger.warn(
+            `A1 alert fired for depot ${depotId}: ${urgentLotCount} urgent lots (threshold: ${urgentCountThreshold})`,
+          );
+
+          if (depot.managerId) {
+            await this.notificationsService.send({
+              userId: depot.managerId,
+              type: 'a1_alert',
+              title: 'A1 Alert: Too many urgent lots',
+              body: `Depot "${depot.name}" has ${urgentLotCount} urgent lots (threshold: ${urgentCountThreshold}). These require immediate processing to meet SLA deadlines.`,
+              payload: {
+                depotId,
+                urgentLotCount,
+                thresholdCount: urgentCountThreshold,
+              },
+            });
+          }
+        }
+      }
+    } catch {
+      // Rule not seeded yet — skip
+    }
   }
 
   async acknowledgeAlert(alertId: string) {

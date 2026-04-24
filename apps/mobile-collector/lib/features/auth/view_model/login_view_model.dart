@@ -6,30 +6,30 @@ part 'login_view_model.g.dart';
 
 class LoginState {
   const LoginState({
-    this.email = '',
+    this.phone = '',
     this.password = '',
     this.isLoading = false,
     this.obscurePassword = true,
     this.error,
   });
 
-  final String email;
+  final String phone;
   final String password;
   final bool isLoading;
   final bool obscurePassword;
   final String? error;
 
-  bool get isValid => email.contains('@') && password.length >= 4;
+  bool get isValid => phone.isNotEmpty && password.length >= 4;
 
   LoginState copyWith({
-    String? email,
+    String? phone,
     String? password,
     bool? isLoading,
     bool? obscurePassword,
     String? error,
   }) {
     return LoginState(
-      email: email ?? this.email,
+      phone: phone ?? this.phone,
       password: password ?? this.password,
       isLoading: isLoading ?? this.isLoading,
       obscurePassword: obscurePassword ?? this.obscurePassword,
@@ -43,8 +43,8 @@ class LoginViewModel extends _$LoginViewModel {
   @override
   LoginState build() => const LoginState();
 
-  void setEmail(String email) {
-    state = state.copyWith(email: email, error: null);
+  void setPhone(String phone) {
+    state = state.copyWith(phone: phone, error: null);
   }
 
   void setPassword(String password) {
@@ -57,19 +57,19 @@ class LoginViewModel extends _$LoginViewModel {
 
   Future<bool> login() async {
     if (!state.isValid) {
-      state = state.copyWith(error: 'Email and password are required');
+      state = state.copyWith(error: 'رقم الهاتف وكلمة المرور مطلوبان');
       return false;
     }
     state = state.copyWith(isLoading: true, error: null);
 
     final success = await ref
         .read(authProvider.notifier)
-        .login(state.email, state.password);
+        .login(state.phone, state.password);
 
     if (!success) {
       state = state.copyWith(
         isLoading: false,
-        error: 'Invalid email or password',
+        error: 'رقم الهاتف أو كلمة المرور غير صحيحة',
       );
       return false;
     }

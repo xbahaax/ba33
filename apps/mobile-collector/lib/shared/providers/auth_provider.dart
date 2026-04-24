@@ -1,4 +1,3 @@
-import 'package:ba33_api_client/ba33_api_client.dart';
 import 'package:ba33_domain/ba33_domain.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
@@ -11,12 +10,12 @@ class Auth extends _$Auth {
   @override
   User? build() => null;
 
-  Future<bool> login(String email, String password) async {
+  Future<bool> login(String phone, String password) async {
     try {
       final authSvc = ref.read(authServiceProvider);
       final apiClient = ref.read(apiClientProvider);
 
-      final tokens = await authSvc.login(email, password);
+      final tokens = await authSvc.loginWithPhone(phone, password);
       final accessToken = tokens['accessToken'] as String;
       apiClient.setAccessToken(accessToken);
 

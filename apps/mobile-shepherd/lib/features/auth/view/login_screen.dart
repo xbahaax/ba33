@@ -1,10 +1,11 @@
 import 'package:ba33_ui/ba33_ui.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../view_model/login_view_model.dart';
 
-/// Email + password login screen.
+/// Phone number + password login screen.
 class LoginScreen extends ConsumerStatefulWidget {
   const LoginScreen({super.key});
 
@@ -13,12 +14,12 @@ class LoginScreen extends ConsumerStatefulWidget {
 }
 
 class _LoginScreenState extends ConsumerState<LoginScreen> {
-  final _emailController = TextEditingController();
+  final _phoneController = TextEditingController();
   final _passwordController = TextEditingController();
 
   @override
   void dispose() {
-    _emailController.dispose();
+    _phoneController.dispose();
     _passwordController.dispose();
     super.dispose();
   }
@@ -66,15 +67,22 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
               ),
               const Spacer(),
               Text(
-                'الإيميل',
+                'رقم الهاتف',
                 style: Theme.of(context).textTheme.titleLarge,
               ),
               const SizedBox(height: Ba33Spacing.spacing3),
-              TextField(
-                controller: _emailController,
-                keyboardType: TextInputType.emailAddress,
-                decoration: const InputDecoration(
-                  hintText: 'example@ba33.dz',
+              Directionality(
+                textDirection: TextDirection.ltr,
+                child: TextField(
+                  controller: _phoneController,
+                  keyboardType: TextInputType.phone,
+                  inputFormatters: [
+                    FilteringTextInputFormatter.digitsOnly,
+                  ],
+                  decoration: const InputDecoration(
+                    prefixText: '+213 ',
+                    hintText: '555123456',
+                  ),
                 ),
               ),
               const SizedBox(height: Ba33Spacing.spacing4),
@@ -99,7 +107,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                       : () => ref
                           .read(loginViewModelProvider.notifier)
                           .login(
-                            _emailController.text.trim(),
+                            _phoneController.text.trim(),
                             _passwordController.text,
                           ),
                   child: loginState.isLoading

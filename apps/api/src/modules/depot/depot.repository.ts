@@ -8,8 +8,9 @@ import {
   depotDispatches,
   depotDispatchLots,
   a1Alerts,
+  lots,
 } from '../../common/database/schema';
-import { eq, and, desc, isNull } from 'drizzle-orm';
+import { eq, and, desc, isNull, count } from 'drizzle-orm';
 
 @Injectable()
 export class DepotRepository {
@@ -111,6 +112,21 @@ export class DepotRepository {
       .from(depotReceptions)
       .where(and(...conditions))
       .orderBy(desc(depotReceptions.receivedAt));
+  }
+
+  async countUrgentLots(depotId: string): Promise<number> {
+    const [result] = await this.db
+      .select({ count: count() })
+      .from(depotReceptions)
+      .innerJoin(lots, eq(depotReceptions.lotId, lots.id))
+      .where(
+        and(
+          eq(depotReceptions.depotId, depotId),
+          eq(lots.isUrgent, true),
+          eq(lots.status, 'received_depot'),
+        ),
+      );
+    return result?.count ?? 0;
   }
 
   async createDispatch(data: {

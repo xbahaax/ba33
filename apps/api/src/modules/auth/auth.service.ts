@@ -11,8 +11,14 @@ export class AuthService {
     private readonly jwtService: JwtService,
   ) {}
 
-  async login(email: string, password: string) {
-    const user = await this.authRepository.findUserByEmail(email);
+  async login(password: string, email?: string, phone?: string) {
+    if (!email && !phone) {
+      throw new UnauthorizedException('Email or phone is required');
+    }
+
+    const user = phone
+      ? await this.authRepository.findUserByPhone(phone)
+      : await this.authRepository.findUserByEmail(email!);
     if (!user) {
       throw new UnauthorizedException('Invalid credentials');
     }

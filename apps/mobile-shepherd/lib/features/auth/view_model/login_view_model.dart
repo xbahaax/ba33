@@ -29,16 +29,16 @@ class LoginViewModel extends _$LoginViewModel {
   @override
   LoginState build() => const LoginState();
 
-  Future<void> login(String email, String password) async {
-    if (email.isEmpty || password.isEmpty) {
-      state = state.copyWith(error: 'ادخل الإيميل و كلمة السر');
+  Future<void> login(String phone, String password) async {
+    if (phone.isEmpty || password.isEmpty) {
+      state = state.copyWith(error: 'ادخل رقم الهاتف و كلمة السر');
       return;
     }
 
     state = state.copyWith(isLoading: true);
 
     try {
-      await ref.read(authProvider.notifier).login(email, password);
+      await ref.read(authProvider.notifier).login(phone, password);
       state = state.copyWith(isLoading: false);
     } catch (e) {
       state = state.copyWith(

@@ -6,7 +6,7 @@ part of 'job_list_view_model.dart';
 // RiverpodGenerator
 // **************************************************************************
 
-String _$jobListHash() => r'99afda4da7f3dbde8fba0633eb7a385da432277e';
+String _$jobListHash() => r'3b958fe8b4b1329dc9f22289e88a91fce634c1ab';
 
 /// See also [JobList].
 @ProviderFor(JobList)

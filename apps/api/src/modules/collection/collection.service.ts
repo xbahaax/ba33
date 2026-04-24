@@ -4,11 +4,15 @@ import {
   BadRequestException,
 } from '@nestjs/common';
 import { CollectionRepository } from './collection.repository';
+import { EventsService } from '../events/events.service';
 import { v4 as uuid } from 'uuid';
 
 @Injectable()
 export class CollectionService {
-  constructor(private readonly collectionRepository: CollectionRepository) {}
+  constructor(
+    private readonly collectionRepository: CollectionRepository,
+    private readonly eventsService: EventsService,
+  ) {}
 
   // ── Pre-Lots ──────────────────────────────────────────────
 
@@ -22,13 +26,30 @@ export class CollectionService {
     notes?: string;
     voiceNoteId?: string;
   }) {
-    return this.collectionRepository.createPreLot({
-      id: uuid(),
+    const id = uuid();
+    const preLot = await this.collectionRepository.createPreLot({
+      id,
       ...data,
       status: 'announced',
       createdAt: new Date(),
       updatedAt: new Date(),
     });
+
+    await this.eventsService.emit({
+      eventType: 'collection.prelot.announced',
+      aggregateType: 'prelot',
+      aggregateId: id,
+      actorType: 'source',
+      payload: {
+        sourceId: data.sourceId,
+        estimatedWeightKg: data.estimatedWeightKg,
+        regionId: data.regionId,
+      },
+      occurredAt: new Date(),
+      version: 1,
+    });
+
+    return preLot;
   }
 
   async getPreLot(id: string) {
@@ -60,11 +81,24 @@ export class CollectionService {
       );
     }
 
-    return this.collectionRepository.updatePreLot(preLotId, {
+    const updated = await this.collectionRepository.updatePreLot(preLotId, {
       status: 'assigned',
       assignedCollectorId: collectorId,
       scheduledAt,
     });
+
+    await this.eventsService.emit({
+      eventType: 'collection.prelot.assigned',
+      aggregateType: 'prelot',
+      aggregateId: preLotId,
+      actorId: collectorId,
+      actorType: 'collector',
+      payload: { collectorId, scheduledAt: scheduledAt.toISOString() },
+      occurredAt: new Date(),
+      version: 1,
+    });
+
+    return updated;
   }
 
   async completePreLot(preLotId: string, lotId: string) {
@@ -76,10 +110,23 @@ export class CollectionService {
       );
     }
 
-    return this.collectionRepository.updatePreLot(preLotId, {
+    const updated = await this.collectionRepository.updatePreLot(preLotId, {
       status: 'collected',
       lotId,
     });
+
+    await this.eventsService.emit({
+      eventType: 'collection.prelot.collected',
+      aggregateType: 'prelot',
+      aggregateId: preLotId,
+      actorId: preLot.assignedCollectorId ?? undefined,
+      actorType: 'collector',
+      payload: { lotId },
+      occurredAt: new Date(),
+      version: 1,
+    });
+
+    return updated;
   }
 
   async cancelPreLot(preLotId: string, reason?: string) {
@@ -91,9 +138,21 @@ export class CollectionService {
       );
     }
 
-    return this.collectionRepository.updatePreLot(preLotId, {
+    const updated = await this.collectionRepository.updatePreLot(preLotId, {
       status: 'cancelled',
     });
+
+    await this.eventsService.emit({
+      eventType: 'collection.prelot.cancelled',
+      aggregateType: 'prelot',
+      aggregateId: preLotId,
+      actorType: 'system',
+      payload: { reason: reason ?? null },
+      occurredAt: new Date(),
+      version: 1,
+    });
+
+    return updated;
   }
 
   // ── Collectors ────────────────────────────────────────────
@@ -123,14 +182,28 @@ export class CollectionService {
   // ── Routes ────────────────────────────────────────────────
 
   async createRoute(collectorId: string, date: Date) {
-    return this.collectionRepository.createRoute({
-      id: uuid(),
+    const id = uuid();
+    const route = await this.collectionRepository.createRoute({
+      id,
       collectorId,
       date,
       status: 'planned',
       createdAt: new Date(),
       updatedAt: new Date(),
     });
+
+    await this.eventsService.emit({
+      eventType: 'collection.route.planned',
+      aggregateType: 'route',
+      aggregateId: id,
+      actorId: collectorId,
+      actorType: 'collector',
+      payload: { date: date.toISOString() },
+      occurredAt: new Date(),
+      version: 1,
+    });
+
+    return route;
   }
 
   async getRoute(id: string) {

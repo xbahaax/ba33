@@ -10,18 +10,18 @@ class Auth extends _$Auth {
   @override
   User? build() => null;
 
-  Future<void> login(String email, String password) async {
+  Future<void> login(String phone, String password) async {
     final authService = ref.read(authServiceProvider);
     final apiClient = ref.read(apiClientProvider);
 
-    final tokens = await authService.login(email, password);
+    final tokens = await authService.loginWithPhone(phone, password);
     final accessToken = tokens['accessToken'] as String;
     apiClient.setAccessToken(accessToken);
 
     final profile = await authService.me();
     state = User(
       id: profile['id'] as String,
-      phone: profile['phone'] as String? ?? '',
+      phone: profile['phone'] as String? ?? phone,
       role: _mapRole(profile['userType'] as String? ?? 'collector'),
       regionId: profile['regionId'] as String? ?? '',
       name: profile['fullName'] as String?,
