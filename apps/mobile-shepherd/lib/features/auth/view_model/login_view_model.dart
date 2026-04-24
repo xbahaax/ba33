@@ -38,7 +38,8 @@ class LoginViewModel extends _$LoginViewModel {
     state = state.copyWith(isLoading: true);
 
     try {
-      await ref.read(authProvider.notifier).login(phone, password);
+      final normalizedPhone = phone.startsWith('0') ? phone : '0$phone';
+      await ref.read(authProvider.notifier).login(normalizedPhone, password);
       state = state.copyWith(isLoading: false);
     } catch (e) {
       state = state.copyWith(

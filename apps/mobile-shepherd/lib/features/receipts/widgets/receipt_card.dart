@@ -12,10 +12,8 @@ class ReceiptCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final colors = Theme.of(context).ba33;
 
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(Ba33Spacing.spacing4),
-        child: Column(
+    return Ba33Card(
+      child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Row(
@@ -40,25 +38,30 @@ class ReceiptCard extends StatelessWidget {
                   size: 20,
                 ),
                 const SizedBox(width: Ba33Spacing.spacing2),
-                Text(
-                  _labelForCategory(declaration.weightCategory),
-                  style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                        fontWeight: FontWeight.w500,
-                      ),
+                Expanded(
+                  child: Text(
+                    _labelForCategory(declaration.weightCategory),
+                    style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                          fontWeight: FontWeight.w500,
+                        ),
+                  ),
                 ),
                 if (declaration.finalWeight != null) ...[
-                  const SizedBox(width: Ba33Spacing.spacing2),
-                  Text(
-                    '←',
-                    style: TextStyle(color: colors.mutedForeground),
-                  ),
-                  const SizedBox(width: Ba33Spacing.spacing2),
                   Text(
                     '${declaration.finalWeight} كغ',
                     style: Ba33Typography.mono(
                       fontSize: 14,
                       fontWeight: FontWeight.w600,
                       color: colors.primary,
+                    ),
+                  ),
+                ] else if (declaration.estimatedWeight != null) ...[
+                  Text(
+                    '~${declaration.estimatedWeight!.toStringAsFixed(1)} كغ',
+                    style: Ba33Typography.mono(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      color: colors.foreground,
                     ),
                   ),
                 ],
@@ -138,7 +141,6 @@ class ReceiptCard extends StatelessWidget {
             ],
           ],
         ),
-      ),
     );
   }
 
