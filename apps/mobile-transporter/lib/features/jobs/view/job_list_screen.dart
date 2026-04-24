@@ -143,16 +143,6 @@ class JobListScreen extends ConsumerWidget {
                       ],
                     ),
                   ),
-                  // Trigger mock A1 alert
-                  IconButton(
-                    tooltip: 'محاكاة تنبيه A1',
-                    onPressed: () =>
-                        ref.read(a1AlertNotifierProvider.notifier).fireMockAlert(),
-                    icon: Icon(Icons.campaign_outlined,
-                        color: a1Alert != null
-                            ? colors.destructive
-                            : colors.mutedForeground),
-                  ),
                   IconButton(
                     onPressed: () =>
                         ref.read(jobListProvider.notifier).refresh(),
