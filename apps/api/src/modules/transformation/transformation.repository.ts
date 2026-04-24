@@ -107,6 +107,7 @@ export class TransformationRepository {
   async updateProductionRun(
     id: string,
     data: {
+      inputWeightKg?: string;
       outputWeightKg?: string;
       wasteWeightKg?: string;
       yieldPercent?: string;

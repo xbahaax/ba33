@@ -18,7 +18,7 @@ import {
   ApiConsumes,
   ApiBody,
 } from '@nestjs/swagger';
-import { Response } from 'express';
+import type { Response } from 'express';
 import { createReadStream } from 'fs';
 import { FilesService } from './files.service';
 import { UploadFileDto } from './dto/upload-file.dto';

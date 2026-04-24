@@ -94,13 +94,7 @@ export class SourcesService {
 
     return {
       ...source,
-      details: details
-        ? source.sourceType === 'c1_shepherd'
-          ? details.shepherds
-          : source.sourceType === 'c2_slaughterhouse'
-            ? details.slaughterhouses
-            : details.aggregators
-        : null,
+      details: details ?? null,
     };
   }
 

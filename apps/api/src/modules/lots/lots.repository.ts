@@ -26,7 +26,7 @@ export class LotsRepository {
     coldChainTempC?: string;
     gpsLat?: string;
     gpsLng?: string;
-    status: string;
+    status: any;
     isUrgent?: boolean;
     collectedAt?: Date;
     preLotId?: string;
