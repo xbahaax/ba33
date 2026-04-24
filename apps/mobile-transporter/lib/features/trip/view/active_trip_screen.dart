@@ -256,22 +256,8 @@ class ActiveTripScreen extends ConsumerWidget {
             ),
             const SizedBox(height: Ba33Spacing.spacing6),
 
-            // ── Deliver button ───────────────────────
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton.icon(
-                onPressed: () {
-                  ref.read(activeTripProvider.notifier).startDelivering();
-                  context.push('/scan-delivery');
-                },
-                icon: const Icon(Icons.qr_code_scanner),
-                label: const Text('Arrivé — Commencer la livraison'),
-                style: ElevatedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(
-                      vertical: Ba33Spacing.spacing4),
-                ),
-              ),
-            ),
+            // ── Arrive button ────────────────────────
+            _ArriveButton(gps: gps),
           ],
         ),
       ),
@@ -567,6 +553,75 @@ class _PulsingDotState extends State<_PulsingDot>
           shape: BoxShape.circle,
         ),
       ),
+    );
+  }
+}
+
+// ── Arrive button with GPS validation ────────────────────
+
+class _ArriveButton extends ConsumerWidget {
+  const _ArriveButton({required this.gps});
+
+  final GpsTrackerState gps;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final arrived = gps.isLikelyArrived;
+    final tracking = gps.isTracking;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        // GPS status hint
+        if (tracking && !arrived) ...[
+          Container(
+            padding: const EdgeInsets.symmetric(
+              horizontal: Ba33Spacing.spacing3,
+              vertical: Ba33Spacing.spacing2,
+            ),
+            decoration: BoxDecoration(
+              color: Theme.of(context).ba33.destructive.withValues(alpha: 0.08),
+              borderRadius: Ba33Radii.borderRadiusMd,
+              border: Border.all(
+                color: Theme.of(context)
+                    .ba33
+                    .destructive
+                    .withValues(alpha: 0.3),
+              ),
+            ),
+            child: Row(
+              children: [
+                Icon(Icons.directions_car_outlined,
+                    size: 14,
+                    color: Theme.of(context).ba33.destructive),
+                const SizedBox(width: Ba33Spacing.spacing2),
+                Text(
+                  'GPS: لا تزال في حركة — توقف عند الوجهة',
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: Theme.of(context).ba33.destructive,
+                      ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: Ba33Spacing.spacing3),
+        ],
+
+        ElevatedButton.icon(
+          onPressed: () {
+            ref.read(activeTripProvider.notifier).startDelivering();
+            context.push('/deliver');
+          },
+          icon: Icon(arrived
+              ? Icons.where_to_vote_outlined
+              : Icons.flag_outlined),
+          label: Text(arrived ? 'وصلت — ابدأ التسليم' : 'تأكيد الوصول'),
+          style: ElevatedButton.styleFrom(
+            padding:
+                const EdgeInsets.symmetric(vertical: Ba33Spacing.spacing4),
+          ),
+        ),
+      ],
     );
   }
 }

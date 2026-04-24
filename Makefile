@@ -20,7 +20,7 @@ ok  = @printf "$(GREEN)[ok]$(NC) %s\n" $(1)
 #                then seeds the DB automatically once the API is ready.
 # ══════════════════════════════════════════════════════════════════════════════
 .PHONY: dev
-dev: install infra wait-db migrate
+dev: install infra wait-db migrate api-build
 	$(call log,"Starting all services (API :3333 · web-ops :3003 · web-buyer :3001 · web-institutional :3002)...")
 	@trap 'kill 0' INT; \
 	pnpm dev & \
@@ -30,6 +30,14 @@ dev: install infra wait-db migrate
 	  && printf "$(GREEN)[ok]$(NC) Database seeded.\n" \
 	  || printf "$(GRAY)[ba33] Seed skipped (already seeded or returned an error).$(NC)\n"; \
 	wait
+
+# ── API first build (creates dist/ so nest --watch can start) ─────────────────
+.PHONY: api-build
+api-build:
+	$(call log,"Building API (first compile)...")
+	@rm -f apps/api/tsconfig.tsbuildinfo
+	@pnpm --filter @ba33/api build
+	$(ok,"API built")
 
 # ── Dependencies ──────────────────────────────────────────────────────────────
 .PHONY: install
@@ -87,6 +95,15 @@ reset:
 	@pnpm clean 2>/dev/null || true
 	@$(MAKE) dev
 
+# ── Mobile ────────────────────────────────────────────────────────────────────
+SIMULATOR_ID := EAE5F417-BD42-42FA-BDF3-9E7610AC0FB9
+
+.PHONY: transporter
+transporter:
+	$(call log,"Launching transporter app on iPhone 16e simulator (iOS 26.2)...")
+	@xcrun simctl boot $(SIMULATOR_ID) 2>/dev/null || true
+	@cd apps/mobile-transporter && flutter run -d $(SIMULATOR_ID) --dart-define=API_URL=http://localhost:3333
+
 # ── Utilities ─────────────────────────────────────────────────────────────────
 .PHONY: logs
 logs:
@@ -121,5 +138,6 @@ help:
 	@printf "  $(GREEN)make studio$(NC)   Open Drizzle Studio\n"
 	@printf "  $(GREEN)make logs$(NC)     Tail Docker logs\n"
 	@printf "  $(GREEN)make build$(NC)    Build all packages\n"
-	@printf "  $(GREEN)make install$(NC)  pnpm install\n\n"
+	@printf "  $(GREEN)make install$(NC)  pnpm install\n"
+	@printf "  $(GREEN)make transporter$(NC)  Run transporter app on iOS 26.2 simulator\n\n"
 	@printf "  Ports:  API :3333 · web-operations :3003 · web-buyer :3001 · web-institutional :3002\n\n"

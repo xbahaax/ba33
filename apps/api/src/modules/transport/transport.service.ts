@@ -90,7 +90,42 @@ export class TransportService {
     status?: string;
     lane?: string;
   }) {
-    return this.transportRepository.findJobs(filters);
+    const jobs = await this.transportRepository.findJobs(filters);
+
+    // Enrich each job with its lots + pre-lot estimated weight for source-origin jobs
+    const enriched = await Promise.all(
+      jobs.map(async (job) => {
+        const lots = await this.transportRepository.findJobLots(job.id);
+
+        // For source-origin jobs with no real lots, find the pre-lot
+        // created around the same time as this job (the one that triggered it)
+        if (job.originType === 'source' && lots.length === 0) {
+          const preLot = await this.transportRepository.findPreLotForJob(
+            job.originId,
+            job.createdAt,
+          );
+          if (preLot) {
+            return {
+              ...job,
+              lots: [{
+                id: preLot.id,
+                qrCode: `PRELOT-${preLot.id.slice(0, 8)}`,
+                sourceType: 'c1_shepherd',
+                declaredWeight: parseFloat(preLot.estimatedWeightKg ?? '0'),
+                loadedWeight: null,
+                deliveredWeight: null,
+                isLoaded: false,
+                isDelivered: false,
+              }],
+            };
+          }
+        }
+
+        return { ...job, lots };
+      }),
+    );
+
+    return enriched;
   }
 
   async acceptJob(jobId: string, transporterId: string) {
@@ -400,6 +435,106 @@ export class TransportService {
   }
 
   // ── Transporters ──────────────────────────────────────────
+
+  // ── Pickup Confirmation (pre-lot → lot) ──────────────────
+
+  async confirmPickup(
+    jobId: string,
+    data: { weight: string; stateQuick?: string; notes?: string },
+  ) {
+    const job = await this.transportRepository.findJobById(jobId);
+    if (!job) {
+      throw new NotFoundException(`Transport job ${jobId} not found`);
+    }
+
+    if (job.originType !== 'source') {
+      throw new BadRequestException('Pickup confirmation is only for source-origin jobs');
+    }
+
+    // Find the pre-lot that triggered this job
+    const preLot = await this.transportRepository.findPreLotForJob(
+      job.originId,
+      job.createdAt,
+    );
+    if (!preLot) {
+      throw new NotFoundException('No pre-lot found for this job');
+    }
+
+    // Generate QR code automatically: BA33-{short UUID}
+    const qrCode = `BA33-${uuid().slice(0, 8).toUpperCase()}`;
+
+    // Create a real lot from the pre-lot
+    const lot = await this.lotsService.createLot(
+      {
+        sourceId: preLot.sourceId,
+        sourceType: 'c1_shepherd',
+        collectorId: job.transporterId ?? undefined,
+        qrCode,
+        declaredWeightKg: preLot.estimatedWeightKg,
+        stateQuick: (data.stateQuick as any) ?? 'clean',
+        gpsLat: preLot.locationLat ?? undefined,
+        gpsLng: preLot.locationLng ?? undefined,
+        preLotId: preLot.id,
+        notes: data.notes ?? preLot.notes ?? undefined,
+        initialWeigh: {
+          weightKg: data.weight,
+          source: 'manual',
+        },
+      },
+      job.transporterId ?? 'system',
+    );
+
+    // Link the lot to the transport job + record weigh-in
+    try {
+      await this.transportRepository.addJobLot(jobId, lot.id);
+    } catch {
+      // Already linked
+    }
+    await this.transportRepository.updateJobLot(jobId, lot.id, {
+      loadedWeightKg: data.weight,
+      loadedAt: new Date(),
+    });
+
+    // Update lot status to in_transit
+    await this.lotsService.updateLotStatus(lot.id, 'in_transit', job.transporterId ?? 'system');
+
+    // Complete the pre-lot
+    await this.transportRepository.completePreLot(preLot.id, lot.id);
+
+    await this.eventsService.emit({
+      eventType: 'transport.pickup.confirmed',
+      aggregateType: 'transport_job',
+      aggregateId: jobId,
+      actorId: job.transporterId ?? undefined,
+      actorType: 'transporter',
+      payload: {
+        preLotId: preLot.id,
+        lotId: lot.id,
+        qrCode,
+        weight: data.weight,
+        estimatedWeight: preLot.estimatedWeightKg,
+      },
+      occurredAt: new Date(),
+      version: 1,
+    });
+
+    this.logger.log(
+      `Pickup confirmed for job ${jobId}: pre-lot ${preLot.id} → lot ${lot.id} (QR: ${qrCode}, weight: ${data.weight}kg)`,
+    );
+
+    return {
+      lotId: lot.id,
+      qrCode,
+      declaredWeight: preLot.estimatedWeightKg,
+      actualWeight: data.weight,
+      preLotId: preLot.id,
+    };
+  }
+
+  async findTransporterForRegion(regionId: string): Promise<string | null> {
+    const rows = await this.transportRepository.findActiveTransportersByRegion(regionId);
+    return rows.length > 0 ? rows[0].userId : null;
+  }
 
   async createTransporter(
     userId: string,

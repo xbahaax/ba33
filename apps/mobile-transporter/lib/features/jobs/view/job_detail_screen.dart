@@ -195,8 +195,8 @@ class JobDetailScreen extends ConsumerWidget {
             SizedBox(
               width: double.infinity,
               child: ElevatedButton.icon(
-                onPressed: () => context.push('/scan-load'),
-                icon: const Icon(Icons.qr_code_scanner),
+                onPressed: () => context.push('/load'),
+                icon: const Icon(Icons.inventory_outlined),
                 label: const Text('ابدا التحميل'),
                 style: ElevatedButton.styleFrom(
                   padding: const EdgeInsets.symmetric(
