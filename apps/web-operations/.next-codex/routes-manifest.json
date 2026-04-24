@@ -1,0 +1,131 @@
+{
+  "version": 3,
+  "pages404": true,
+  "caseSensitive": false,
+  "basePath": "",
+  "redirects": [
+    {
+      "source": "/:path+/",
+      "destination": "/:path+",
+      "internal": true,
+      "statusCode": 308,
+      "regex": "^(?:/((?:[^/]+?)(?:/(?:[^/]+?))*))/$"
+    }
+  ],
+  "headers": [],
+  "rewrites": {
+    "beforeFiles": [],
+    "afterFiles": [
+      {
+        "source": "/_ba33_api/:path*",
+        "destination": "http://127.0.0.1:3001/:path*",
+        "regex": "^/_ba33_api(?:/((?:[^/]+?)(?:/(?:[^/]+?))*))?(?:/)?$"
+      }
+    ],
+    "fallback": []
+  },
+  "dynamicRoutes": [],
+  "staticRoutes": [
+    {
+      "page": "/",
+      "regex": "^/(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/(?:/)?$"
+    },
+    {
+      "page": "/_not-found",
+      "regex": "^/_not\\-found(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/_not\\-found(?:/)?$"
+    },
+    {
+      "page": "/analytics",
+      "regex": "^/analytics(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/analytics(?:/)?$"
+    },
+    {
+      "page": "/certification",
+      "regex": "^/certification(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/certification(?:/)?$"
+    },
+    {
+      "page": "/depot",
+      "regex": "^/depot(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/depot(?:/)?$"
+    },
+    {
+      "page": "/fulfillment",
+      "regex": "^/fulfillment(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/fulfillment(?:/)?$"
+    },
+    {
+      "page": "/laverie",
+      "regex": "^/laverie(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/laverie(?:/)?$"
+    },
+    {
+      "page": "/regions",
+      "regex": "^/regions(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/regions(?:/)?$"
+    },
+    {
+      "page": "/sales",
+      "regex": "^/sales(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/sales(?:/)?$"
+    },
+    {
+      "page": "/settings",
+      "regex": "^/settings(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/settings(?:/)?$"
+    },
+    {
+      "page": "/traceability",
+      "regex": "^/traceability(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/traceability(?:/)?$"
+    },
+    {
+      "page": "/transformation",
+      "regex": "^/transformation(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/transformation(?:/)?$"
+    },
+    {
+      "page": "/transport",
+      "regex": "^/transport(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/transport(?:/)?$"
+    },
+    {
+      "page": "/users",
+      "regex": "^/users(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/users(?:/)?$"
+    }
+  ],
+  "dataRoutes": [],
+  "rsc": {
+    "header": "rsc",
+    "varyHeader": "rsc, next-router-state-tree, next-router-prefetch, next-router-segment-prefetch",
+    "prefetchHeader": "next-router-prefetch",
+    "didPostponeHeader": "x-nextjs-postponed",
+    "contentTypeHeader": "text/x-component",
+    "suffix": ".rsc",
+    "prefetchSuffix": ".prefetch.rsc",
+    "prefetchSegmentHeader": "next-router-segment-prefetch",
+    "prefetchSegmentSuffix": ".segment.rsc",
+    "prefetchSegmentDirSuffix": ".segments"
+  },
+  "rewriteHeaders": {
+    "pathHeader": "x-nextjs-rewritten-path",
+    "queryHeader": "x-nextjs-rewritten-query"
+  }
+}

@@ -3,50 +3,158 @@
 import { useEffect, useMemo, useState } from "react";
 import { Button, cn } from "@ba33/ui-web";
 import {
+  Activity,
   LayoutDashboard,
   Warehouse,
   WashingMachine,
   Factory,
   ShoppingCart,
   Award,
-  BarChart3,
   Settings,
   Users,
   Truck,
   MapPin,
   Menu,
+  Search,
+  ShieldCheck,
   X,
 } from "lucide-react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
+import { useSession } from "@/components/session-provider";
 
 const navItems = [
-  { label: "Tableau de bord", href: "/", icon: LayoutDashboard },
-  { label: "Dépôt", href: "/depot", icon: Warehouse },
-  { label: "Laverie", href: "/laverie", icon: WashingMachine },
-  { label: "Transformation", href: "/transformation", icon: Factory },
-  { label: "Ventes", href: "/sales", icon: ShoppingCart },
-  { label: "Transport", href: "/transport", icon: Truck },
-  { label: "Certification", href: "/certification", icon: Award },
-  { label: "Régions", href: "/regions", icon: MapPin },
-  { label: "Statistiques", href: "/analytics", icon: BarChart3 },
-  { label: "Utilisateurs", href: "/users", icon: Users },
-  { label: "Paramètres", href: "/settings", icon: Settings },
+  {
+    label: "Command Center",
+    href: "/",
+    icon: LayoutDashboard,
+    permissions: ["dashboard.view"],
+  },
+  {
+    label: "Fulfillment",
+    href: "/fulfillment",
+    icon: Activity,
+    permissions: ["fulfillment.view"],
+  },
+  {
+    label: "Contrôle",
+    href: "/analytics",
+    icon: ShieldCheck,
+    permissions: ["validation.view"],
+  },
+  {
+    label: "Traçabilité",
+    href: "/traceability",
+    icon: Search,
+    permissions: ["traceability.view"],
+  },
+  { label: "Dépôt", href: "/depot", icon: Warehouse, permissions: ["depot.view"] },
+  {
+    label: "Laverie",
+    href: "/laverie",
+    icon: WashingMachine,
+    permissions: ["laverie.view"],
+  },
+  {
+    label: "Transformation",
+    href: "/transformation",
+    icon: Factory,
+    permissions: ["transformation.view"],
+  },
+  {
+    label: "Ventes",
+    href: "/sales",
+    icon: ShoppingCart,
+    permissions: ["sales.view"],
+  },
+  {
+    label: "Transport",
+    href: "/transport",
+    icon: Truck,
+    permissions: ["transport.view"],
+  },
+  {
+    label: "Certification",
+    href: "/certification",
+    icon: Award,
+    permissions: ["certification.view"],
+  },
+  {
+    label: "Régions",
+    href: "/regions",
+    icon: MapPin,
+    permissions: ["regions.view"],
+  },
+  {
+    label: "Accès & RBAC",
+    href: "/users",
+    icon: Users,
+    permissions: ["users.view"],
+  },
+  {
+    label: "Règles",
+    href: "/settings",
+    icon: Settings,
+    permissions: ["rules.view"],
+  },
 ];
 
 export function AppSidebar() {
   const pathname = usePathname();
+  const router = useRouter();
+  const { hasPermission, loading, personas, session, switchPersona } = useSession();
   const [mobileOpen, setMobileOpen] = useState(false);
+
+  const visibleNavItems = useMemo(
+    () =>
+      navItems.filter((item) =>
+        item.permissions.every((permission) => hasPermission(permission)),
+      ),
+    [hasPermission],
+  );
 
   const currentLabel = useMemo(
     () =>
-      navItems.find((item) =>
+      visibleNavItems.find((item) =>
         item.href === "/"
           ? pathname === item.href
           : pathname === item.href || pathname.startsWith(`${item.href}/`),
-      )?.label ?? "ba33 Opérations",
-    [pathname],
+      )?.label ?? (session ? "Accès limité" : "ba33 Opérations"),
+    [pathname, visibleNavItems],
   );
+
+  const currentRouteIsAccessible = useMemo(
+    () =>
+      visibleNavItems.some((item) =>
+        item.href === "/"
+          ? pathname === item.href
+          : pathname === item.href || pathname.startsWith(`${item.href}/`),
+      ),
+    [pathname, visibleNavItems],
+  );
+
+  const fallbackHref = visibleNavItems[0]?.href ?? null;
+
+  const accessNotice =
+    session && visibleNavItems.length > 0 && !currentRouteIsAccessible ? (
+      <div className="rounded-2xl border border-amber-300/70 bg-amber-50/80 p-3 text-amber-950 shadow-sm">
+        <p className="text-sm font-semibold">Accès limité pour ce profil</p>
+        <p className="mt-1 text-xs text-amber-900/80">
+          Cette page n'est pas autorisée. Les liens ci-dessous restent visibles
+          pour montrer ce que ce profil peut ouvrir.
+        </p>
+        {fallbackHref ? (
+          <Button
+            className="mt-3 w-full"
+            size="sm"
+            variant="outline"
+            onClick={() => router.push(fallbackHref)}
+          >
+            Aller à {visibleNavItems[0]?.label}
+          </Button>
+        ) : null}
+      </div>
+    ) : null;
 
   useEffect(() => {
     setMobileOpen(false);
@@ -54,7 +162,7 @@ export function AppSidebar() {
 
   const nav = (
     <nav className="flex flex-col gap-1">
-      {navItems.map((item) => {
+      {visibleNavItems.map((item) => {
         const active =
           item.href === "/"
             ? pathname === item.href
@@ -79,6 +187,71 @@ export function AppSidebar() {
         );
       })}
     </nav>
+  );
+
+  const personaPicker = (
+    <div className="space-y-2 rounded-2xl border border-sidebar-border/80 bg-sidebar-accent/20 p-3">
+      <div>
+        <p className="text-sm font-semibold">
+          {session?.user.fullName ?? "Session indisponible"}
+        </p>
+        <p className="text-xs text-muted-foreground">
+          {session?.user.userType ?? "Aucun profil"} ·{" "}
+          {session?.user.regionName ?? "Toutes régions"}
+        </p>
+      </div>
+
+      <label className="block text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
+        Persona dev
+      </label>
+      <select
+        className="w-full rounded-xl border border-sidebar-border bg-sidebar px-3 py-2 text-sm text-sidebar-foreground outline-none"
+        disabled={loading}
+        value={session?.user.id ?? ""}
+        onChange={async (event) => {
+          const persona = personas.find(
+            (candidate) => candidate.id === event.target.value,
+          );
+
+          if (!persona) {
+            return;
+          }
+
+          const nextSession = await switchPersona({
+            email: persona.email,
+          });
+
+          if (!nextSession) {
+            return;
+          }
+
+          const nextNavItems = navItems.filter((item) =>
+            item.permissions.every((permission) =>
+              nextSession.permissions.includes(permission),
+            ),
+          );
+
+          const canStayOnCurrentRoute = nextNavItems.some((item) =>
+            item.href === "/"
+              ? pathname === item.href
+              : pathname === item.href || pathname.startsWith(`${item.href}/`),
+          );
+
+          if (canStayOnCurrentRoute) {
+            router.refresh();
+            return;
+          }
+
+          router.push(nextNavItems[0]?.href ?? "/");
+        }}
+      >
+        {personas.map((persona) => (
+          <option key={persona.id} value={persona.id}>
+            {persona.fullName} · {persona.userType}
+          </option>
+        ))}
+      </select>
+    </div>
   );
 
   return (
@@ -130,7 +303,11 @@ export function AppSidebar() {
               </Button>
             </div>
 
-            <div className="mt-4">{nav}</div>
+            <div className="mt-4 space-y-4">
+              {accessNotice}
+              {nav}
+              {personaPicker}
+            </div>
           </div>
         </div>
       ) : null}
@@ -145,9 +322,15 @@ export function AppSidebar() {
             <p className="text-xs text-muted-foreground">Opérations</p>
           </div>
         </div>
-        <div className="flex-1 overflow-y-auto p-4">{nav}</div>
-        <div className="border-t border-sidebar-border px-5 py-4">
-          <p className="text-xs text-muted-foreground">ba33 operations console</p>
+        <div className="flex-1 overflow-y-auto p-4 space-y-4">
+          {accessNotice}
+          {nav}
+        </div>
+        <div className="space-y-4 border-t border-sidebar-border px-5 py-4">
+          {personaPicker}
+          <p className="text-xs text-muted-foreground">
+            ba33 operations console
+          </p>
         </div>
       </aside>
     </>

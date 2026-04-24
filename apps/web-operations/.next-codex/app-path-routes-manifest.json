@@ -1,0 +1,16 @@
+{
+  "/_not-found/page": "/_not-found",
+  "/analytics/page": "/analytics",
+  "/certification/page": "/certification",
+  "/depot/page": "/depot",
+  "/laverie/page": "/laverie",
+  "/fulfillment/page": "/fulfillment",
+  "/page": "/",
+  "/regions/page": "/regions",
+  "/sales/page": "/sales",
+  "/settings/page": "/settings",
+  "/traceability/page": "/traceability",
+  "/transformation/page": "/transformation",
+  "/transport/page": "/transport",
+  "/users/page": "/users"
+}

@@ -1,0 +1,16 @@
+{
+  "/_not-found/page": "app/_not-found/page.js",
+  "/analytics/page": "app/analytics/page.js",
+  "/certification/page": "app/certification/page.js",
+  "/depot/page": "app/depot/page.js",
+  "/laverie/page": "app/laverie/page.js",
+  "/fulfillment/page": "app/fulfillment/page.js",
+  "/page": "app/page.js",
+  "/regions/page": "app/regions/page.js",
+  "/sales/page": "app/sales/page.js",
+  "/settings/page": "app/settings/page.js",
+  "/traceability/page": "app/traceability/page.js",
+  "/transformation/page": "app/transformation/page.js",
+  "/transport/page": "app/transport/page.js",
+  "/users/page": "app/users/page.js"
+}

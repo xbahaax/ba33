@@ -6,6 +6,7 @@ import { RefreshCcw, Wifi, WifiOff } from "lucide-react";
 import { LoadingState } from "@/components/loading-state";
 import { MetricCard } from "@/components/metric-card";
 import { PageHeader } from "@/components/page-header";
+import { useSession } from "@/components/session-provider";
 import { UnavailableState } from "@/components/unavailable-state";
 import { useAsyncData } from "@/hooks/use-async-data";
 import { formatDateTime } from "@/lib/format";
@@ -23,13 +24,40 @@ export function OperationsRoutePage({
   routeKey,
 }: OperationsRoutePageProps) {
   const route = getOperationsRoute(routeKey);
+  const { hasPermission, loading: sessionLoading, session } = useSession();
+  const canViewRoute =
+    (route.requiredPermissions?.length ?? 0) === 0
+      ? true
+      : hasPermission(...(route.requiredPermissions ?? []));
   const { data, error, loading, refresh, updatedAt } = useAsyncData(
-    route.loader,
-    [routeKey],
+    () => {
+      if (!session || !canViewRoute) {
+        return Promise.resolve(null);
+      }
+
+      return route.loader();
+    },
+    [routeKey, session?.user.id, canViewRoute],
   );
   const [isPending, startTransition] = useTransition();
 
   const headerMeta = useMemo(() => {
+    if (sessionLoading) {
+      return {
+        icon: <Wifi className="h-4 w-4 text-warning-dark" />,
+        label: "Session en cours",
+        detail: "Initialisation du profil opérateur",
+      };
+    }
+
+    if (!session) {
+      return {
+        icon: <WifiOff className="h-4 w-4 text-destructive" />,
+        label: "Session indisponible",
+        detail: "Authentification requise",
+      };
+    }
+
     if (loading && !data) {
       return {
         icon: <Wifi className="h-4 w-4 text-warning-dark" />,
@@ -53,7 +81,7 @@ export function OperationsRoutePage({
       label: "API indisponible",
       detail: getClientApiBaseUrl(),
     };
-  }, [data, loading, updatedAt]);
+  }, [data, loading, session, sessionLoading, updatedAt]);
 
   return (
     <div className="min-h-screen bg-[radial-gradient(circle_at_top_left,rgba(160,174,192,0.18),transparent_30%),linear-gradient(180deg,rgba(255,255,255,0.96),rgba(244,247,250,0.96))]">
@@ -81,11 +109,21 @@ export function OperationsRoutePage({
           </div>
         </div>
 
-        {loading && !data ? (
+        {(sessionLoading || (loading && !data && session && canViewRoute)) ? (
           <LoadingState />
         ) : null}
 
-        {!loading && !data ? (
+        {!sessionLoading && !session ? (
+          <UnavailableState message="Aucune session active n'est disponible pour le centre d'opérations." />
+        ) : null}
+
+        {!sessionLoading && session && !canViewRoute ? (
+          <UnavailableState
+            message="Ce profil n'a pas les permissions requises pour accéder à cet écran."
+          />
+        ) : null}
+
+        {!sessionLoading && session && canViewRoute && !loading && !data ? (
           <UnavailableState
             message={error ?? `${route.emptyMessage} Source: ${getClientApiBaseUrl()}`}
           />

@@ -4,10 +4,11 @@ import { InfoListCard } from "@/components/info-list-card";
 import { StatusBadge } from "@/components/status-badge";
 import {
   getCertificationOverview,
+  getCommandCenter,
   getDepotOverview,
+  getFulfillmentOverview,
   getLaverieOverview,
   getLotsSummary,
-  getRecentEvents,
   getRegionsOverview,
   getRulesOverview,
   getSalesOverview,
@@ -15,10 +16,11 @@ import {
   getTransportOverview,
   getUsersOverview,
   type CertificationOverviewResponse,
+  type CommandCenterResponse,
   type DepotOverviewResponse,
+  type FulfillmentOverviewResponse,
   type LaverieOverviewResponse,
   type LotsSummaryResponse,
-  type RecentEvent,
   type RegionsOverviewResponse,
   type RulesOverviewResponse,
   type SalesOverviewResponse,
@@ -46,6 +48,7 @@ export interface OperationsPageConfig<T> {
   description: string;
   emptyMessage: string;
   loader: () => Promise<T | null>;
+  requiredPermissions?: string[];
   getMetrics?: (data: T) => MetricDescriptor[];
   renderSections: (data: T) => ReactNode;
 }
@@ -54,6 +57,7 @@ type AnyOperationsPageConfig = OperationsPageConfig<any>;
 
 export type OperationsRouteKey =
   | "dashboard"
+  | "fulfillment"
   | "depot"
   | "laverie"
   | "transformation"
@@ -64,17 +68,6 @@ export type OperationsRouteKey =
   | "analytics"
   | "users"
   | "settings";
-
-type DashboardData = {
-  lots: LotsSummaryResponse | null;
-  events: RecentEvent[] | null;
-  depot: DepotOverviewResponse | null;
-  transport: TransportOverviewResponse | null;
-  laverie: LaverieOverviewResponse | null;
-  transformation: TransformationOverviewResponse | null;
-  sales: SalesOverviewResponse | null;
-  certification: CertificationOverviewResponse | null;
-};
 
 type AnalyticsData = {
   lots: LotsSummaryResponse | null;
@@ -100,43 +93,6 @@ function countValue(value: number | null | undefined) {
   return value === null || value === undefined ? "—" : String(value);
 }
 
-function textValue(
-  value: string | number | null | undefined,
-  formatter?: (value: string | number) => string,
-) {
-  if (value === null || value === undefined) {
-    return "—";
-  }
-
-  return formatter ? formatter(value) : String(value);
-}
-
-async function loadDashboardData(): Promise<DashboardData | null> {
-  const results = await Promise.allSettled([
-    getLotsSummary(),
-    getRecentEvents(),
-    getDepotOverview(),
-    getTransportOverview(),
-    getLaverieOverview(),
-    getTransformationOverview(),
-    getSalesOverview(),
-    getCertificationOverview(),
-  ]);
-
-  const data: DashboardData = {
-    lots: settledValue(results[0]),
-    events: settledValue(results[1]),
-    depot: settledValue(results[2]),
-    transport: settledValue(results[3]),
-    laverie: settledValue(results[4]),
-    transformation: settledValue(results[5]),
-    sales: settledValue(results[6]),
-    certification: settledValue(results[7]),
-  };
-
-  return hasSomeData(Object.values(data)) ? data : null;
-}
-
 async function loadAnalyticsData(): Promise<AnalyticsData | null> {
   const results = await Promise.allSettled([
     getLotsSummary(),
@@ -157,75 +113,187 @@ async function loadAnalyticsData(): Promise<AnalyticsData | null> {
   return hasSomeData(Object.values(data)) ? data : null;
 }
 
-const dashboardRoute: OperationsPageConfig<DashboardData> = {
-  title: "Tableau de bord",
-  description: "Vue consolidee des flux, stocks, operations et certifications.",
+const dashboardRoute: OperationsPageConfig<CommandCenterResponse> = {
+  title: "Command Center",
+  description: "Vue centrale NFN des flux, alertes, nœuds terrain et handoffs critiques.",
   emptyMessage:
-    "Le tableau de bord n'a recu aucune donnee exploitable depuis l'API.",
-  loader: loadDashboardData,
+    "Le command center n'a recu aucune donnee exploitable depuis l'API.",
+  requiredPermissions: ["dashboard.view"],
+  loader: getCommandCenter,
   getMetrics: (data) => [
     {
-      label: "Lots totaux",
-      value: countValue(data.lots?.summary.totalLots),
-      helper: data.lots
-        ? `${data.lots.summary.urgentLots} urgents`
-        : "Aucune synthese lots",
+      label: "Collecte annoncée",
+      value: countValue(data.summary.announcedPreLots),
+      helper: `${formatWeight(data.summary.announcedWeightKg)} prévus`,
     },
     {
-      label: "Stock depot",
-      value: textValue(
-        data.depot?.summary.currentWeightKg,
-        (value) => formatWeight(value),
-      ),
-      helper: data.depot
-        ? `${formatPercent(data.depot.summary.occupancyRate)} d'occupation`
-        : "Aucun depot remonte",
+      label: "En transit",
+      value: countValue(data.summary.inTransitLots),
+      helper: `${formatWeight(data.summary.inTransitWeightKg)} suivis`,
     },
     {
-      label: "Transport actif",
-      value: countValue(data.transport?.summary.activeJobs),
-      helper: data.transport
-        ? `${data.transport.summary.pendingJobs} en attente`
-        : "Aucune mission chargee",
+      label: "Dépôt D1",
+      value: countValue(data.summary.depotLots),
+      helper: `${formatWeight(data.summary.depotWeightKg)} stockés`,
     },
     {
-      label: "Lavage actif",
-      value: countValue(data.laverie?.summary.activeRuns),
-      helper: data.laverie
-        ? `${data.laverie.summary.totalWashRuns} cycles`
-        : "Aucune laverie remontee",
+      label: "Laverie active",
+      value: countValue(data.summary.activeWashRuns),
+      helper: `${formatWeight(data.summary.washingWeightKg)} en traitement`,
     },
     {
       label: "Transformation",
-      value: countValue(data.transformation?.summary.activeRuns),
-      helper: data.transformation
-        ? `${data.transformation.summary.recentProducts} produits recents`
-        : "Aucun run remonte",
+      value: countValue(data.summary.activeProductionRuns),
+      helper: `${formatWeight(data.summary.productionWeightKg)} engagés`,
     },
     {
-      label: "Commandes ouvertes",
-      value: countValue(data.sales?.summary.openOrders),
-      helper: data.certification
-        ? `${data.certification.summary.pending} certifications en attente`
-        : "Aucune certification remontee",
+      label: "Contrôle ouvert",
+      value: countValue(data.summary.openAlerts),
+      helper: `${data.summary.pendingCertifications} certifications à émettre`,
     },
   ],
   renderSections: (data) => (
     <>
       <div className="grid gap-4 xl:grid-cols-[1.7fr_1fr]">
         <DataTableCard
-          title="Activite recente"
-          description="Derniers evenements detectes sur la chaine."
-          rows={data.events ?? []}
-          getRowKey={(event) => event.id}
-          emptyMessage="Aucun evenement recent n'a ete remonte."
+          title="Monitor de flux"
+          description="Lecture instantanée des volumes et étapes actives de la filière."
+          rows={data.flow}
+          getRowKey={(row) => row.stage}
+          emptyMessage="Aucun flux n'a été calculé."
           columns={[
             {
-              header: "Evenement",
+              header: "Étape",
+              render: (row) => row.label,
+            },
+            {
+              header: "Volume",
+              render: (row) => row.count,
+            },
+            {
+              header: "Charge",
+              render: (row) =>
+                row.stage === "sales"
+                  ? formatCurrency(row.weightKg, "DZD")
+                  : formatWeight(row.weightKg),
+            },
+            {
+              header: "Signal",
+              render: (row) =>
+                row.count > 0 ? (
+                  <StatusBadge value={row.stage === "sales" ? "active" : "in_progress"} />
+                ) : (
+                  "—"
+                ),
+            },
+          ]}
+        />
+
+        <InfoListCard
+          title="Synthèse terrain"
+          description="Indicateurs prioritaires pour le pilotage central."
+          items={[
+            {
+              label: "Transport sous SLA",
+              value: data.transportWatch.length,
+              helper: "Jobs actifs ou en attente",
+            },
+            {
+              label: "Nœuds géographiques",
+              value: data.terrainNodes.length,
+              helper: "Sources et installations visibles",
+            },
+            {
+              label: "Commandes ouvertes",
+              value: data.summary.openOrders,
+            },
+            {
+              label: "Alertes critiques",
+              value: data.alerts.filter((alert) => alert.severity === "critical").length,
+              tone: data.alerts.some((alert) => alert.severity === "critical")
+                ? "destructive"
+                : "default",
+            },
+          ]}
+        />
+      </div>
+
+      <div className="grid gap-4 xl:grid-cols-[1.7fr_1fr]">
+        <DataTableCard
+          title="Alertes transverses"
+          description="A1, sécurité, certification: tout ce qui demande une décision immédiate."
+          rows={data.alerts}
+          getRowKey={(alert) => `${alert.type}-${alert.id}`}
+          emptyMessage="Aucune alerte opérationnelle active."
+          columns={[
+            {
+              header: "Type",
+              render: (alert) => formatEnumLabel(alert.type),
+            },
+            {
+              header: "Cible",
+              render: (alert) => alert.title,
+            },
+            {
+              header: "Sévérité",
+              render: (alert) => <StatusBadge value={alert.severity} />,
+            },
+            {
+              header: "Statut",
+              render: (alert) => <StatusBadge value={alert.status} />,
+            },
+            {
+              header: "Survenu le",
+              render: (alert) => formatDateTime(alert.occurredAt),
+            },
+          ]}
+        />
+
+        <DataTableCard
+          title="Transport watch"
+          description="Jobs qui structurent le reste du flux."
+          rows={data.transportWatch}
+          getRowKey={(job) => job.id}
+          emptyMessage="Aucun job à surveiller."
+          columns={[
+            {
+              header: "Lane",
+              render: (job) => formatEnumLabel(job.lane),
+            },
+            {
+              header: "Statut",
+              render: (job) => <StatusBadge value={job.status} />,
+            },
+            {
+              header: "Lots",
+              render: (job) => job.lotCount,
+            },
+            {
+              header: "Transporteur",
+              render: (job) => job.transporterName ?? "Non affecté",
+            },
+            {
+              header: "SLA",
+              render: (job) => formatDateTime(job.slaDeadline),
+            },
+          ]}
+        />
+      </div>
+
+      <div className="grid gap-4 xl:grid-cols-[1.6fr_1fr]">
+        <DataTableCard
+          title="Timeline NFN"
+          description="Derniers événements enregistrés dans la colonne vertébrale append-only."
+          rows={data.recentEvents}
+          getRowKey={(event) => event.id}
+          emptyMessage="Aucun événement récent n'a été retourné."
+          columns={[
+            {
+              header: "Événement",
               render: (event) => formatEnumLabel(event.eventType),
             },
             {
-              header: "Agregat",
+              header: "Agrégat",
               render: (event) => formatEnumLabel(event.aggregateType),
             },
             {
@@ -234,88 +302,232 @@ const dashboardRoute: OperationsPageConfig<DashboardData> = {
                 event.actorName ?? formatEnumLabel(event.actorType),
             },
             {
-              header: "Survenu le",
+              header: "Horodatage",
               render: (event) => formatDateTime(event.occurredAt),
             },
           ]}
         />
 
-        <InfoListCard
-          title="Alertes et file d'attente"
-          description="Points chauds a surveiller immediatement."
-          items={[
+        <DataTableCard
+          title="Maillage terrain"
+          description="Sources et installations géolocalisées visibles par le centre."
+          rows={data.terrainNodes}
+          getRowKey={(node) => `${node.nodeType}-${node.id}`}
+          emptyMessage="Aucun nœud géographique disponible."
+          columns={[
             {
-              label: "Alertes depot ouvertes",
-              value: countValue(data.depot?.summary.openAlerts),
-              tone:
-                (data.depot?.summary.openAlerts ?? 0) > 0
-                  ? "destructive"
-                  : "default",
+              header: "Nœud",
+              render: (node) => node.label,
             },
             {
-              label: "Lots en transit",
-              value: countValue(data.lots?.summary.inTransitLots),
-              tone:
-                (data.lots?.summary.inTransitLots ?? 0) > 0
-                  ? "warning"
-                  : "default",
+              header: "Type",
+              render: (node) => formatEnumLabel(node.nodeType),
             },
             {
-              label: "Commandes ouvertes",
-              value: countValue(data.sales?.summary.openOrders),
+              header: "Région",
+              render: (node) => node.regionName ?? "—",
             },
             {
-              label: "Certifications en attente",
-              value: countValue(data.certification?.summary.pending),
-              tone:
-                (data.certification?.summary.pending ?? 0) > 0
-                  ? "warning"
-                  : "default",
+              header: "Coordonnées",
+              render: (node) =>
+                node.latitude && node.longitude
+                  ? `${node.latitude}, ${node.longitude}`
+                  : "—",
+              cellClassName: "font-mono text-xs",
+            },
+          ]}
+        />
+      </div>
+    </>
+  ),
+};
+
+const fulfillmentRoute: OperationsPageConfig<FulfillmentOverviewResponse> = {
+  title: "Fulfillment",
+  description: "Queues d'exécution NFN de la promesse terrain jusqu'à la préparation de vente.",
+  emptyMessage: "La vue fulfillment n'a reçu aucune donnée exploitable.",
+  requiredPermissions: ["fulfillment.view"],
+  loader: getFulfillmentOverview,
+  getMetrics: (data) => [
+    { label: "Collecte", value: countValue(data.summary.collectionQueue) },
+    { label: "Transport", value: countValue(data.summary.transportQueue) },
+    { label: "Dépôt", value: countValue(data.summary.depotQueue) },
+    { label: "Laverie", value: countValue(data.summary.washingQueue) },
+    { label: "Qualification", value: countValue(data.summary.qualificationQueue) },
+    { label: "Production", value: countValue(data.summary.productionQueue) },
+  ],
+  renderSections: (data) => (
+    <>
+      <div className="grid gap-4 xl:grid-cols-2">
+        <DataTableCard
+          title="File de collecte"
+          rows={data.collectionQueue}
+          getRowKey={(item) => item.id}
+          emptyMessage="Aucune pré-lot en attente."
+          columns={[
+            { header: "Source", render: (item) => item.sourceName ?? "—" },
+            {
+              header: "Type",
+              render: (item) => formatEnumLabel(item.sourceType),
+            },
+            {
+              header: "Statut",
+              render: (item) => <StatusBadge value={item.status} />,
+            },
+            {
+              header: "Poids estimé",
+              render: (item) => formatWeight(item.estimatedWeightKg),
+            },
+            {
+              header: "Collecteur",
+              render: (item) => item.assignedCollectorName ?? "—",
+            },
+          ]}
+        />
+
+        <DataTableCard
+          title="File transport"
+          rows={data.transportQueue}
+          getRowKey={(item) => item.id}
+          emptyMessage="Aucun job transport actif."
+          columns={[
+            { header: "Lane", render: (item) => formatEnumLabel(item.lane) },
+            {
+              header: "Statut",
+              render: (item) => <StatusBadge value={item.status} />,
+            },
+            { header: "Lots", render: (item) => item.lotCount },
+            {
+              header: "Transporteur",
+              render: (item) => item.transporterName ?? "—",
+            },
+            {
+              header: "SLA",
+              render: (item) => formatDateTime(item.slaDeadline),
             },
           ]}
         />
       </div>
 
-      <div className="grid gap-4 xl:grid-cols-[1.7fr_1fr]">
+      <div className="grid gap-4 xl:grid-cols-2">
         <DataTableCard
-          title="Lots recents"
-          description="Dernieres entrees creees dans la colonne de tracabilite."
-          rows={data.lots?.recentLots ?? []}
-          getRowKey={(lot) => lot.id}
-          emptyMessage="Aucun lot recent n'a ete renvoye."
+          title="Queue dépôt D1"
+          rows={data.depotQueue}
+          getRowKey={(item) => item.id}
+          emptyMessage="Aucun lot en attente au dépôt."
           columns={[
             {
-              header: "QR",
-              render: (lot) => lot.qrCode,
+              header: "Lot",
+              render: (item) => item.qrCode,
               cellClassName: "font-mono text-xs",
             },
             {
-              header: "Source",
-              render: (lot) => formatEnumLabel(lot.sourceType),
+              header: "Statut",
+              render: (item) => <StatusBadge value={item.status} />,
             },
             {
-              header: "Etat",
-              render: (lot) => <StatusBadge value={lot.status} />,
+              header: "Urgence",
+              render: (item) => <StatusBadge value={item.urgency} />,
             },
             {
-              header: "Poids declare",
-              render: (lot) => formatWeight(lot.declaredWeightKg),
+              header: "Dépôt / zone",
+              render: (item) => `${item.depotName ?? "—"} / ${item.zoneCode ?? "—"}`,
             },
             {
-              header: "Cree le",
-              render: (lot) => formatDateTime(lot.createdAt),
+              header: "Poids",
+              render: (item) => formatWeight(item.weightKg),
             },
           ]}
         />
 
-        <InfoListCard
-          title="Breakdown lots"
-          description="Repartition instantanee des statuts connus."
-          items={(data.lots?.summary.statusBreakdown ?? []).map((row) => ({
-            label: formatEnumLabel(row.status),
-            value: row.count,
-          }))}
-          emptyMessage="Le breakdown des lots est vide."
+        <DataTableCard
+          title="Queue laverie D2"
+          rows={data.washingQueue}
+          getRowKey={(item) => item.id}
+          emptyMessage="Aucun run de lavage actif."
+          columns={[
+            { header: "Lot", render: (item) => item.lotQrCode ?? "—" },
+            { header: "Laverie", render: (item) => item.laverieName ?? "—" },
+            {
+              header: "Poids entrant",
+              render: (item) => formatWeight(item.dirtyWeightKg),
+            },
+            {
+              header: "Poids sortant",
+              render: (item) =>
+                item.cleanWeightKg ? formatWeight(item.cleanWeightKg) : "—",
+            },
+            {
+              header: "Démarré",
+              render: (item) => formatDateTime(item.startedAt),
+            },
+          ]}
+        />
+      </div>
+
+      <div className="grid gap-4 xl:grid-cols-2">
+        <DataTableCard
+          title="Queue qualification"
+          rows={data.qualificationQueue}
+          getRowKey={(item) => item.id}
+          emptyMessage="Aucune qualification récente."
+          columns={[
+            { header: "Lot", render: (item) => item.lotQrCode ?? "—" },
+            { header: "Grade", render: (item) => item.grade },
+            {
+              header: "Sécurité",
+              render: (item) => <StatusBadge value={item.safetyStatus} />,
+            },
+            {
+              header: "Analyste",
+              render: (item) => item.analystName ?? "—",
+            },
+            {
+              header: "Effectué le",
+              render: (item) => formatDateTime(item.performedAt),
+            },
+          ]}
+        />
+
+        <DataTableCard
+          title="Queue transformation & ventes"
+          rows={[...data.productionQueue, ...data.salesQueue]}
+          getRowKey={(item) => item.id}
+          emptyMessage="Aucune charge aval en cours."
+          columns={[
+            {
+              header: "Référence",
+              render: (item) =>
+                "buyerCompanyName" in item
+                  ? item.buyerCompanyName ?? item.id
+                  : item.productName,
+            },
+            {
+              header: "Canal / piste",
+              render: (item) =>
+                "buyerCompanyName" in item
+                  ? formatEnumLabel(item.channel)
+                  : formatEnumLabel(item.track),
+            },
+            {
+              header: "Statut",
+              render: (item) => <StatusBadge value={item.status} />,
+            },
+            {
+              header: "Charge",
+              render: (item) =>
+                "buyerCompanyName" in item
+                  ? formatCurrency(item.total, item.currency)
+                  : formatWeight(item.inputWeightKg),
+            },
+            {
+              header: "Date",
+              render: (item) =>
+                formatDateTime(
+                  "buyerCompanyName" in item ? item.createdAt : item.startedAt,
+                ),
+            },
+          ]}
         />
       </div>
     </>
@@ -326,6 +538,7 @@ const depotRoute: OperationsPageConfig<DepotOverviewResponse> = {
   title: "Depot",
   description: "Reception, stockage, pre-tri et alertes logistiques.",
   emptyMessage: "Le module depot n'a recu aucune donnee backend.",
+  requiredPermissions: ["depot.view"],
   loader: getDepotOverview,
   getMetrics: (data) => [
     {
@@ -444,6 +657,7 @@ const laverieRoute: OperationsPageConfig<LaverieOverviewResponse> = {
   title: "Laverie",
   description: "Installations, cycles actifs et qualifications recentes.",
   emptyMessage: "Le module laverie n'a recu aucune donnee backend.",
+  requiredPermissions: ["laverie.view"],
   loader: getLaverieOverview,
   getMetrics: (data) => [
     { label: "Laveries", value: countValue(data.summary.totalLaveries) },
@@ -558,6 +772,7 @@ const transformationRoute: OperationsPageConfig<TransformationOverviewResponse> 
     title: "Transformation",
     description: "Pilotage des transformateurs, runs de production et sorties.",
     emptyMessage: "Le module transformation n'a recu aucune donnee backend.",
+    requiredPermissions: ["transformation.view"],
     loader: getTransformationOverview,
     getMetrics: (data) => [
       {
@@ -678,6 +893,7 @@ const salesRoute: OperationsPageConfig<SalesOverviewResponse> = {
   title: "Ventes",
   description: "Commandes, canaux de vente et suivi de paiement.",
   emptyMessage: "Le module ventes n'a recu aucune donnee backend.",
+  requiredPermissions: ["sales.view"],
   loader: getSalesOverview,
   getMetrics: (data) => [
     { label: "Total commandes", value: countValue(data.summary.totalOrders) },
@@ -739,6 +955,7 @@ const transportRoute: OperationsPageConfig<TransportOverviewResponse> = {
   title: "Transport",
   description: "Affectation, suivi et execution des jobs de transport.",
   emptyMessage: "Le module transport n'a recu aucune donnee backend.",
+  requiredPermissions: ["transport.view"],
   loader: getTransportOverview,
   getMetrics: (data) => [
     { label: "Jobs totaux", value: countValue(data.summary.totalJobs) },
@@ -799,6 +1016,7 @@ const certificationRoute: OperationsPageConfig<CertificationOverviewResponse> =
     title: "Certification",
     description: "Emission, suivi et revocation des sceaux produits.",
     emptyMessage: "Le module certification n'a recu aucune donnee backend.",
+    requiredPermissions: ["certification.view"],
     loader: getCertificationOverview,
     getMetrics: (data) => [
       {
@@ -859,6 +1077,7 @@ const regionsRoute: OperationsPageConfig<RegionsOverviewResponse> = {
   title: "Regions",
   description: "Carte des regions, codes et typologies administratives.",
   emptyMessage: "Le module regions n'a recu aucune donnee backend.",
+  requiredPermissions: ["regions.view"],
   loader: getRegionsOverview,
   getMetrics: (data) => [
     { label: "Regions", value: countValue(data.summary.totalRegions) },
@@ -908,6 +1127,7 @@ const analyticsRoute: OperationsPageConfig<AnalyticsData> = {
   title: "Statistiques",
   description: "Breakdowns transverses pour lots, transport, ventes et utilisateurs.",
   emptyMessage: "Le module statistiques n'a recu aucune donnee exploitable.",
+  requiredPermissions: ["analytics.view"],
   loader: loadAnalyticsData,
   getMetrics: (data) => [
     {
@@ -994,6 +1214,7 @@ const usersRoute: OperationsPageConfig<UsersOverviewResponse> = {
   title: "Utilisateurs",
   description: "Administration des comptes, types d'acteur et activite recente.",
   emptyMessage: "Le module utilisateurs n'a recu aucune donnee backend.",
+  requiredPermissions: ["users.view"],
   loader: getUsersOverview,
   getMetrics: (data) => [
     { label: "Total", value: countValue(data.summary.totalUsers) },
@@ -1052,6 +1273,7 @@ const settingsRoute: OperationsPageConfig<RulesOverviewResponse> = {
   title: "Parametres",
   description: "Regles metier, versions et fenetres d'effet configurees.",
   emptyMessage: "Le module parametres n'a recu aucune donnee backend.",
+  requiredPermissions: ["rules.view"],
   loader: getRulesOverview,
   getMetrics: (data) => [
     { label: "Regles total", value: countValue(data.summary.totalRules) },
@@ -1097,6 +1319,7 @@ const settingsRoute: OperationsPageConfig<RulesOverviewResponse> = {
 
 const operationsRoutes: Record<OperationsRouteKey, AnyOperationsPageConfig> = {
   dashboard: dashboardRoute,
+  fulfillment: fulfillmentRoute,
   depot: depotRoute,
   laverie: laverieRoute,
   transformation: transformationRoute,
