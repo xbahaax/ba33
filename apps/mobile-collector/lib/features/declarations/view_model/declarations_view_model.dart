@@ -60,14 +60,19 @@ class DeclarationsViewModel extends _$DeclarationsViewModel {
     final user = ref.read(authProvider);
     if (user == null) return;
 
+    final previous = state;
     try {
       final collectionService = ref.read(collectionServiceProvider);
       await collectionService.assignPreLot(declarationId, {
-        'assignedCollectorId': user.id,
+        'collectorId': user.id,
+        'scheduledAt': DateTime.now()
+            .add(const Duration(hours: 1))
+            .toIso8601String(),
       });
       await refresh();
     } catch (e, st) {
-      state = AsyncValue.error(e, st);
+      state = previous;
+      rethrow;
     }
   }
 

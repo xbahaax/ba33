@@ -39,17 +39,17 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       _errorMessage = null;
     });
 
-    final success =
+    final error =
         await ref.read(authStateProvider.notifier).login(phone, password);
 
     if (!mounted) return;
 
-    if (success) {
+    if (error == null) {
       context.go('/');
     } else {
       setState(() {
         _isLoading = false;
-        _errorMessage = 'رقم الهاتف ولا كلمة السر غالطة';
+        _errorMessage = error;
       });
     }
   }

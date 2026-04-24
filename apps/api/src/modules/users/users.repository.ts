@@ -2,13 +2,6 @@ import { BadRequestException, Inject, Injectable, NotFoundException } from '@nes
 import { desc, eq, inArray, sql } from 'drizzle-orm';
 import { DATABASE_TOKEN } from '../../common/database/database.module';
 import type { Database } from '../../common/database/client';
-import { regions, roles, userRoles, users } from '../../common/database/schema';
-import {
-  defaultRoleTemplates,
-  getDefaultPermissionsForUserType,
-  mergePermissions,
-} from '../../common/auth/rbac';
-import type { UpdateUserAccessDto } from './dto/update-user-access.dto';
 
 @Injectable()
 export class UsersRepository {

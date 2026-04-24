@@ -51,9 +51,12 @@ class DeclarationCard extends StatelessWidget {
               Icon(Icons.person_rounded,
                   size: 16, color: colors.mutedForeground),
               const SizedBox(width: 6),
-              Text(
-                'Shepherd ${declaration.shepherdId}',
-                style: Theme.of(context).textTheme.bodyMedium,
+              Flexible(
+                child: Text(
+                  'Shepherd ${declaration.shepherdId}',
+                  style: Theme.of(context).textTheme.bodyMedium,
+                  overflow: TextOverflow.ellipsis,
+                ),
               ),
             ],
           ),
@@ -62,14 +65,17 @@ class DeclarationCard extends StatelessWidget {
             children: [
               Icon(Icons.scale, size: 16, color: colors.mutedForeground),
               const SizedBox(width: 6),
-              Text(
-                declaration.estimatedWeight != null
-                    ? '~${declaration.estimatedWeight!.toStringAsFixed(0)} kg'
-                    : _categoryLabel(declaration.weightCategory),
-                style: Ba33Typography.mono(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w600,
-                  color: colors.foreground,
+              Flexible(
+                child: Text(
+                  declaration.estimatedWeight != null
+                      ? '~${declaration.estimatedWeight!.toStringAsFixed(0)} kg'
+                      : _categoryLabel(declaration.weightCategory),
+                  style: Ba33Typography.mono(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    color: colors.foreground,
+                  ),
+                  overflow: TextOverflow.ellipsis,
                 ),
               ),
               const SizedBox(width: Ba33Spacing.spacing3),

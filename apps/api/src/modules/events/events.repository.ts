@@ -2,7 +2,6 @@ import { Inject, Injectable } from '@nestjs/common';
 import { desc, eq } from 'drizzle-orm';
 import { DATABASE_TOKEN } from '../../common/database/database.module';
 import type { Database } from '../../common/database/client';
-import { events, users } from '../../common/database/schema';
 
 @Injectable()
 export class EventsRepository {

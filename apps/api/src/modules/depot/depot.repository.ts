@@ -7,22 +7,6 @@ import {
 import { desc, eq, inArray } from 'drizzle-orm';
 import { DATABASE_TOKEN } from '../../common/database/database.module';
 import type { Database } from '../../common/database/client';
-import {
-  a1Alerts,
-  depotDispatchLots,
-  depotDispatches,
-  depotReceptions,
-  depotZones,
-  depots,
-  laveries,
-  lotWeighs,
-  lots,
-  regions,
-  users,
-} from '../../common/database/schema';
-import { appendWorkflowEvent } from '../../common/workflow/workflow-events';
-import { CreateDepotDispatchDto } from './dto/create-depot-dispatch.dto';
-import { CreateDepotReceptionDto } from './dto/create-depot-reception.dto';
 
 @Injectable()
 export class DepotRepository {

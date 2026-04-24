@@ -7,20 +7,6 @@ import {
 import { and, desc, eq, inArray, isNull, sql } from 'drizzle-orm';
 import { DATABASE_TOKEN } from '../../common/database/database.module';
 import type { Database } from '../../common/database/client';
-import {
-  boms,
-  certifications,
-  lots,
-  products,
-  productionRunLots,
-  productionRuns,
-  transformers,
-  users,
-  wasteRecords,
-} from '../../common/database/schema';
-import { appendWorkflowEvent } from '../../common/workflow/workflow-events';
-import { CompleteProductionRunDto } from './dto/complete-production-run.dto';
-import { CreateProductionRunDto } from './dto/create-production-run.dto';
 
 @Injectable()
 export class TransformationRepository {

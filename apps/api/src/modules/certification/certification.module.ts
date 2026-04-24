@@ -2,12 +2,10 @@ import { Module } from '@nestjs/common';
 import { CertificationController } from './certification.controller';
 import { CertificationService } from './certification.service';
 import { CertificationRepository } from './certification.repository';
-import { EventsModule } from '../events/events.module';
-import { RulesModule } from '../rules/rules.module';
-import { AuditModule } from '../audit/audit.module';
+import { SalesModule } from '../sales/sales.module';
 
 @Module({
-  imports: [EventsModule, RulesModule, AuditModule],
+  imports: [SalesModule],
   controllers: [CertificationController],
   providers: [CertificationService, CertificationRepository],
   exports: [CertificationService],

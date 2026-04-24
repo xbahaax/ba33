@@ -13,11 +13,13 @@ class JobList extends _$JobList {
     final auth = ref.watch(authStateProvider);
     final transportSvc = ref.read(transportServiceProvider);
 
-    final raw = await transportSvc.listJobs(transporterId: auth.userId);
-    return raw.map((e) {
-      final j = e as Map<String, dynamic>;
-      return _mapApiJob(j);
-    }).toList();
+    final raw = await transportSvc.listJobs();
+    return raw
+        .map((e) => _mapApiJob(e as Map<String, dynamic>))
+        .where((j) =>
+            j.status != JobStatus.delivered &&
+            j.status != JobStatus.cancelled)
+        .toList();
   }
 
   Future<void> refresh() async {

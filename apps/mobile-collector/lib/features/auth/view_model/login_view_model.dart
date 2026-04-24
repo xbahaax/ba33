@@ -62,15 +62,12 @@ class LoginViewModel extends _$LoginViewModel {
     }
     state = state.copyWith(isLoading: true, error: null);
 
-    final success = await ref
+    final error = await ref
         .read(authProvider.notifier)
         .login(state.phone, state.password);
 
-    if (!success) {
-      state = state.copyWith(
-        isLoading: false,
-        error: 'رقم الهاتف أو كلمة المرور غير صحيحة',
-      );
+    if (error != null) {
+      state = state.copyWith(isLoading: false, error: error);
       return false;
     }
 

@@ -2,8 +2,6 @@ import { Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { desc, eq, sql } from 'drizzle-orm';
 import { DATABASE_TOKEN } from '../../common/database/database.module';
 import type { Database } from '../../common/database/client';
-import { rulesConfig, users } from '../../common/database/schema';
-import type { UpdateRuleDto } from './dto/update-rule.dto';
 
 @Injectable()
 export class RulesRepository {

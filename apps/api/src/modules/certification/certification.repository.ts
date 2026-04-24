@@ -7,14 +7,6 @@ import {
 import { desc, eq, inArray, sql } from 'drizzle-orm';
 import { DATABASE_TOKEN } from '../../common/database/database.module';
 import type { Database } from '../../common/database/client';
-import {
-  certifications,
-  lots,
-  products,
-  productionRunLots,
-  users,
-} from '../../common/database/schema';
-import { appendWorkflowEvent } from '../../common/workflow/workflow-events';
 
 @Injectable()
 export class CertificationRepository {
