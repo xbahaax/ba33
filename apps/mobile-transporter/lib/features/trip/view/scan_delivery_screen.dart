@@ -5,22 +5,23 @@ import 'package:go_router/go_router.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 
 import '../../jobs/model/transport_job.dart';
-import '../../trip/view_model/active_trip_view_model.dart';
+import '../view_model/active_trip_view_model.dart';
 
-class ScanScreen extends ConsumerStatefulWidget {
-  const ScanScreen({super.key});
+class ScanDeliveryScreen extends ConsumerStatefulWidget {
+  const ScanDeliveryScreen({super.key});
 
   @override
-  ConsumerState<ScanScreen> createState() => _ScanScreenState();
+  ConsumerState<ScanDeliveryScreen> createState() =>
+      _ScanDeliveryScreenState();
 }
 
-class _ScanScreenState extends ConsumerState<ScanScreen> {
-  final MobileScannerController _cameraController = MobileScannerController();
+class _ScanDeliveryScreenState extends ConsumerState<ScanDeliveryScreen> {
+  final MobileScannerController _camera = MobileScannerController();
   bool _isProcessing = false;
 
   @override
   void dispose() {
-    _cameraController.dispose();
+    _camera.dispose();
     super.dispose();
   }
 
@@ -33,37 +34,36 @@ class _ScanScreenState extends ConsumerState<ScanScreen> {
     if (trip == null) return;
 
     final lot = trip.job.lots
-        .where((l) => l.qrCode == rawValue && !l.isLoaded)
+        .where((l) => l.qrCode == rawValue && !l.isDelivered)
         .firstOrNull;
-
-    if (lot == null) return; // unknown QR or already loaded
+    if (lot == null) return;
 
     setState(() => _isProcessing = true);
-    _cameraController.stop();
-    _showWeightConfirm(lot);
+    _camera.stop();
+    _showDeliveryConfirm(lot);
   }
 
   void _onManualTap(TransportLot lot) {
     if (_isProcessing) return;
     setState(() => _isProcessing = true);
-    _cameraController.stop();
-    _showWeightConfirm(lot);
+    _camera.stop();
+    _showDeliveryConfirm(lot);
   }
 
-  void _showWeightConfirm(TransportLot lot) {
+  void _showDeliveryConfirm(TransportLot lot) {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      builder: (_) => WeightConfirmSheet(
+      builder: (_) => _DeliveryWeightSheet(
         lot: lot,
         onConfirmed: (weight) {
-          ref.read(activeTripProvider.notifier).loadLot(lot.qrCode, weight);
+          ref.read(activeTripProvider.notifier).deliverLot(lot.qrCode, weight);
           setState(() => _isProcessing = false);
-          _cameraController.start();
+          _camera.start();
         },
         onCancelled: () {
           setState(() => _isProcessing = false);
-          _cameraController.start();
+          _camera.start();
         },
       ),
     );
@@ -77,7 +77,6 @@ class _ScanScreenState extends ConsumerState<ScanScreen> {
     }
 
     final job = trip.job;
-    final pending = job.lots.where((l) => !l.isLoaded).toList();
     final colors = Theme.of(context).ba33;
     final textTheme = Theme.of(context).textTheme;
 
@@ -86,7 +85,7 @@ class _ScanScreenState extends ConsumerState<ScanScreen> {
       appBar: AppBar(
         backgroundColor: Colors.black,
         foregroundColor: Colors.white,
-        title: Text('Scanner les lots',
+        title: Text('Livraison',
             style: textTheme.titleLarge?.copyWith(color: Colors.white)),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Colors.white),
@@ -95,34 +94,41 @@ class _ScanScreenState extends ConsumerState<ScanScreen> {
         actions: [
           IconButton(
             icon: const Icon(Icons.flash_on, color: Colors.white),
-            onPressed: () => _cameraController.toggleTorch(),
+            onPressed: () => _camera.toggleTorch(),
           ),
         ],
       ),
       body: Column(
         children: [
-          // ── Progress bar ─────────────────────────
+          // ── Destination + progress ───────────────
           Container(
             color: Colors.black,
             padding: const EdgeInsets.symmetric(
-                horizontal: Ba33Spacing.spacing4, vertical: Ba33Spacing.spacing2),
+                horizontal: Ba33Spacing.spacing4,
+                vertical: Ba33Spacing.spacing3),
             child: Row(
               children: [
-                Text('${job.lotsLoaded}/${job.lots.length} chargés',
-                    style: const TextStyle(color: Colors.white70, fontSize: 13)),
+                const Text('🫧', style: TextStyle(fontSize: 20)),
                 const SizedBox(width: Ba33Spacing.spacing3),
                 Expanded(
-                  child: ClipRRect(
-                    borderRadius: Ba33Radii.borderRadiusFull,
-                    child: LinearProgressIndicator(
-                      value: job.lots.isEmpty
-                          ? 0
-                          : job.lotsLoaded / job.lots.length,
-                      backgroundColor: Colors.white12,
-                      color: colors.primary,
-                      minHeight: 6,
-                    ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(job.destinationName,
+                          style: const TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.w600)),
+                      Text('${job.lotsDelivered}/${job.lots.length} livrés',
+                          style: const TextStyle(
+                              color: Colors.white54, fontSize: 12)),
+                    ],
                   ),
+                ),
+                _ProgressRing(
+                  progress: job.lots.isEmpty
+                      ? 0
+                      : job.lotsDelivered / job.lots.length,
+                  color: colors.primary,
                 ),
               ],
             ),
@@ -134,10 +140,7 @@ class _ScanScreenState extends ConsumerState<ScanScreen> {
             child: Stack(
               children: [
                 MobileScanner(
-                  controller: _cameraController,
-                  onDetect: _onQRDetected,
-                ),
-                // Scanner overlay frame
+                    controller: _camera, onDetect: _onQRDetected),
                 Center(
                   child: SizedBox(
                     width: 220,
@@ -151,14 +154,14 @@ class _ScanScreenState extends ConsumerState<ScanScreen> {
                   Container(
                     color: Colors.black54,
                     child: Center(
-                      child: CircularProgressIndicator(color: colors.primary),
-                    ),
+                        child: CircularProgressIndicator(
+                            color: colors.primary)),
                   ),
               ],
             ),
           ),
 
-          // ── Lots list (manual fallback) ──────────
+          // ── Lots list ────────────────────────────
           Expanded(
             flex: 4,
             child: Container(
@@ -174,14 +177,16 @@ class _ScanScreenState extends ConsumerState<ScanScreen> {
                     padding: const EdgeInsets.fromLTRB(
                         Ba33Spacing.spacing4, Ba33Spacing.spacing4,
                         Ba33Spacing.spacing4, Ba33Spacing.spacing2),
-                    child: pending.isEmpty
-                        ? Text('Tous les lots scannés ✓',
-                            style: textTheme.titleSmall
-                                ?.copyWith(color: colors.primary))
-                        : Text(
-                            'Lots restants — appuyez pour scan manuel',
-                            style: textTheme.titleSmall,
-                          ),
+                    child: Text(
+                      job.allLotsDelivered
+                          ? 'Tous les lots livrés ✓'
+                          : 'Lots à livrer — appuyez pour scan manuel',
+                      style: textTheme.titleSmall?.copyWith(
+                        color: job.allLotsDelivered
+                            ? colors.primary
+                            : colors.foreground,
+                      ),
+                    ),
                   ),
                   Expanded(
                     child: ListView.builder(
@@ -190,29 +195,24 @@ class _ScanScreenState extends ConsumerState<ScanScreen> {
                       itemCount: job.lots.length,
                       itemBuilder: (ctx, i) {
                         final lot = job.lots[i];
-                        return _ScanLotTile(
+                        return _DeliveryLotTile(
                           lot: lot,
-                          onTap: lot.isLoaded
+                          onTap: lot.isDelivered
                               ? null
                               : () => _onManualTap(lot),
                         );
                       },
                     ),
                   ),
-                  if (job.allLotsLoaded)
+                  if (job.allLotsDelivered)
                     Padding(
                       padding: const EdgeInsets.all(Ba33Spacing.spacing4),
                       child: SizedBox(
                         width: double.infinity,
                         child: ElevatedButton.icon(
-                          onPressed: () {
-                            ref
-                                .read(activeTripProvider.notifier)
-                                .startTrip();
-                            context.go('/trip');
-                          },
-                          icon: const Icon(Icons.local_shipping),
-                          label: const Text('Démarrer le trajet'),
+                          onPressed: () => context.push('/signature'),
+                          icon: const Icon(Icons.draw),
+                          label: const Text('Signature du réceptionnaire'),
                           style: ElevatedButton.styleFrom(
                             padding: const EdgeInsets.symmetric(
                                 vertical: Ba33Spacing.spacing4),
@@ -230,41 +230,9 @@ class _ScanScreenState extends ConsumerState<ScanScreen> {
   }
 }
 
-// ── Scanner frame painter ─────────────────────────────────
-class _ScannerFramePainter extends CustomPainter {
-  const _ScannerFramePainter(this.color);
-
-  final Color color;
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final paint = Paint()
-      ..color = color
-      ..strokeWidth = 3.5
-      ..style = PaintingStyle.stroke
-      ..strokeCap = StrokeCap.round;
-
-    const c = 28.0;
-    final w = size.width;
-    final h = size.height;
-
-    canvas.drawLine(Offset.zero, Offset(c, 0), paint);
-    canvas.drawLine(Offset.zero, Offset(0, c), paint);
-    canvas.drawLine(Offset(w, 0), Offset(w - c, 0), paint);
-    canvas.drawLine(Offset(w, 0), Offset(w, c), paint);
-    canvas.drawLine(Offset(0, h), Offset(c, h), paint);
-    canvas.drawLine(Offset(0, h), Offset(0, h - c), paint);
-    canvas.drawLine(Offset(w, h), Offset(w - c, h), paint);
-    canvas.drawLine(Offset(w, h), Offset(w, h - c), paint);
-  }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter _) => false;
-}
-
-// ── Lot tile ─────────────────────────────────────────────
-class _ScanLotTile extends StatelessWidget {
-  const _ScanLotTile({required this.lot, this.onTap});
+// ── Lot tile ──────────────────────────────────────────────
+class _DeliveryLotTile extends StatelessWidget {
+  const _DeliveryLotTile({required this.lot, this.onTap});
 
   final TransportLot lot;
   final VoidCallback? onTap;
@@ -280,14 +248,14 @@ class _ScanLotTile extends StatelessWidget {
         margin: const EdgeInsets.only(bottom: Ba33Spacing.spacing2),
         padding: const EdgeInsets.all(Ba33Spacing.spacing3),
         decoration: BoxDecoration(
-          color: lot.isLoaded
-              ? colors.primary.withAlpha(20)
-              : colors.card,
+          color: lot.isDelivered ? colors.primary.withAlpha(20) : colors.card,
           borderRadius: Ba33Radii.borderRadiusMd,
           border: Border.all(
-            color: lot.isLoaded
-                ? colors.primary.withAlpha(80)
-                : colors.border,
+            color: lot.hasMismatch
+                ? colors.destructive.withAlpha(100)
+                : lot.isDelivered
+                    ? colors.primary.withAlpha(80)
+                    : colors.border,
           ),
         ),
         child: Row(
@@ -296,13 +264,13 @@ class _ScanLotTile extends StatelessWidget {
               width: 32,
               height: 32,
               decoration: BoxDecoration(
-                color: lot.isLoaded ? colors.primary : colors.muted,
+                color: lot.isDelivered ? colors.primary : colors.muted,
                 borderRadius: Ba33Radii.borderRadiusSm,
               ),
               child: Icon(
-                lot.isLoaded ? Icons.check : Icons.qr_code_scanner,
+                lot.isDelivered ? Icons.check : Icons.qr_code_scanner,
                 size: 16,
-                color: lot.isLoaded
+                color: lot.isDelivered
                     ? colors.primaryForeground
                     : colors.mutedForeground,
               ),
@@ -318,27 +286,18 @@ class _ScanLotTile extends StatelessWidget {
                           fontWeight: FontWeight.w500,
                           color: colors.foreground)),
                   Text(
-                    lot.isLoaded
-                        ? 'Chargé · ${lot.loadedWeight?.toStringAsFixed(1)} kg'
-                        : 'Déclaré · ${lot.declaredWeight.toStringAsFixed(1)} kg',
+                    lot.isDelivered
+                        ? 'Livré · ${lot.deliveredWeight?.toStringAsFixed(1)} kg'
+                        : 'Chargé · ${(lot.loadedWeight ?? lot.declaredWeight).toStringAsFixed(1)} kg',
                     style: textTheme.bodySmall
                         ?.copyWith(color: colors.mutedForeground),
                   ),
                 ],
               ),
             ),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-              decoration: BoxDecoration(
-                color: colors.secondary,
-                borderRadius: Ba33Radii.borderRadiusSm,
-              ),
-              child: Text(lot.sourceType,
-                  style: Ba33Typography.mono(
-                      fontSize: 10,
-                      fontWeight: FontWeight.w700,
-                      color: colors.secondaryForeground)),
-            ),
+            if (lot.hasMismatch)
+              Icon(Icons.warning_amber,
+                  color: colors.destructive, size: 16),
           ],
         ),
       ),
@@ -346,10 +305,9 @@ class _ScanLotTile extends StatelessWidget {
   }
 }
 
-// ── Weight confirm bottom sheet ───────────────────────────
-class WeightConfirmSheet extends StatefulWidget {
-  const WeightConfirmSheet({
-    super.key,
+// ── Delivery weight sheet ─────────────────────────────────
+class _DeliveryWeightSheet extends StatefulWidget {
+  const _DeliveryWeightSheet({
     required this.lot,
     required this.onConfirmed,
     required this.onCancelled,
@@ -360,18 +318,18 @@ class WeightConfirmSheet extends StatefulWidget {
   final VoidCallback onCancelled;
 
   @override
-  State<WeightConfirmSheet> createState() => _WeightConfirmSheetState();
+  State<_DeliveryWeightSheet> createState() => _DeliveryWeightSheetState();
 }
 
-class _WeightConfirmSheetState extends State<WeightConfirmSheet> {
+class _DeliveryWeightSheetState extends State<_DeliveryWeightSheet> {
   late final TextEditingController _ctrl;
   bool _hasMismatch = false;
 
   @override
   void initState() {
     super.initState();
-    _ctrl = TextEditingController(
-        text: widget.lot.declaredWeight.toStringAsFixed(1));
+    final ref = widget.lot.loadedWeight ?? widget.lot.declaredWeight;
+    _ctrl = TextEditingController(text: ref.toStringAsFixed(1));
   }
 
   @override
@@ -382,9 +340,8 @@ class _WeightConfirmSheetState extends State<WeightConfirmSheet> {
 
   void _check(String v) {
     final entered = double.tryParse(v) ?? 0;
-    final delta = (entered - widget.lot.declaredWeight).abs();
-    setState(
-        () => _hasMismatch = delta > widget.lot.declaredWeight * 0.02);
+    final ref = widget.lot.loadedWeight ?? widget.lot.declaredWeight;
+    setState(() => _hasMismatch = (entered - ref).abs() > ref * 0.02);
   }
 
   void _confirm() {
@@ -394,15 +351,11 @@ class _WeightConfirmSheetState extends State<WeightConfirmSheet> {
     widget.onConfirmed(w);
   }
 
-  void _cancel() {
-    Navigator.of(context).pop();
-    widget.onCancelled();
-  }
-
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).ba33;
     final textTheme = Theme.of(context).textTheme;
+    final loadedWeight = widget.lot.loadedWeight ?? widget.lot.declaredWeight;
 
     return Padding(
       padding:
@@ -416,10 +369,13 @@ class _WeightConfirmSheetState extends State<WeightConfirmSheet> {
             Row(
               children: [
                 Expanded(
-                    child: Text('Confirmer le poids',
+                    child: Text('Poids à la livraison',
                         style: textTheme.titleLarge)),
                 IconButton(
-                  onPressed: _cancel,
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                    widget.onCancelled();
+                  },
                   icon: Icon(Icons.close, color: colors.mutedForeground),
                 ),
               ],
@@ -434,12 +390,10 @@ class _WeightConfirmSheetState extends State<WeightConfirmSheet> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text('Poids déclaré', style: textTheme.labelSmall),
-                      Text(
-                        '${widget.lot.declaredWeight.toStringAsFixed(1)} kg',
-                        style: Ba33Typography.mono(
-                            fontSize: 18, color: colors.mutedForeground),
-                      ),
+                      Text('Poids chargé', style: textTheme.labelSmall),
+                      Text('${loadedWeight.toStringAsFixed(1)} kg',
+                          style: Ba33Typography.mono(
+                              fontSize: 18, color: colors.mutedForeground)),
                     ],
                   ),
                 ),
@@ -448,16 +402,16 @@ class _WeightConfirmSheetState extends State<WeightConfirmSheet> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.end,
                     children: [
-                      Text('Poids mesuré',
+                      Text('Poids livré',
                           style: textTheme.labelSmall,
                           textAlign: TextAlign.end),
                       const SizedBox(height: 4),
                       TextField(
                         controller: _ctrl,
+                        autofocus: true,
                         keyboardType: const TextInputType.numberWithOptions(
                             decimal: true),
                         textAlign: TextAlign.end,
-                        autofocus: true,
                         style: Ba33Typography.mono(fontSize: 18),
                         decoration: const InputDecoration(
                           suffixText: 'kg',
@@ -487,7 +441,7 @@ class _WeightConfirmSheetState extends State<WeightConfirmSheet> {
                     const SizedBox(width: Ba33Spacing.spacing2),
                     Expanded(
                       child: Text(
-                        'Écart > 2% détecté — anomalie Point Noir signalée.',
+                        'Écart > 2% — anomalie Point Noir signalée.',
                         style: textTheme.bodySmall
                             ?.copyWith(color: colors.destructive),
                       ),
@@ -501,11 +455,73 @@ class _WeightConfirmSheetState extends State<WeightConfirmSheet> {
               width: double.infinity,
               child: ElevatedButton(
                 onPressed: _confirm,
-                child: const Text('Confirmer le chargement'),
+                child: const Text('Confirmer la livraison'),
               ),
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+// ── Scanner frame painter ─────────────────────────────────
+class _ScannerFramePainter extends CustomPainter {
+  const _ScannerFramePainter(this.color);
+
+  final Color color;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final p = Paint()
+      ..color = color
+      ..strokeWidth = 3.5
+      ..style = PaintingStyle.stroke
+      ..strokeCap = StrokeCap.round;
+    const c = 28.0;
+    final w = size.width;
+    final h = size.height;
+    canvas.drawLine(Offset.zero, Offset(c, 0), p);
+    canvas.drawLine(Offset.zero, Offset(0, c), p);
+    canvas.drawLine(Offset(w, 0), Offset(w - c, 0), p);
+    canvas.drawLine(Offset(w, 0), Offset(w, c), p);
+    canvas.drawLine(Offset(0, h), Offset(c, h), p);
+    canvas.drawLine(Offset(0, h), Offset(0, h - c), p);
+    canvas.drawLine(Offset(w, h), Offset(w - c, h), p);
+    canvas.drawLine(Offset(w, h), Offset(w, h - c), p);
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter _) => false;
+}
+
+// ── Progress ring ─────────────────────────────────────────
+class _ProgressRing extends StatelessWidget {
+  const _ProgressRing({required this.progress, required this.color});
+
+  final double progress;
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: 40,
+      height: 40,
+      child: Stack(
+        alignment: Alignment.center,
+        children: [
+          CircularProgressIndicator(
+            value: progress,
+            strokeWidth: 3,
+            color: color,
+            backgroundColor: color.withAlpha(50),
+          ),
+          Text('${(progress * 100).round()}%',
+              style: TextStyle(
+                  fontSize: 9,
+                  fontWeight: FontWeight.w700,
+                  color: color)),
+        ],
       ),
     );
   }

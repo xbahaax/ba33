@@ -49,6 +49,16 @@
 	</dict>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
+	<key>NSCameraUsageDescription</key>
+	<string>ba33 utilise la caméra pour scanner les QR codes des lots de laine.</string>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>ba33 enregistre votre position GPS pendant le transport pour la traçabilité des lots.</string>
+	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
+	<string>ba33 continue d'enregistrer votre GPS en arrière-plan pendant le trajet.</string>
+	<key>UIBackgroundModes</key>
+	<array>
+		<string>location</string>
+	</array>
 	<key>UILaunchStoryboardName</key>
 	<string>LaunchScreen</string>
 	<key>UIMainStoryboardFile</key>
