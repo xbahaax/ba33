@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Card, CardHeader, CardTitle, CardContent, Button, Badge } from "@ba33/ui-web";
+import { Card, CardHeader, CardTitle, CardContent, Button, Badge, Input } from "@ba33/ui-web";
 import { Download, FileText, CheckCircle2 } from "lucide-react";
 
 const EXPORT_TYPES = [
@@ -112,20 +112,20 @@ export default function ExportsPage() {
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-1.5">
                 <label className="text-sm font-medium">Date de début</label>
-                <input
+                <Input
                   type="date"
                   value={dateFrom}
                   onChange={(e) => setDateFrom(e.target.value)}
-                  className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-ring"
+                  className="font-mono"
                 />
               </div>
               <div className="space-y-1.5">
                 <label className="text-sm font-medium">Date de fin</label>
-                <input
+                <Input
                   type="date"
                   value={dateTo}
                   onChange={(e) => setDateTo(e.target.value)}
-                  className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-ring"
+                  className="font-mono"
                 />
               </div>
             </div>

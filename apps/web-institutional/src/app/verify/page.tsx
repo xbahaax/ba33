@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { Button, Badge, Card, CardContent } from "@ba33/ui-web";
+import { Button, Badge, Card, CardContent, Input } from "@ba33/ui-web";
 import { QrCode, CheckCircle2, XCircle, ArrowLeft, Search, Shield } from "lucide-react";
 import { CERTIFICATES, type Certificate } from "@/lib/mock-data";
 
@@ -56,9 +56,9 @@ export default function PublicVerifyPage() {
             <CardContent className="pt-6 space-y-4">
               <div className="flex gap-2">
                 <div className="relative flex-1">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                  <input
-                    className="w-full pl-9 pr-4 py-2.5 rounded-lg border border-input bg-background text-sm font-mono placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
+                  <Input
+                    className="pl-9 font-mono"
                     placeholder="P1-00042 ou L-C1-TZ-00312"
                     value={query}
                     onChange={(e) => setQuery(e.target.value)}
