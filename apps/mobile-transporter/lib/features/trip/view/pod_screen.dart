@@ -62,12 +62,12 @@ class PodScreen extends ConsumerWidget {
                     ),
                     const SizedBox(height: Ba33Spacing.spacing3),
                     Text(
-                      'Livraison confirmée',
+                      'التسليم تأكد',
                       style: textTheme.headlineSmall,
                     ),
                     const SizedBox(height: Ba33Spacing.spacing1),
                     Text(
-                      'Bon de livraison généré',
+                      'بون التسليم تولد',
                       style: textTheme.bodySmall
                           ?.copyWith(color: colors.mutedForeground),
                     ),
@@ -81,24 +81,24 @@ class PodScreen extends ConsumerWidget {
                 colors: colors,
                 children: [
                   _InfoRow(
-                    label: 'Mission',
+                    label: 'المهمة',
                     value: job.id,
                     mono: true,
                     colors: colors,
                   ),
                   _InfoRow(
-                    label: 'Origine',
+                    label: 'الأصل',
                     value: job.originName,
                     colors: colors,
                   ),
                   _InfoRow(
-                    label: 'Destination',
+                    label: 'الوجهة',
                     value: job.destinationName,
                     colors: colors,
                   ),
                   if (trip.receiverName != null)
                     _InfoRow(
-                      label: 'Réceptionné par',
+                      label: 'استلمه',
                       value: trip.receiverName!,
                       colors: colors,
                     ),

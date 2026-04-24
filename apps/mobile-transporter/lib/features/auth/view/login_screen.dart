@@ -84,17 +84,17 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 ),
               ),
               const SizedBox(height: Ba33Spacing.spacing4),
-              Text('Transporter', style: textTheme.displaySmall),
+              Text('الناقل', style: textTheme.displaySmall),
               const SizedBox(height: Ba33Spacing.spacing1),
               Text(
-                'Connectez-vous pour accéder à vos missions.',
+                'ادخل باش توصل للمهام تاعك.',
                 style: textTheme.bodyMedium
                     ?.copyWith(color: colors.mutedForeground),
               ),
               const SizedBox(height: Ba33Spacing.spacing8),
 
               if (!_otpSent) ...[
-                Text('Numéro de téléphone', style: textTheme.labelLarge),
+                Text('رقم التيليفون', style: textTheme.labelLarge),
                 const SizedBox(height: Ba33Spacing.spacing2),
                 TextField(
                   controller: _phoneController,
@@ -122,7 +122,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                               strokeWidth: 2,
                             ),
                           )
-                        : const Text('Envoyer le code OTP'),
+                        : const Text('ابعث كود OTP'),
                   ),
                 ),
               ] else ...[
@@ -140,20 +140,20 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                       const SizedBox(width: Ba33Spacing.spacing2),
                       Expanded(
                         child: Text(
-                          'Code envoyé au +213 ${_phoneController.text}',
+                          'الكود تبعث ل +213 ${_phoneController.text}',
                           style: textTheme.bodySmall
                               ?.copyWith(color: colors.mutedForeground),
                         ),
                       ),
                       TextButton(
                         onPressed: () => setState(() => _otpSent = false),
-                        child: const Text('Changer'),
+                        child: const Text('بدل'),
                       ),
                     ],
                   ),
                 ),
                 const SizedBox(height: Ba33Spacing.spacing4),
-                Text('Code OTP', style: textTheme.labelLarge),
+                Text('كود OTP', style: textTheme.labelLarge),
                 const SizedBox(height: Ba33Spacing.spacing2),
                 TextField(
                   controller: _otpController,
@@ -169,7 +169,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 ),
                 const SizedBox(height: Ba33Spacing.spacing1),
                 Text(
-                  'Demo : entrez n\'importe quel code à 4+ chiffres',
+                  'ديمو: دخل أي كود فيه 4+ أرقام',
                   style: textTheme.bodySmall
                       ?.copyWith(color: colors.mutedForeground),
                 ),
@@ -191,7 +191,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                               strokeWidth: 2,
                             ),
                           )
-                        : const Text('Vérifier & Se connecter'),
+                        : const Text('تأكد و ادخل'),
                   ),
                 ),
               ],
@@ -206,7 +206,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 child: OutlinedButton.icon(
                   onPressed: _demoLogin,
                   icon: const Icon(Icons.bolt, size: 18),
-                  label: const Text('Accès démo rapide'),
+                  label: const Text('دخول ديمو سريع'),
                   style: OutlinedButton.styleFrom(
                     padding: const EdgeInsets.symmetric(
                         vertical: Ba33Spacing.spacing4),
@@ -216,7 +216,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
               const SizedBox(height: Ba33Spacing.spacing2),
               Center(
                 child: Text(
-                  'Contourne le OTP — pour la démo uniquement',
+                  'بلا OTP — للديمو فقط',
                   style: textTheme.bodySmall
                       ?.copyWith(color: colors.mutedForeground),
                 ),

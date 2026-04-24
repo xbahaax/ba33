@@ -49,7 +49,7 @@ class JobListScreen extends ConsumerWidget {
                         size: 14, color: colors.destructiveForeground),
                     const SizedBox(width: Ba33Spacing.spacing2),
                     Text(
-                      'Hors ligne — scans enregistrés localement',
+                      'بلا انترنت — السكانات محفوظين محلي',
                       style: TextStyle(
                         fontSize: 12,
                         color: colors.destructiveForeground,
@@ -82,7 +82,7 @@ class JobListScreen extends ConsumerWidget {
                       const SizedBox(width: Ba33Spacing.spacing2),
                       Expanded(
                         child: Text(
-                          '● ALERTE A1 — ${a1Alert.depotName} — Appuyez pour accepter',
+                          '● تنبيه A1 — ${a1Alert.depotName} — اضغط باش تقبل',
                           style: TextStyle(
                             fontSize: 12,
                             fontWeight: FontWeight.w700,
@@ -113,7 +113,7 @@ class JobListScreen extends ConsumerWidget {
                       children: [
                         Row(
                           children: [
-                            Text('Bonjour, Mohamed',
+                            Text('صباح الخير، محمد',
                                 style: textTheme.headlineSmall),
                             const SizedBox(width: Ba33Spacing.spacing2),
                             Container(
@@ -129,7 +129,7 @@ class JobListScreen extends ConsumerWidget {
                           ],
                         ),
                         Text(
-                          'Missions du jour — 24 Avril 2026',
+                          'مهام اليوم',
                           style: textTheme.bodySmall
                               ?.copyWith(color: colors.mutedForeground),
                         ),
@@ -138,7 +138,7 @@ class JobListScreen extends ConsumerWidget {
                   ),
                   // Trigger mock A1 alert
                   IconButton(
-                    tooltip: 'Simuler alerte A1',
+                    tooltip: 'محاكاة تنبيه A1',
                     onPressed: () =>
                         ref.read(a1AlertNotifierProvider.notifier).fireMockAlert(),
                     icon: Icon(Icons.campaign_outlined,
@@ -176,7 +176,7 @@ class JobListScreen extends ConsumerWidget {
                     const SizedBox(width: Ba33Spacing.spacing2),
                     Expanded(
                       child: Text(
-                        'Mission urgente en cours — nouvelles missions normales bloquées',
+                        'مهمة مستعجلة جارية — المهام العادية محبوسين',
                         style: textTheme.bodySmall
                             ?.copyWith(color: colors.destructive),
                       ),
@@ -189,7 +189,7 @@ class JobListScreen extends ConsumerWidget {
                         foregroundColor: colors.destructive,
                         textStyle: const TextStyle(fontSize: 11),
                       ),
-                      child: const Text('Superviseur'),
+                      child: const Text('المشرف'),
                     ),
                   ],
                 ),
@@ -202,7 +202,7 @@ class JobListScreen extends ConsumerWidget {
                   child: CircularProgressIndicator(color: colors.primary),
                 ),
                 error: (e, _) => Center(
-                  child: Text('Erreur de chargement',
+                  child: Text('خطأ في التحميل',
                       style: textTheme.bodyMedium
                           ?.copyWith(color: colors.destructive)),
                 ),
@@ -222,7 +222,7 @@ class JobListScreen extends ConsumerWidget {
                       children: [
                         if (urgent.isNotEmpty) ...[
                           _SectionHeader(
-                              label: 'URGENT',
+                              label: 'مستعجل',
                               color: colors.destructive,
                               count: urgent.length),
                           ...urgent.map((job) => _JobCard(
@@ -234,7 +234,7 @@ class JobListScreen extends ConsumerWidget {
                         ],
                         if (normal.isNotEmpty) ...[
                           _SectionHeader(
-                              label: 'ASSIGNÉS',
+                              label: 'موكلين',
                               color: colors.mutedForeground,
                               count: normal.length),
                           ...normal.map((job) => _JobCard(
@@ -273,12 +273,12 @@ class JobListScreen extends ConsumerWidget {
       builder: (ctx) {
         final colors = Theme.of(ctx).ba33;
         return AlertDialog(
-          title: const Text('Autorisation superviseur'),
+          title: const Text('تصريح المشرف'),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
               Text(
-                'Entrez le code superviseur pour débloquer.',
+                'دخل كود المشرف باش تفتح.',
                 style: Theme.of(ctx).textTheme.bodySmall?.copyWith(
                       color: colors.mutedForeground,
                     ),
@@ -290,7 +290,7 @@ class JobListScreen extends ConsumerWidget {
                 keyboardType: TextInputType.number,
                 maxLength: 4,
                 decoration: const InputDecoration(
-                  hintText: 'Code PIN',
+                  hintText: 'كود PIN',
                   counterText: '',
                 ),
               ),
@@ -299,7 +299,7 @@ class JobListScreen extends ConsumerWidget {
           actions: [
             TextButton(
               onPressed: () => Navigator.of(ctx).pop(),
-              child: const Text('Annuler'),
+              child: const Text('إلغاء'),
             ),
             ElevatedButton(
               onPressed: () {
@@ -308,7 +308,7 @@ class JobListScreen extends ConsumerWidget {
                   _openJob(context, ref, pendingJob);
                 }
               },
-              child: const Text('Confirmer'),
+              child: const Text('أكد'),
             ),
           ],
         );
@@ -466,13 +466,13 @@ class _JobCard extends StatelessWidget {
                       children: [
                         _Stat(
                             icon: Icons.inventory_2_outlined,
-                            label: '${job.lots.length} lots',
+                            label: '${job.lots.length} لوت',
                             colors: colors),
                         const SizedBox(width: Ba33Spacing.spacing4),
                         _Stat(
                           icon: Icons.scale_outlined,
                           label:
-                              '${job.totalDeclaredWeight.toStringAsFixed(1)} kg',
+                              '${job.totalDeclaredWeight.toStringAsFixed(1)} كغ',
                           mono: true,
                           colors: colors,
                         ),

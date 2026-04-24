@@ -148,6 +148,7 @@ class ReceiptCard extends StatelessWidget {
       WeightCategory.oneBag => Icons.shopping_bag_outlined,
       WeightCategory.smallPile => Icons.inventory_2_outlined,
       WeightCategory.largePile => Icons.warehouse_outlined,
+      WeightCategory.custom => Icons.edit_outlined,
     };
   }
 
@@ -157,6 +158,7 @@ class ReceiptCard extends StatelessWidget {
       WeightCategory.oneBag => 'شكارة وحدة (~5 كغ)',
       WeightCategory.smallPile => 'كومة صغيرة (~10-20 كغ)',
       WeightCategory.largePile => 'كومة كبيرة (~50+ كغ)',
+      WeightCategory.custom => 'كمية مخصصة',
     };
   }
 
