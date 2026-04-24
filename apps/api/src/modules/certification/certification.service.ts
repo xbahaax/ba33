@@ -11,6 +11,38 @@ export class CertificationService {
     private readonly salesService: SalesService,
   ) {}
 
+  getOverview() {
+    return this.certificationRepository.getOverview();
+  }
+
+  issue(
+    certificationId: string,
+    input: IssueCertificationDto,
+    actorId: string,
+    actorType: string,
+  ) {
+    return this.certificationRepository.issue(
+      certificationId,
+      input.force ?? false,
+      actorId,
+      actorType,
+    );
+  }
+
+  revoke(
+    certificationId: string,
+    input: RevokeCertificationDto,
+    actorId: string,
+    actorType: string,
+  ) {
+    return this.certificationRepository.revoke(
+      certificationId,
+      input.reason,
+      actorId,
+      actorType,
+    );
+  }
+
   async verifyByCode(code: string) {
     const product = await this.salesService.findProductByCertificate(code);
 

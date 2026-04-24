@@ -1,10 +1,31 @@
-const SERVER_API_BASE_URL =
-  process.env.BA33_API_URL ??
-  process.env.NEXT_PUBLIC_BA33_API_URL ??
-  "http://127.0.0.1:3001";
+function normalizeApiBaseUrl(rawBaseUrl: string) {
+  const trimmedBaseUrl = rawBaseUrl.replace(/\/$/, "");
 
-const CLIENT_API_BASE_URL =
-  process.env.NEXT_PUBLIC_BA33_API_URL ?? "/_ba33_api";
+  if (
+    trimmedBaseUrl === "/_ba33_api" ||
+    trimmedBaseUrl.startsWith("/_ba33_api/")
+  ) {
+    return trimmedBaseUrl;
+  }
+
+  if (/^https?:\/\//.test(trimmedBaseUrl)) {
+    return trimmedBaseUrl.endsWith("/api/v1")
+      ? trimmedBaseUrl
+      : `${trimmedBaseUrl}/api/v1`;
+  }
+
+  return trimmedBaseUrl;
+}
+
+const SERVER_API_BASE_URL = normalizeApiBaseUrl(
+  process.env.BA33_API_URL ??
+    process.env.NEXT_PUBLIC_BA33_API_URL ??
+    "http://127.0.0.1:3001",
+);
+
+const CLIENT_API_BASE_URL = normalizeApiBaseUrl(
+  process.env.NEXT_PUBLIC_BA33_API_URL ?? "/_ba33_api",
+);
 
 const ACCESS_TOKEN_STORAGE_KEY = "ba33.web-operations.access-token";
 

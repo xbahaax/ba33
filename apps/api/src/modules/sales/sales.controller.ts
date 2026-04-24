@@ -1,8 +1,10 @@
 import { Body, Controller, Delete, Get, Header, NotFoundException, Param, Patch, Post, Query, UseGuards } from '@nestjs/common';
-import { ApiTags } from '@nestjs/swagger';
-import { CurrentUser } from '../../common/auth/decorators';
+import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
+import { CurrentUser, RequirePermissions } from '../../common/auth/decorators';
 import { JwtAuthGuard } from '../../common/auth/jwt-auth.guard';
+import { PermissionsGuard } from '../../common/auth/permissions.guard';
 import { SalesService } from './sales.service';
+import { AdvanceOrderDto } from './dto/advance-order.dto';
 import type { AddressInput, CreateComplaintInput, CreateOrderInput, OrderQuery, ProductQuery } from './sales.repository';
 import type { BuyerProfile, DocumentType, OrderItem, OrderStatus } from './buyer-read-model';
 
@@ -10,6 +12,27 @@ import type { BuyerProfile, DocumentType, OrderItem, OrderStatus } from './buyer
 @Controller()
 export class SalesController {
   constructor(private readonly salesService: SalesService) {}
+
+  @ApiBearerAuth()
+  @UseGuards(JwtAuthGuard, PermissionsGuard)
+  @RequirePermissions('sales.view')
+  @Get('sales/overview')
+  getOverview() {
+    return this.salesService.getOverview();
+  }
+
+  @ApiBearerAuth()
+  @UseGuards(JwtAuthGuard, PermissionsGuard)
+  @RequirePermissions('sales.manage')
+  @Post('sales/orders/:orderId/actions')
+  advanceOrder(
+    @Param('orderId') orderId: string,
+    @Body() input: AdvanceOrderDto,
+    @CurrentUser('id') actorId: string,
+    @CurrentUser('userType') actorType: string,
+  ) {
+    return this.salesService.advanceOrder(orderId, input, actorId, actorType);
+  }
 
   @Get('products')
   listProducts(@Query() query: ProductQuery) {

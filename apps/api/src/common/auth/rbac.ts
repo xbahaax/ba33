@@ -122,33 +122,22 @@ export const defaultRoleTemplates: RoleTemplate[] = [
   {
     name: 'control_supervisor',
     description: 'Cross-phase validation and alert handling overlay role.',
-    permissions: [
-      'dashboard.view',
-      'fulfillment.view',
-      'validation.view',
-      'traceability.view',
-      'alerts.manage',
-    ],
+    permissions: ['validation.view', 'alerts.manage'],
   },
   {
     name: 'rules_admin',
     description: 'Rule-engine management overlay role.',
-    permissions: ['dashboard.view', 'rules.view', 'rules.manage'],
+    permissions: ['rules.view', 'rules.manage'],
   },
   {
     name: 'rbac_admin',
     description: 'Access governance and RBAC overlay role.',
-    permissions: ['dashboard.view', 'users.view', 'rbac.manage'],
+    permissions: ['users.view', 'rbac.manage'],
   },
   {
     name: 'certification_authority',
     description: 'Seal issuance and revocation authority.',
-    permissions: [
-      'dashboard.view',
-      'traceability.view',
-      'certification.view',
-      'certification.manage',
-    ],
+    permissions: ['certification.view', 'certification.manage'],
   },
 ];
 

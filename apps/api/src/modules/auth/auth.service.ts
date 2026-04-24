@@ -1,10 +1,23 @@
-import { ConflictException, Injectable, UnauthorizedException } from '@nestjs/common';
+import {
+  BadRequestException,
+  ConflictException,
+  Injectable,
+  NotFoundException,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
-import { compare, hash } from 'bcrypt';
-import { AuthProfileUpdates, AuthRepository, AuthSessionUser } from './auth.repository';
+import { compare, hash } from 'bcryptjs';
+import type { DevLoginDto } from './dto/dev-login.dto';
+import {
+  AuthProfileUpdates,
+  AuthRepository,
+  AuthSessionUser,
+  DevPersona,
+  OperationsSessionResponse,
+} from './auth.repository';
 
 export interface LoginInput {
-  email: string;
+  email?: string;
   password: string;
 }
 
@@ -23,6 +36,11 @@ export interface AuthResponse {
   user: AuthSessionUser;
 }
 
+export interface DevLoginResponse {
+  accessToken: string;
+  session: OperationsSessionResponse;
+}
+
 @Injectable()
 export class AuthService {
   private static readonly TOKEN_TTL_SECONDS = 60 * 60 * 24;
@@ -33,7 +51,11 @@ export class AuthService {
   ) {}
 
   async login(input: LoginInput): Promise<AuthResponse> {
-    const user = await this.authRepository.findByEmail(input.email);
+    if (!input.email) {
+      throw new BadRequestException('Email login is required.');
+    }
+
+    const user = await this.authRepository.findBuyerByEmail(input.email);
 
     if (!user) {
       throw new NotFoundException('The current user no longer exists.');
@@ -45,11 +67,13 @@ export class AuthService {
       throw new UnauthorizedException('Invalid credentials');
     }
 
-    return this.buildAuthResponse(this.authRepository.toSessionUser(user));
+    await this.authRepository.touchLastLogin(user.id);
+    const refreshedUser = (await this.authRepository.findBuyerById(user.id)) ?? user;
+    return this.buildBuyerAuthResponse(this.authRepository.toSessionUser(refreshedUser));
   }
 
   async register(input: RegisterInput): Promise<AuthResponse> {
-    const existing = await this.authRepository.findByEmail(input.email);
+    const existing = await this.authRepository.findBuyerByEmail(input.email);
 
     if (existing) {
       throw new ConflictException('Email already exists');
@@ -64,21 +88,61 @@ export class AuthService {
       registrationNumber: input.registrationNumber,
     });
 
-    return this.buildAuthResponse(this.authRepository.toSessionUser(created));
+    return this.buildBuyerAuthResponse(this.authRepository.toSessionUser(created));
   }
 
-  async getMe(userId: string): Promise<AuthSessionUser> {
-    const user = await this.authRepository.findById(userId);
+  async getMe(userId: string): Promise<AuthSessionUser | OperationsSessionResponse> {
+    const buyerUser = await this.authRepository.findBuyerById(userId);
 
-    if (!user) {
+    if (buyerUser) {
+      return this.authRepository.toSessionUser(buyerUser);
+    }
+
+    const operationsUser = await this.authRepository.findOperationsUserById(userId);
+
+    if (!operationsUser) {
       throw new UnauthorizedException('Invalid session');
     }
 
-    return this.authRepository.toSessionUser(user);
+    return this.authRepository.toOperationsSession(operationsUser);
+  }
+
+  async getDevPersonas(): Promise<DevPersona[]> {
+    return this.authRepository.listDevPersonas();
+  }
+
+  async devLogin(input: DevLoginDto): Promise<DevLoginResponse> {
+    if (!input.email && !input.userId) {
+      throw new BadRequestException('A dev persona email or userId is required.');
+    }
+
+    const user =
+      (input.userId ? await this.authRepository.findOperationsUserById(input.userId) : undefined) ??
+      (input.email ? await this.authRepository.findOperationsUserByEmail(input.email) : undefined);
+
+    if (!user) {
+      throw new UnauthorizedException('Dev persona not found.');
+    }
+
+    await this.authRepository.touchLastLogin(user.id);
+    const refreshedUser = (await this.authRepository.findOperationsUserById(user.id)) ?? user;
+    const session = await this.authRepository.toOperationsSession(refreshedUser);
+
+    return {
+      accessToken: await this.signAccessToken({
+        email: session.user.email,
+        fullName: session.user.fullName,
+        id: session.user.id,
+        permissions: session.permissions,
+        regionId: session.user.regionId,
+        userType: session.user.userType,
+      }),
+      session,
+    };
   }
 
   async changePassword(userId: string, currentPassword: string, nextPassword: string): Promise<{ updated: true }> {
-    const user = await this.authRepository.findById(userId);
+    const user = await this.authRepository.findBuyerById(userId);
 
     if (!user) {
       throw new UnauthorizedException('Invalid session');
@@ -105,20 +169,35 @@ export class AuthService {
     return updated;
   }
 
-  private async signAccessToken(user: AuthSessionUser): Promise<string> {
+  private async signAccessToken(input: {
+    id: string;
+    email: string;
+    userType: string;
+    fullName?: string;
+    regionId?: string | null;
+    permissions?: string[];
+  }): Promise<string> {
     return this.jwtService.signAsync(
       {
-        sub: user.id,
-        email: user.email,
-        type: user.userType,
+        sub: input.id,
+        email: input.email,
+        type: input.userType,
+        fullName: input.fullName,
+        regionId: input.regionId ?? null,
+        permissions: input.permissions ?? [],
       },
       { expiresIn: `${AuthService.TOKEN_TTL_SECONDS}s` },
     );
   }
 
-  private async buildAuthResponse(user: AuthSessionUser): Promise<AuthResponse> {
+  private async buildBuyerAuthResponse(user: AuthSessionUser): Promise<AuthResponse> {
     return {
-      accessToken: await this.signAccessToken(user),
+      accessToken: await this.signAccessToken({
+        email: user.email,
+        fullName: user.fullName,
+        id: user.id,
+        userType: user.userType,
+      }),
       tokenType: 'Bearer',
       expiresInSeconds: AuthService.TOKEN_TTL_SECONDS,
       user,

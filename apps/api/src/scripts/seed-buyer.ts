@@ -1,4 +1,4 @@
-import { hashSync } from 'bcrypt';
+import { hashSync } from 'bcryptjs';
 import { randomUUID } from 'crypto';
 import { eq } from 'drizzle-orm';
 import { db } from '../common/database/client';

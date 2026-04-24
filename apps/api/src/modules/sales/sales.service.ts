@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import { AdvanceOrderDto } from './dto/advance-order.dto';
 import {
   AddressInput,
   CreateComplaintInput,
@@ -12,6 +13,19 @@ import { BuyerProfile, DocumentType, OrderItem, OrderStatus } from './buyer-read
 @Injectable()
 export class SalesService {
   constructor(private readonly salesRepository: SalesRepository) {}
+
+  getOverview() {
+    return this.salesRepository.getOverview();
+  }
+
+  advanceOrder(
+    orderId: string,
+    input: AdvanceOrderDto,
+    actorId: string,
+    actorType: string,
+  ) {
+    return this.salesRepository.advanceOrder(orderId, input, actorId, actorType);
+  }
 
   listProducts(query: ProductQuery) {
     return this.salesRepository.listProducts(query);

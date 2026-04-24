@@ -2,6 +2,13 @@ import { BadRequestException, Inject, Injectable, NotFoundException } from '@nes
 import { desc, eq, inArray, sql } from 'drizzle-orm';
 import { DATABASE_TOKEN } from '../../common/database/database.module';
 import type { Database } from '../../common/database/client';
+import { regions, roles, userRoles, users } from '../../common/database/schema';
+import {
+  defaultRoleTemplates,
+  getDefaultPermissionsForUserType,
+  mergePermissions,
+} from '../../common/auth/rbac';
+import type { UpdateUserAccessDto } from './dto/update-user-access.dto';
 
 @Injectable()
 export class UsersRepository {
@@ -106,15 +113,19 @@ export class UsersRepository {
 
     const accessUsers = userRows.map((user) => {
       const assignedRolesForUser = assignmentsByUser.get(user.id) ?? [];
-      const effectivePermissions = mergePermissions(
-        getDefaultPermissionsForUserType(user.userType),
-        assignedRolesForUser.flatMap((role) => role.permissions),
-      );
+      const baselinePermissions = getDefaultPermissionsForUserType(user.userType);
+      const effectivePermissions =
+        user.status === 'active'
+          ? mergePermissions(
+              baselinePermissions,
+              assignedRolesForUser.flatMap((role) => role.permissions),
+            )
+          : [];
 
       return {
         ...user,
         assignedRoles: assignedRolesForUser,
-        baselinePermissions: getDefaultPermissionsForUserType(user.userType),
+        baselinePermissions,
         effectivePermissions,
       };
     });
@@ -185,15 +196,21 @@ export class UsersRepository {
   }
 
   private async ensureDefaultRoles() {
-    await this.db
-      .insert(roles)
-      .values(
-        defaultRoleTemplates.map((roleTemplate) => ({
+    for (const roleTemplate of defaultRoleTemplates) {
+      await this.db
+        .insert(roles)
+        .values({
           name: roleTemplate.name,
           permissions: roleTemplate.permissions,
-        })),
-      )
-      .onConflictDoNothing({ target: roles.name });
+        })
+        .onConflictDoUpdate({
+          target: roles.name,
+          set: {
+            permissions: roleTemplate.permissions,
+            updatedAt: new Date(),
+          },
+        });
+    }
 
     return this.db
       .select({

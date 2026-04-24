@@ -38,7 +38,7 @@ services:
       REDIS_URL: redis://redis:6379
       PORT: 3001
       CHOKIDAR_USEPOLLING: "true"
-    command: sh -c "if [ ! -x node_modules/.bin/ts-node ]; then npm ci; fi && cd apps/api && npx ts-node --transpile-only src/main.ts"
+    command: sh -c "pnpm install --frozen-lockfile && pnpm --filter @ba33/api dev"
     depends_on:
       postgres:
         condition: service_healthy
@@ -60,11 +60,11 @@ services:
     working_dir: /app
     environment:
       BA33_API_URL: http://api:3001
-      NEXT_PUBLIC_BA33_API_URL: http://localhost:3001
+      NEXT_PUBLIC_BA33_API_URL: /_ba33_api
       NEXT_TELEMETRY_DISABLED: "1"
       WATCHPACK_POLLING: "true"
       CHOKIDAR_USEPOLLING: "true"
-    command: sh -c "if [ ! -x node_modules/.bin/next ]; then npm ci; fi && npm run dev:web-operations"
+    command: sh -c "pnpm install --frozen-lockfile && pnpm --filter @ba33/web-operations dev"
     depends_on:
       api:
         condition: service_started

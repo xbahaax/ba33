@@ -4,8 +4,6 @@ import { CurrentUser } from '../../common/auth/decorators';
 import { JwtAuthGuard } from '../../common/auth/jwt-auth.guard';
 import { AuthService } from './auth.service';
 import { DevLoginDto } from './dto/dev-login.dto';
-import { CurrentUser } from '../../common/auth/decorators';
-import { JwtAuthGuard } from '../../common/auth/jwt-auth.guard';
 
 @ApiTags('auth')
 @Controller('auth')
@@ -13,7 +11,7 @@ export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
   @Post('login')
-  login(@Body() body: { email: string; password: string }) {
+  login(@Body() body: { email?: string; password: string }) {
     return this.authService.login(body);
   }
 
@@ -29,6 +27,16 @@ export class AuthController {
     },
   ) {
     return this.authService.register(body);
+  }
+
+  @Get('personas')
+  personas() {
+    return this.authService.getDevPersonas();
+  }
+
+  @Post('dev-login')
+  devLogin(@Body() body: DevLoginDto) {
+    return this.authService.devLogin(body);
   }
 
   @UseGuards(JwtAuthGuard)

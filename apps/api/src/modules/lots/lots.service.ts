@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { LotsRepository } from './lots.repository';
 import { EventsService } from '../events/events.service';
 import { NotificationsService } from '../notifications/notifications.service';
@@ -14,7 +14,7 @@ const CRITICAL_LOT_STATUSES = new Set([
 
 @Injectable()
 export class LotsService {
-  constructor(private readonly lotsRepository: LotsRepository) {}
+  private readonly logger = new Logger(LotsService.name);
 
   constructor(
     private readonly lotsRepository: LotsRepository,
