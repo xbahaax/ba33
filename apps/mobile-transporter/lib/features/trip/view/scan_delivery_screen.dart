@@ -2,40 +2,110 @@ import 'package:ba33_ui/ba33_ui.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:mobile_scanner/mobile_scanner.dart';
 
 import '../../jobs/model/transport_job.dart';
 import '../view_model/active_trip_view_model.dart';
 
-class ScanDeliveryScreen extends ConsumerWidget {
+class ScanDeliveryScreen extends ConsumerStatefulWidget {
   const ScanDeliveryScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<ScanDeliveryScreen> createState() =>
+      _ScanDeliveryScreenState();
+}
+
+class _ScanDeliveryScreenState extends ConsumerState<ScanDeliveryScreen> {
+  final MobileScannerController _camera = MobileScannerController();
+  bool _isProcessing = false;
+
+  @override
+  void dispose() {
+    _camera.dispose();
+    super.dispose();
+  }
+
+  void _onQRDetected(BarcodeCapture capture) {
+    if (_isProcessing) return;
+    final rawValue = capture.barcodes.firstOrNull?.rawValue;
+    if (rawValue == null) return;
+
+    final trip = ref.read(activeTripProvider);
+    if (trip == null) return;
+
+    final lot = trip.job.lots
+        .where((l) => l.qrCode == rawValue && !l.isDelivered)
+        .firstOrNull;
+    if (lot == null) return;
+
+    setState(() => _isProcessing = true);
+    _camera.stop();
+    _showDeliveryConfirm(lot);
+  }
+
+  void _onManualTap(TransportLot lot) {
+    if (_isProcessing) return;
+    setState(() => _isProcessing = true);
+    _camera.stop();
+    _showDeliveryConfirm(lot);
+  }
+
+  void _showDeliveryConfirm(TransportLot lot) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      builder: (_) => _DeliveryWeightSheet(
+        lot: lot,
+        onConfirmed: (weight) {
+          ref.read(activeTripProvider.notifier).deliverLot(lot.qrCode, weight);
+          setState(() => _isProcessing = false);
+          _camera.start();
+        },
+        onCancelled: () {
+          setState(() => _isProcessing = false);
+          _camera.start();
+        },
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final trip = ref.watch(activeTripProvider);
     if (trip == null) {
       return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
 
     final job = trip.job;
-    final remaining = job.lots.where((l) => !l.isDelivered).toList();
     final colors = Theme.of(context).ba33;
     final textTheme = Theme.of(context).textTheme;
 
     return Scaffold(
-      backgroundColor: colors.background,
+      backgroundColor: Colors.black,
       appBar: AppBar(
-        title: Text('Livraison', style: textTheme.titleLarge),
+        backgroundColor: Colors.black,
+        foregroundColor: Colors.white,
+        title: Text('Livraison',
+            style: textTheme.titleLarge?.copyWith(color: Colors.white)),
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
+          icon: const Icon(Icons.arrow_back, color: Colors.white),
           onPressed: () => context.pop(),
         ),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.flash_on, color: Colors.white),
+            onPressed: () => _camera.toggleTorch(),
+          ),
+        ],
       ),
       body: Column(
         children: [
-          // Destination banner
+          // ── Destination + progress ───────────────
           Container(
-            padding: const EdgeInsets.all(Ba33Spacing.spacing4),
-            color: colors.muted,
+            color: Colors.black,
+            padding: const EdgeInsets.symmetric(
+                horizontal: Ba33Spacing.spacing4,
+                vertical: Ba33Spacing.spacing3),
             child: Row(
               children: [
                 const Text('🫧', style: TextStyle(fontSize: 20)),
@@ -44,12 +114,13 @@ class ScanDeliveryScreen extends ConsumerWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(job.destinationName, style: textTheme.titleSmall),
-                      Text(
-                        '${job.lotsDelivered}/${job.lots.length} livrés',
-                        style: textTheme.bodySmall
-                            ?.copyWith(color: colors.mutedForeground),
-                      ),
+                      Text(job.destinationName,
+                          style: const TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.w600)),
+                      Text('${job.lotsDelivered}/${job.lots.length} livrés',
+                          style: const TextStyle(
+                              color: Colors.white54, fontSize: 12)),
                     ],
                   ),
                 ),
@@ -63,38 +134,55 @@ class ScanDeliveryScreen extends ConsumerWidget {
             ),
           ),
 
-          // Camera viewfinder (mock)
+          // ── Camera viewfinder ────────────────────
           Expanded(
-            flex: 3,
-            child: _DeliveryCamera(colors: colors),
+            flex: 5,
+            child: Stack(
+              children: [
+                MobileScanner(
+                    controller: _camera, onDetect: _onQRDetected),
+                Center(
+                  child: SizedBox(
+                    width: 220,
+                    height: 220,
+                    child: CustomPaint(
+                      painter: _ScannerFramePainter(colors.primary),
+                    ),
+                  ),
+                ),
+                if (_isProcessing)
+                  Container(
+                    color: Colors.black54,
+                    child: Center(
+                        child: CircularProgressIndicator(
+                            color: colors.primary)),
+                  ),
+              ],
+            ),
           ),
 
-          // Lots list
+          // ── Lots list ────────────────────────────
           Expanded(
             flex: 4,
             child: Container(
               decoration: BoxDecoration(
                 color: colors.background,
                 borderRadius: const BorderRadius.vertical(
-                  top: Radius.circular(Ba33Radii.xl),
-                ),
+                    top: Radius.circular(Ba33Radii.xl)),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Padding(
                     padding: const EdgeInsets.fromLTRB(
-                      Ba33Spacing.spacing4,
-                      Ba33Spacing.spacing4,
-                      Ba33Spacing.spacing4,
-                      Ba33Spacing.spacing2,
-                    ),
+                        Ba33Spacing.spacing4, Ba33Spacing.spacing4,
+                        Ba33Spacing.spacing4, Ba33Spacing.spacing2),
                     child: Text(
-                      remaining.isEmpty
-                          ? 'Tous les lots ont été livrés ✓'
-                          : 'Lots à livrer — appuyez pour scanner',
+                      job.allLotsDelivered
+                          ? 'Tous les lots livrés ✓'
+                          : 'Lots à livrer — appuyez pour scan manuel',
                       style: textTheme.titleSmall?.copyWith(
-                        color: remaining.isEmpty
+                        color: job.allLotsDelivered
                             ? colors.primary
                             : colors.foreground,
                       ),
@@ -104,23 +192,14 @@ class ScanDeliveryScreen extends ConsumerWidget {
                     child: ListView.builder(
                       padding: const EdgeInsets.symmetric(
                           horizontal: Ba33Spacing.spacing4),
-                      itemCount: remaining.isEmpty
-                          ? job.lots.length
-                          : remaining.length,
-                      itemBuilder: (context, i) {
-                        final lot = remaining.isEmpty
-                            ? job.lots[i]
-                            : remaining[i];
+                      itemCount: job.lots.length,
+                      itemBuilder: (ctx, i) {
+                        final lot = job.lots[i];
                         return _DeliveryLotTile(
                           lot: lot,
-                          alreadyDelivered: lot.isDelivered,
                           onTap: lot.isDelivered
                               ? null
-                              : () => _showDeliveryConfirm(
-                                    context,
-                                    ref,
-                                    lot,
-                                  ),
+                              : () => _onManualTap(lot),
                         );
                       },
                     ),
@@ -136,8 +215,7 @@ class ScanDeliveryScreen extends ConsumerWidget {
                           label: const Text('Signature du réceptionnaire'),
                           style: ElevatedButton.styleFrom(
                             padding: const EdgeInsets.symmetric(
-                              vertical: Ba33Spacing.spacing4,
-                            ),
+                                vertical: Ba33Spacing.spacing4),
                           ),
                         ),
                       ),
@@ -150,65 +228,19 @@ class ScanDeliveryScreen extends ConsumerWidget {
       ),
     );
   }
-
-  void _showDeliveryConfirm(
-    BuildContext context,
-    WidgetRef ref,
-    TransportLot lot,
-  ) {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      builder: (_) => _DeliveryWeightSheet(lot: lot, ref: ref),
-    );
-  }
 }
 
-class _DeliveryCamera extends StatelessWidget {
-  const _DeliveryCamera({required this.colors});
-
-  final Ba33Colors colors;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      color: const Color(0xFF0A0A0A),
-      child: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const Text('📦', style: TextStyle(fontSize: 40)),
-            const SizedBox(height: Ba33Spacing.spacing3),
-            Text(
-              'Pointez vers le QR du lot',
-              style: TextStyle(
-                color: Colors.white.withOpacity(0.5),
-                fontSize: 13,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
+// ── Lot tile ──────────────────────────────────────────────
 class _DeliveryLotTile extends StatelessWidget {
-  const _DeliveryLotTile({
-    required this.lot,
-    required this.alreadyDelivered,
-    this.onTap,
-  });
+  const _DeliveryLotTile({required this.lot, this.onTap});
 
   final TransportLot lot;
-  final bool alreadyDelivered;
   final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).ba33;
     final textTheme = Theme.of(context).textTheme;
-    final hasMismatch = lot.hasMismatch;
 
     return GestureDetector(
       onTap: onTap,
@@ -216,15 +248,13 @@ class _DeliveryLotTile extends StatelessWidget {
         margin: const EdgeInsets.only(bottom: Ba33Spacing.spacing2),
         padding: const EdgeInsets.all(Ba33Spacing.spacing3),
         decoration: BoxDecoration(
-          color: alreadyDelivered
-              ? colors.primary.withOpacity(0.08)
-              : colors.card,
+          color: lot.isDelivered ? colors.primary.withAlpha(20) : colors.card,
           borderRadius: Ba33Radii.borderRadiusMd,
           border: Border.all(
-            color: hasMismatch
-                ? colors.destructive.withOpacity(0.4)
-                : alreadyDelivered
-                    ? colors.primary.withOpacity(0.3)
+            color: lot.hasMismatch
+                ? colors.destructive.withAlpha(100)
+                : lot.isDelivered
+                    ? colors.primary.withAlpha(80)
                     : colors.border,
           ),
         ),
@@ -234,13 +264,13 @@ class _DeliveryLotTile extends StatelessWidget {
               width: 32,
               height: 32,
               decoration: BoxDecoration(
-                color: alreadyDelivered ? colors.primary : colors.muted,
+                color: lot.isDelivered ? colors.primary : colors.muted,
                 borderRadius: Ba33Radii.borderRadiusSm,
               ),
               child: Icon(
-                alreadyDelivered ? Icons.check : Icons.qr_code_scanner,
+                lot.isDelivered ? Icons.check : Icons.qr_code_scanner,
                 size: 16,
-                color: alreadyDelivered
+                color: lot.isDelivered
                     ? colors.primaryForeground
                     : colors.mutedForeground,
               ),
@@ -250,30 +280,24 @@ class _DeliveryLotTile extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  Text(lot.qrCode,
+                      style: Ba33Typography.mono(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w500,
+                          color: colors.foreground)),
                   Text(
-                    lot.qrCode,
-                    style: Ba33Typography.mono(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w500,
-                      color: colors.foreground,
-                    ),
-                  ),
-                  Text(
-                    alreadyDelivered
+                    lot.isDelivered
                         ? 'Livré · ${lot.deliveredWeight?.toStringAsFixed(1)} kg'
-                        : 'Chargé · ${lot.loadedWeight?.toStringAsFixed(1) ?? lot.declaredWeight.toStringAsFixed(1)} kg',
+                        : 'Chargé · ${(lot.loadedWeight ?? lot.declaredWeight).toStringAsFixed(1)} kg',
                     style: textTheme.bodySmall
                         ?.copyWith(color: colors.mutedForeground),
                   ),
                 ],
               ),
             ),
-            if (hasMismatch)
-              Padding(
-                padding: const EdgeInsets.only(left: Ba33Spacing.spacing2),
-                child: Icon(Icons.warning_amber,
-                    color: colors.destructive, size: 16),
-              ),
+            if (lot.hasMismatch)
+              Icon(Icons.warning_amber,
+                  color: colors.destructive, size: 16),
           ],
         ),
       ),
@@ -281,63 +305,61 @@ class _DeliveryLotTile extends StatelessWidget {
   }
 }
 
-class _DeliveryWeightSheet extends ConsumerStatefulWidget {
+// ── Delivery weight sheet ─────────────────────────────────
+class _DeliveryWeightSheet extends StatefulWidget {
   const _DeliveryWeightSheet({
     required this.lot,
-    required this.ref,
+    required this.onConfirmed,
+    required this.onCancelled,
   });
 
   final TransportLot lot;
-  final WidgetRef ref;
+  final ValueChanged<double> onConfirmed;
+  final VoidCallback onCancelled;
 
   @override
-  ConsumerState<_DeliveryWeightSheet> createState() =>
-      _DeliveryWeightSheetState();
+  State<_DeliveryWeightSheet> createState() => _DeliveryWeightSheetState();
 }
 
-class _DeliveryWeightSheetState extends ConsumerState<_DeliveryWeightSheet> {
-  late final TextEditingController _controller;
+class _DeliveryWeightSheetState extends State<_DeliveryWeightSheet> {
+  late final TextEditingController _ctrl;
   bool _hasMismatch = false;
 
   @override
   void initState() {
     super.initState();
-    final loaded = widget.lot.loadedWeight ?? widget.lot.declaredWeight;
-    _controller = TextEditingController(text: loaded.toStringAsFixed(1));
+    final ref = widget.lot.loadedWeight ?? widget.lot.declaredWeight;
+    _ctrl = TextEditingController(text: ref.toStringAsFixed(1));
   }
 
   @override
   void dispose() {
-    _controller.dispose();
+    _ctrl.dispose();
     super.dispose();
   }
 
-  void _checkMismatch(String val) {
-    final entered = double.tryParse(val) ?? 0;
+  void _check(String v) {
+    final entered = double.tryParse(v) ?? 0;
     final ref = widget.lot.loadedWeight ?? widget.lot.declaredWeight;
     setState(() => _hasMismatch = (entered - ref).abs() > ref * 0.02);
   }
 
   void _confirm() {
-    final weight = double.tryParse(_controller.text);
-    if (weight == null) return;
-    widget.ref
-        .read(activeTripProvider.notifier)
-        .deliverLot(widget.lot.qrCode, weight);
+    final w = double.tryParse(_ctrl.text);
+    if (w == null) return;
     Navigator.of(context).pop();
+    widget.onConfirmed(w);
   }
 
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).ba33;
     final textTheme = Theme.of(context).textTheme;
-    final loadedWeight =
-        widget.lot.loadedWeight ?? widget.lot.declaredWeight;
+    final loadedWeight = widget.lot.loadedWeight ?? widget.lot.declaredWeight;
 
     return Padding(
-      padding: EdgeInsets.only(
-        bottom: MediaQuery.of(context).viewInsets.bottom,
-      ),
+      padding:
+          EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
       child: Container(
         padding: const EdgeInsets.all(Ba33Spacing.spacing6),
         child: Column(
@@ -347,20 +369,20 @@ class _DeliveryWeightSheetState extends ConsumerState<_DeliveryWeightSheet> {
             Row(
               children: [
                 Expanded(
-                  child: Text('Poids à la livraison', style: textTheme.titleLarge),
-                ),
+                    child: Text('Poids à la livraison',
+                        style: textTheme.titleLarge)),
                 IconButton(
-                  onPressed: () => Navigator.of(context).pop(),
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                    widget.onCancelled();
+                  },
                   icon: Icon(Icons.close, color: colors.mutedForeground),
                 ),
               ],
             ),
-            const SizedBox(height: Ba33Spacing.spacing2),
-            Text(
-              widget.lot.qrCode,
-              style: Ba33Typography.mono(
-                  fontSize: 13, color: colors.mutedForeground),
-            ),
+            Text(widget.lot.qrCode,
+                style: Ba33Typography.mono(
+                    fontSize: 13, color: colors.mutedForeground)),
             const SizedBox(height: Ba33Spacing.spacing4),
             Row(
               children: [
@@ -369,11 +391,9 @@ class _DeliveryWeightSheetState extends ConsumerState<_DeliveryWeightSheet> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text('Poids chargé', style: textTheme.labelSmall),
-                      Text(
-                        '${loadedWeight.toStringAsFixed(1)} kg',
-                        style: Ba33Typography.mono(
-                            fontSize: 18, color: colors.mutedForeground),
-                      ),
+                      Text('${loadedWeight.toStringAsFixed(1)} kg',
+                          style: Ba33Typography.mono(
+                              fontSize: 18, color: colors.mutedForeground)),
                     ],
                   ),
                 ),
@@ -382,11 +402,13 @@ class _DeliveryWeightSheetState extends ConsumerState<_DeliveryWeightSheet> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.end,
                     children: [
-                      Text('Poids livré', style: textTheme.labelSmall,
+                      Text('Poids livré',
+                          style: textTheme.labelSmall,
                           textAlign: TextAlign.end),
                       const SizedBox(height: 4),
                       TextField(
-                        controller: _controller,
+                        controller: _ctrl,
+                        autofocus: true,
                         keyboardType: const TextInputType.numberWithOptions(
                             decimal: true),
                         textAlign: TextAlign.end,
@@ -397,7 +419,7 @@ class _DeliveryWeightSheetState extends ConsumerState<_DeliveryWeightSheet> {
                           contentPadding: EdgeInsets.symmetric(
                               horizontal: 12, vertical: 8),
                         ),
-                        onChanged: _checkMismatch,
+                        onChanged: _check,
                       ),
                     ],
                   ),
@@ -409,7 +431,7 @@ class _DeliveryWeightSheetState extends ConsumerState<_DeliveryWeightSheet> {
               Container(
                 padding: const EdgeInsets.all(Ba33Spacing.spacing3),
                 decoration: BoxDecoration(
-                  color: colors.destructive.withOpacity(0.08),
+                  color: colors.destructive.withAlpha(20),
                   borderRadius: Ba33Radii.borderRadiusMd,
                 ),
                 child: Row(
@@ -443,6 +465,37 @@ class _DeliveryWeightSheetState extends ConsumerState<_DeliveryWeightSheet> {
   }
 }
 
+// ── Scanner frame painter ─────────────────────────────────
+class _ScannerFramePainter extends CustomPainter {
+  const _ScannerFramePainter(this.color);
+
+  final Color color;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final p = Paint()
+      ..color = color
+      ..strokeWidth = 3.5
+      ..style = PaintingStyle.stroke
+      ..strokeCap = StrokeCap.round;
+    const c = 28.0;
+    final w = size.width;
+    final h = size.height;
+    canvas.drawLine(Offset.zero, Offset(c, 0), p);
+    canvas.drawLine(Offset.zero, Offset(0, c), p);
+    canvas.drawLine(Offset(w, 0), Offset(w - c, 0), p);
+    canvas.drawLine(Offset(w, 0), Offset(w, c), p);
+    canvas.drawLine(Offset(0, h), Offset(c, h), p);
+    canvas.drawLine(Offset(0, h), Offset(0, h - c), p);
+    canvas.drawLine(Offset(w, h), Offset(w - c, h), p);
+    canvas.drawLine(Offset(w, h), Offset(w, h - c), p);
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter _) => false;
+}
+
+// ── Progress ring ─────────────────────────────────────────
 class _ProgressRing extends StatelessWidget {
   const _ProgressRing({required this.progress, required this.color});
 
@@ -461,16 +514,13 @@ class _ProgressRing extends StatelessWidget {
             value: progress,
             strokeWidth: 3,
             color: color,
-            backgroundColor: color.withOpacity(0.2),
+            backgroundColor: color.withAlpha(50),
           ),
-          Text(
-            '${(progress * 100).round()}%',
-            style: TextStyle(
-              fontSize: 9,
-              fontWeight: FontWeight.w700,
-              color: color,
-            ),
-          ),
+          Text('${(progress * 100).round()}%',
+              style: TextStyle(
+                  fontSize: 9,
+                  fontWeight: FontWeight.w700,
+                  color: color)),
         ],
       ),
     );

@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../jobs/model/transport_job.dart';
 import '../view_model/active_trip_view_model.dart';
+import '../../../shared/services/pdf_service.dart';
 
 class PodScreen extends ConsumerWidget {
   const PodScreen({super.key});
@@ -299,7 +300,10 @@ class PodScreen extends ConsumerWidget {
                 children: [
                   Expanded(
                     child: OutlinedButton.icon(
-                      onPressed: () {},
+                      onPressed: () async {
+                        final t = ref.read(activeTripProvider);
+                        if (t != null) await PdfService.sharePoD(t);
+                      },
                       icon: const Icon(Icons.picture_as_pdf_outlined),
                       label: const Text('Exporter PDF'),
                     ),

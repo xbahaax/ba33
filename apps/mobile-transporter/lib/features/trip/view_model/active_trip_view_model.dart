@@ -12,37 +12,20 @@ class ActiveTrip extends _$ActiveTrip {
   ActiveTripState? build() => null;
 
   void startJob(TransportJob job) {
-    final updatedJob = TransportJob(
-      id: job.id,
-      originName: job.originName,
-      originType: job.originType,
-      destinationName: job.destinationName,
-      destinationType: job.destinationType,
-      lane: job.lane,
-      status: JobStatus.accepted,
-      requestedAt: job.requestedAt,
-      slaDeadline: job.slaDeadline,
-      lots: job.lots.map((l) => TransportLot(
-            id: l.id,
-            qrCode: l.qrCode,
-            sourceType: l.sourceType,
-            declaredWeight: l.declaredWeight,
-          )).toList(),
+    state = ActiveTripState(
+      job: _cloneJob(job),
+      phase: TripPhase.loading,
     );
-    state = ActiveTripState(job: updatedJob, phase: TripPhase.loading);
   }
 
   void loadLot(String qrCode, double confirmedWeight) {
     if (state == null) return;
-    final lots = state!.job.lots.map((l) {
-      if (l.qrCode == qrCode) {
-        return l.copyWith(loadedWeight: confirmedWeight, isLoaded: true);
-      }
-      return l;
-    }).toList();
-
-    final updatedJob = _cloneJob(state!.job, lots: lots);
-    state = state!.copyWith(job: updatedJob);
+    final lots = state!.job.lots
+        .map((l) => l.qrCode == qrCode
+            ? l.copyWith(loadedWeight: confirmedWeight, isLoaded: true)
+            : l)
+        .toList();
+    state = state!.copyWith(job: _cloneJob(state!.job, lots: lots));
   }
 
   void startTrip() {
@@ -57,15 +40,21 @@ class ActiveTrip extends _$ActiveTrip {
 
   void deliverLot(String qrCode, double confirmedWeight) {
     if (state == null) return;
-    final lots = state!.job.lots.map((l) {
-      if (l.qrCode == qrCode) {
-        return l.copyWith(deliveredWeight: confirmedWeight, isDelivered: true);
-      }
-      return l;
-    }).toList();
+    final lots = state!.job.lots
+        .map((l) => l.qrCode == qrCode
+            ? l.copyWith(deliveredWeight: confirmedWeight, isDelivered: true)
+            : l)
+        .toList();
+    state = state!.copyWith(job: _cloneJob(state!.job, lots: lots));
+  }
 
-    final updatedJob = _cloneJob(state!.job, lots: lots);
-    state = state!.copyWith(job: updatedJob);
+  void logTemperature(double temp) {
+    if (state == null) return;
+    final readings = [
+      ...state!.temperatureReadings,
+      TemperatureReading(temperature: temp, recordedAt: DateTime.now()),
+    ];
+    state = state!.copyWith(temperatureReadings: readings);
   }
 
   void saveSignature(Uint8List bytes, String receiverName) {
@@ -81,9 +70,7 @@ class ActiveTrip extends _$ActiveTrip {
     state = state!.copyWith(phase: TripPhase.completed);
   }
 
-  void reset() {
-    state = null;
-  }
+  void reset() => state = null;
 
   TransportJob _cloneJob(TransportJob job, {List<TransportLot>? lots}) {
     return TransportJob(
@@ -93,10 +80,18 @@ class ActiveTrip extends _$ActiveTrip {
       destinationName: job.destinationName,
       destinationType: job.destinationType,
       lane: job.lane,
-      status: job.status,
+      status: JobStatus.accepted,
       requestedAt: job.requestedAt,
       slaDeadline: job.slaDeadline,
-      lots: lots ?? job.lots,
+      lots: lots ??
+          job.lots
+              .map((l) => TransportLot(
+                    id: l.id,
+                    qrCode: l.qrCode,
+                    sourceType: l.sourceType,
+                    declaredWeight: l.declaredWeight,
+                  ))
+              .toList(),
     );
   }
 }
