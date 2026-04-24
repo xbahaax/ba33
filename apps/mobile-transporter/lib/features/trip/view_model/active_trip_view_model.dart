@@ -6,7 +6,7 @@ import '../../jobs/model/transport_job.dart';
 
 part 'active_trip_view_model.g.dart';
 
-@riverpod
+@Riverpod(keepAlive: true)
 class ActiveTrip extends _$ActiveTrip {
   @override
   ActiveTripState? build() => null;

@@ -1,8 +1,6 @@
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../features/auth/view/login_screen.dart';
-import '../features/auth/view_model/auth_view_model.dart';
 import '../features/jobs/view/job_detail_screen.dart';
 import '../features/jobs/view/job_list_screen.dart';
 import '../features/scan/view/scan_screen.dart';
@@ -12,15 +10,7 @@ import '../features/trip/view/scan_delivery_screen.dart';
 import '../features/trip/view/signature_screen.dart';
 
 final routerProvider = GoRouter(
-  initialLocation: '/login',
-  redirect: (context, state) {
-    final container = ProviderScope.containerOf(context, listen: false);
-    final isAuth = container.read(authStateProvider);
-    final onLogin = state.matchedLocation == '/login';
-    if (!isAuth && !onLogin) return '/login';
-    if (isAuth && onLogin) return '/';
-    return null;
-  },
+  initialLocation: '/',
   routes: [
     GoRoute(
       path: '/login',

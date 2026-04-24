@@ -4,7 +4,7 @@ import '../model/transport_job.dart';
 
 part 'job_list_view_model.g.dart';
 
-@riverpod
+@Riverpod(keepAlive: true)
 class JobList extends _$JobList {
   @override
   Future<List<TransportJob>> build() async {
