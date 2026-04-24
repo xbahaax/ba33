@@ -2,6 +2,7 @@ import 'package:ba33_ui/ba33_ui.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../jobs/model/transport_job.dart';
 import '../view_model/active_trip_view_model.dart';
@@ -159,55 +160,62 @@ class ActiveTripScreen extends ConsumerWidget {
 
             if (isColdChain) const SizedBox(height: Ba33Spacing.spacing4),
 
-            // ── Map placeholder ──────────────────────
+            // ── Navigation to destination ─────────────
             Container(
-              height: 160,
+              padding: const EdgeInsets.all(Ba33Spacing.spacing4),
               decoration: BoxDecoration(
-                color: colors.muted,
+                color: colors.card,
                 borderRadius: Ba33Radii.borderRadiusLg,
                 border: Border.all(color: colors.border),
               ),
-              child: Stack(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  CustomPaint(
-                    size: const Size(double.infinity, 160),
-                    painter: _FakeMapPainter(colors),
+                  Row(
+                    children: [
+                      Icon(Icons.place, size: 20, color: colors.primary),
+                      const SizedBox(width: Ba33Spacing.spacing2),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(job.destinationName,
+                                style: textTheme.titleMedium),
+                            Text(job.destinationType.toUpperCase(),
+                                style: textTheme.bodySmall
+                                    ?.copyWith(color: colors.mutedForeground)),
+                          ],
+                        ),
+                      ),
+                    ],
                   ),
-                  Padding(
-                    padding: const EdgeInsets.all(Ba33Spacing.spacing4),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 8, vertical: 4),
-                          decoration: BoxDecoration(
-                            color: colors.primary,
-                            borderRadius: Ba33Radii.borderRadiusSm,
-                          ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Icon(Icons.navigation,
-                                  size: 12,
-                                  color: colors.primaryForeground),
-                              const SizedBox(width: 4),
-                              Text('Navigation active',
-                                  style: TextStyle(
-                                      fontSize: 11,
-                                      color: colors.primaryForeground,
-                                      fontWeight: FontWeight.w600)),
-                            ],
+                  const SizedBox(height: Ba33Spacing.spacing4),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: ElevatedButton.icon(
+                          onPressed: () => _openGoogleMaps(job.destinationName),
+                          icon: const Icon(Icons.map, size: 18),
+                          label: const Text('Google Maps'),
+                          style: ElevatedButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(
+                                vertical: Ba33Spacing.spacing3),
                           ),
                         ),
-                        const Spacer(),
-                        Text('→  ${job.destinationName}',
-                            style: textTheme.titleMedium),
-                        Text(job.destinationType.toUpperCase(),
-                            style: textTheme.bodySmall
-                                ?.copyWith(color: colors.mutedForeground)),
-                      ],
-                    ),
+                      ),
+                      const SizedBox(width: Ba33Spacing.spacing3),
+                      Expanded(
+                        child: OutlinedButton.icon(
+                          onPressed: () => _openWaze(job.destinationName),
+                          icon: const Icon(Icons.navigation, size: 18),
+                          label: const Text('Waze'),
+                          style: OutlinedButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(
+                                vertical: Ba33Spacing.spacing3),
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                 ],
               ),
@@ -551,7 +559,7 @@ class _PulsingDotState extends State<_PulsingDot>
   Widget build(BuildContext context) {
     return AnimatedBuilder(
       animation: _ctrl,
-      builder: (_, __) => Container(
+      builder: (_, _) => Container(
         width: 10,
         height: 10,
         decoration: BoxDecoration(
@@ -563,44 +571,19 @@ class _PulsingDotState extends State<_PulsingDot>
   }
 }
 
-// ── Fake map painter ──────────────────────────────────────
-class _FakeMapPainter extends CustomPainter {
-  const _FakeMapPainter(this.colors);
-
-  final Ba33Colors colors;
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final gridPaint = Paint()
-      ..color = colors.border.withAlpha(120)
-      ..strokeWidth = 0.8;
-
-    for (double y = 20; y < size.height; y += 35) {
-      canvas.drawLine(Offset(0, y), Offset(size.width, y), gridPaint);
-    }
-    for (double x = 40; x < size.width; x += 55) {
-      canvas.drawLine(Offset(x, 0), Offset(x, size.height), gridPaint);
-    }
-
-    final routePaint = Paint()
-      ..color = colors.primary.withAlpha(160)
-      ..strokeWidth = 3
-      ..style = PaintingStyle.stroke
-      ..strokeCap = StrokeCap.round;
-
-    final path = Path()
-      ..moveTo(30, size.height * 0.8)
-      ..lineTo(size.width * 0.3, size.height * 0.8)
-      ..lineTo(size.width * 0.3, size.height * 0.3)
-      ..lineTo(size.width - 30, size.height * 0.3);
-
-    canvas.drawPath(path, routePaint);
-
-    final dotPaint = Paint()..color = colors.primary;
-    canvas.drawCircle(const Offset(30, 0) + Offset(0, size.height * 0.8), 5, dotPaint);
-    canvas.drawCircle(Offset(size.width - 30, size.height * 0.3), 5, dotPaint);
+// ── Navigation launchers ─────────────────────────────────
+Future<void> _openGoogleMaps(String destination) async {
+  final query = Uri.encodeComponent('$destination, Algeria');
+  final uri = Uri.parse('https://www.google.com/maps/dir/?api=1&destination=$query&travelmode=driving');
+  if (await canLaunchUrl(uri)) {
+    await launchUrl(uri, mode: LaunchMode.externalApplication);
   }
+}
 
-  @override
-  bool shouldRepaint(covariant CustomPainter _) => false;
+Future<void> _openWaze(String destination) async {
+  final query = Uri.encodeComponent('$destination, Algeria');
+  final wazeUri = Uri.parse('https://waze.com/ul?q=$query&navigate=yes');
+  if (await canLaunchUrl(wazeUri)) {
+    await launchUrl(wazeUri, mode: LaunchMode.externalApplication);
+  }
 }

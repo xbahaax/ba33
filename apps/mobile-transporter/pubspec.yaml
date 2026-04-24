@@ -19,6 +19,7 @@ dependencies:
   geolocator: ^13.0.2
   drift: ^2.21.0
   drift_flutter: ^0.2.3
+  url_launcher: ^6.3.1
   ba33_ui:
     path: ../../packages/ba33_ui
   ba33_domain:
