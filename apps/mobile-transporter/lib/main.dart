@@ -47,7 +47,7 @@ class _TransporterAppState extends ConsumerState<TransporterApp> {
         GlobalWidgetsLocalizations.delegate,
         GlobalCupertinoLocalizations.delegate,
       ],
-      routerConfig: routerProvider,
+      routerConfig: ref.watch(routerProvider),
     );
   }
 }

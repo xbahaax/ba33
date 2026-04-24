@@ -25,6 +25,7 @@ import { LoadLotDto } from './dto/load-lot.dto';
 import { DeliverLotDto } from './dto/deliver-lot.dto';
 import { AddGpsPointDto } from './dto/add-gps-point.dto';
 import { CreateTransporterDto } from './dto/create-transporter.dto';
+import { ConfirmPickupDto } from './dto/confirm-pickup.dto';
 
 @ApiTags('transport')
 @ApiBearerAuth()
@@ -101,6 +102,16 @@ export class TransportController {
     @Body() dto: DeliverLotDto,
   ) {
     return this.transportService.deliverLot(id, lotId, dto.weight);
+  }
+
+  @Post('jobs/:id/confirm-pickup')
+  @ApiOperation({ summary: 'Confirm pickup: converts pre-lot to lot with auto QR + weigh-in' })
+  @ApiParam({ name: 'id', description: 'Job UUID' })
+  async confirmPickup(
+    @Param('id') id: string,
+    @Body() dto: ConfirmPickupDto,
+  ) {
+    return this.transportService.confirmPickup(id, dto);
   }
 
   @Patch('jobs/:id/complete')

@@ -6,6 +6,8 @@ import {
   transportJobLots,
   transportGpsPoints,
   transporters,
+  users,
+  preLots,
 } from '../../common/database/schema';
 import { eq, and, desc } from 'drizzle-orm';
 
@@ -141,6 +143,54 @@ export class TransportRepository {
       .select()
       .from(transporters)
       .where(eq(transporters.userId, userId));
+    return row ?? null;
+  }
+
+  async findPreLotForJob(sourceId: string, jobCreatedAt: Date | string) {
+    // Find the pre-lot created just before the job (the one that triggered it)
+    const jobTime = new Date(jobCreatedAt);
+    const windowStart = new Date(jobTime.getTime() - 5000); // 5s before
+    const rows = await this.db
+      .select()
+      .from(preLots)
+      .where(eq(preLots.sourceId, sourceId))
+      .orderBy(desc(preLots.createdAt));
+
+    // Return the pre-lot whose createdAt is closest to (but before) the job's createdAt
+    for (const row of rows) {
+      const plTime = new Date(row.createdAt);
+      if (plTime >= windowStart && plTime <= jobTime) {
+        return row;
+      }
+    }
+    // Fallback: return the most recent pre-lot before the job
+    return rows.find((r) => new Date(r.createdAt) <= jobTime) ?? rows[0] ?? null;
+  }
+
+  async findActiveTransportersByRegion(regionId: string) {
+    return this.db
+      .select({ userId: transporters.userId })
+      .from(transporters)
+      .innerJoin(users, eq(users.id, transporters.userId))
+      .where(
+        and(
+          eq(transporters.active, true),
+          eq(users.regionId, regionId),
+        ),
+      )
+      .limit(1);
+  }
+
+  async completePreLot(preLotId: string, lotId: string) {
+    const [row] = await this.db
+      .update(preLots)
+      .set({
+        status: 'collected' as any,
+        lotId,
+        updatedAt: new Date(),
+      })
+      .where(eq(preLots.id, preLotId))
+      .returning();
     return row ?? null;
   }
 }

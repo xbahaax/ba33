@@ -10,6 +10,7 @@ import {
   sources,
   shepherds,
   users,
+  depots,
 } from '../../common/database/schema';
 import { eq, and, desc, lt, inArray } from 'drizzle-orm';
 
@@ -238,5 +239,15 @@ export class CollectionRepository {
       .from(collectorBooklets)
       .where(eq(collectorBooklets.collectorId, collectorId))
       .orderBy(desc(collectorBooklets.issuedAt));
+  }
+
+  async findClosestDepot(regionId: string, _lat?: string, _lng?: string) {
+    // Match by region (geo-distance can be added once depots have lat/lng)
+    const [row] = await this.db
+      .select()
+      .from(depots)
+      .where(and(eq(depots.regionId, regionId), eq(depots.active, true)))
+      .limit(1);
+    return row ?? null;
   }
 }

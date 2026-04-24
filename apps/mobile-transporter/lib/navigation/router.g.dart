@@ -1,25 +1,27 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
 
-part of 'auth_view_model.dart';
+part of 'router.dart';
 
 // **************************************************************************
 // RiverpodGenerator
 // **************************************************************************
 
-String _$authStateHash() => r'074231b023e5336fe8f32d95239e098445234417';
+String _$routerHash() => r'598cd7ba66fdd1be39b33eba154bd15eeff969bb';
 
-/// See also [AuthState].
-@ProviderFor(AuthState)
-final authStateProvider = NotifierProvider<AuthState, AuthInfo>.internal(
-  AuthState.new,
-  name: r'authStateProvider',
+/// See also [router].
+@ProviderFor(router)
+final routerProvider = AutoDisposeProvider<GoRouter>.internal(
+  router,
+  name: r'routerProvider',
   debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
       ? null
-      : _$authStateHash,
+      : _$routerHash,
   dependencies: null,
   allTransitiveDependencies: null,
 );
 
-typedef _$AuthState = Notifier<AuthInfo>;
+@Deprecated('Will be removed in 3.0. Use Ref instead')
+// ignore: unused_element
+typedef RouterRef = AutoDisposeProviderRef<GoRouter>;
 // ignore_for_file: type=lint
 // ignore_for_file: subtype_of_sealed_class, invalid_use_of_internal_member, invalid_use_of_visible_for_testing_member, deprecated_member_use_from_same_package

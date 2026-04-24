@@ -2,18 +2,26 @@ import {
   Injectable,
   NotFoundException,
   BadRequestException,
+  Logger,
+  Inject,
+  forwardRef,
 } from '@nestjs/common';
 import { CollectionRepository } from './collection.repository';
 import { EventsService } from '../events/events.service';
 import { NotificationsService } from '../notifications/notifications.service';
+import { TransportService } from '../transport/transport.service';
 import { v4 as uuid } from 'uuid';
 
 @Injectable()
 export class CollectionService {
+  private readonly logger = new Logger(CollectionService.name);
+
   constructor(
     private readonly collectionRepository: CollectionRepository,
     private readonly eventsService: EventsService,
     private readonly notificationsService: NotificationsService,
+    @Inject(forwardRef(() => TransportService))
+    private readonly transportService: TransportService,
   ) {}
 
   // ── Shepherd Declaration ─────────────────────────────────
@@ -141,7 +149,70 @@ export class CollectionService {
       version: 1,
     });
 
+    // Auto-dispatch: create transport job for pickup
+    if (data.regionId) {
+      try {
+        await this.autoDispatchTransportJob(
+          data.sourceId,
+          data.regionId,
+          data.locationLat,
+          data.locationLng,
+        );
+      } catch (e) {
+        this.logger.warn(`Auto-dispatch failed for pre-lot ${id}: ${e}`);
+      }
+    }
+
     return preLot;
+  }
+
+  private async autoDispatchTransportJob(
+    sourceId: string,
+    regionId: string,
+    sourceLat?: string,
+    sourceLng?: string,
+  ) {
+    // Find the closest depot using geo-distance, fallback to region match
+    const depot = await this.collectionRepository.findClosestDepot(
+      regionId,
+      sourceLat,
+      sourceLng,
+    );
+    if (!depot) {
+      this.logger.warn(`No active depot found for region ${regionId}, skipping auto-dispatch`);
+      return;
+    }
+
+    // Find an available transporter in this region
+    const transporterId = await this.transportService.findTransporterForRegion(regionId);
+
+    if (!transporterId) {
+      this.logger.warn(`No active transporter in region ${regionId}, creating unassigned job`);
+    }
+
+    // Create the transport job
+    const job = await this.transportService.createJob({
+      originType: 'source',
+      originId: sourceId,
+      destinationType: 'depot',
+      destinationId: depot.id,
+      lane: 'normal',
+    });
+
+    // If we found a transporter, assign them directly
+    if (transporterId) {
+      await this.transportService.acceptJob(job.id, transporterId);
+
+      await this.notificationsService.send({
+        userId: transporterId,
+        type: 'transport_job_assigned',
+        title: 'مهمة نقل جديدة',
+        body: `مهمة جديدة: اجمع الصوف من المصدر و وصلو للمستودع ${depot.name}`,
+        payload: { jobId: job.id, sourceId, depotId: depot.id },
+      });
+    }
+
+    this.logger.log(`Auto-dispatched transport job ${job.id} for source ${sourceId} → depot ${depot.name}${transporterId ? ` → transporter ${transporterId}` : ' (unassigned)'}`);
   }
 
   async getPreLot(id: string) {

@@ -11,6 +11,6 @@ import { LotsModule } from '../lots/lots.module';
   imports: [EventsModule, RulesModule, NotificationsModule, LotsModule],
   controllers: [TransportController],
   providers: [TransportService, TransportRepository],
-  exports: [TransportService],
+  exports: [TransportService, TransportRepository],
 })
 export class TransportModule {}
