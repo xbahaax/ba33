@@ -1,6 +1,10 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../features/auth/view/login_screen.dart';
+import '../features/auth/view_model/auth_view_model.dart';
 import '../features/jobs/view/job_detail_screen.dart';
 import '../features/jobs/view/job_list_screen.dart';
 import '../features/scan/view/scan_screen.dart';
@@ -11,9 +15,28 @@ import '../features/trip/view/signature_screen.dart';
 import '../features/farmer_declaration/view/farmer_declaration_form_screen.dart';
 import '../features/farmer_declaration/view/farmer_declaration_success_screen.dart';
 
-final routerProvider = GoRouter(
-  initialLocation: '/',
-  routes: [
+part 'router.g.dart';
+
+@riverpod
+GoRouter router(RouterRef ref) {
+  final isAuth = ValueNotifier(false);
+
+  ref.listen(authStateProvider, (_, next) {
+    isAuth.value = next.isAuthenticated;
+  });
+
+  return GoRouter(
+    initialLocation: '/login',
+    refreshListenable: isAuth,
+    redirect: (context, state) {
+      final loggedIn = ref.read(authStateProvider).isAuthenticated;
+      final isLoginRoute = state.matchedLocation == '/login';
+
+      if (!loggedIn && !isLoginRoute) return '/login';
+      if (loggedIn && isLoginRoute) return '/';
+      return null;
+    },
+    routes: [
     GoRoute(
       path: '/login',
       name: 'login',
@@ -65,4 +88,5 @@ final routerProvider = GoRouter(
       builder: (context, state) => const FarmerDeclarationSuccessScreen(),
     ),
   ],
-);
+  );
+}
