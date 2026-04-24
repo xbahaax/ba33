@@ -4,7 +4,7 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 part 'api_provider.g.dart';
 
 const _baseUrl =
-    String.fromEnvironment('API_URL', defaultValue: 'http://localhost:3100');
+    String.fromEnvironment('API_URL', defaultValue: 'http://localhost:3333');
 
 @Riverpod(keepAlive: true)
 Ba33ApiClient apiClient(ApiClientRef ref) {

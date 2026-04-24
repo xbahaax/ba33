@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../database/app_database.dart';
@@ -19,6 +21,32 @@ class GpsTrackerState {
   final GpsPoint? lastPoint;
   final int pointsRecorded;
   final bool hasPermission;
+
+  /// True when GPS speed indicates the vehicle is stopped (< 5.4 km/h).
+  /// Used to validate arrival before confirming delivery.
+  bool get isLikelyArrived {
+    if (!isTracking || lastPoint == null) return false;
+    final speed = lastPoint!.speedMps;
+    if (speed == null || speed < 0) return true; // no speed data → allow
+    return speed < 1.5; // 1.5 m/s ≈ 5.4 km/h
+  }
+
+  /// Haversine distance in metres from the last GPS point to [lat]/[lng].
+  /// Returns null if no GPS fix yet.
+  double? distanceToMeters(double lat, double lng) {
+    if (lastPoint == null) return null;
+    const r = 6371000.0;
+    final phi1 = lastPoint!.lat * math.pi / 180;
+    final phi2 = lat * math.pi / 180;
+    final dPhi = (lat - lastPoint!.lat) * math.pi / 180;
+    final dLambda = (lng - lastPoint!.lng) * math.pi / 180;
+    final a = math.sin(dPhi / 2) * math.sin(dPhi / 2) +
+        math.cos(phi1) *
+            math.cos(phi2) *
+            math.sin(dLambda / 2) *
+            math.sin(dLambda / 2);
+    return r * 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a));
+  }
 
   GpsTrackerState copyWith({
     bool? isTracking,

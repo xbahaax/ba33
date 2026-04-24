@@ -256,22 +256,8 @@ class ActiveTripScreen extends ConsumerWidget {
             ),
             const SizedBox(height: Ba33Spacing.spacing6),
 
-            // ── Deliver button ───────────────────────
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton.icon(
-                onPressed: () {
-                  ref.read(activeTripProvider.notifier).startDelivering();
-                  context.push('/scan-delivery');
-                },
-                icon: const Icon(Icons.qr_code_scanner),
-                label: const Text('Arrivé — Commencer la livraison'),
-                style: ElevatedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(
-                      vertical: Ba33Spacing.spacing4),
-                ),
-              ),
-            ),
+            // ── Arrive button ────────────────────────
+            _ArriveButton(gps: gps),
           ],
         ),
       ),
