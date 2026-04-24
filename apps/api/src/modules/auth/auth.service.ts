@@ -1,128 +1,127 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { ConflictException, Injectable, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
-import * as bcrypt from 'bcryptjs';
-import * as crypto from 'crypto';
-import { AuthRepository } from './auth.repository';
+import { compare, hash } from 'bcrypt';
+import { AuthProfileUpdates, AuthRepository, AuthSessionUser } from './auth.repository';
+
+export interface LoginInput {
+  email: string;
+  password: string;
+}
+
+export interface RegisterInput {
+  email: string;
+  password: string;
+  fullName: string;
+  companyName: string;
+  registrationNumber: string;
+}
+
+export interface AuthResponse {
+  accessToken: string;
+  tokenType: 'Bearer';
+  expiresInSeconds: number;
+  user: AuthSessionUser;
+}
 
 @Injectable()
 export class AuthService {
+  private static readonly TOKEN_TTL_SECONDS = 60 * 60 * 24;
+
   constructor(
     private readonly authRepository: AuthRepository,
     private readonly jwtService: JwtService,
   ) {}
 
-  async login(password: string, email?: string, phone?: string) {
-    if (!email && !phone) {
-      throw new UnauthorizedException('Email or phone is required');
-    }
+  async login(input: LoginInput): Promise<AuthResponse> {
+    const user = await this.authRepository.findByEmail(input.email);
 
-    const user = phone
-      ? await this.authRepository.findUserByPhone(phone)
-      : await this.authRepository.findUserByEmail(email!);
     if (!user) {
       throw new UnauthorizedException('Invalid credentials');
     }
 
-    if (user.status !== 'active') {
-      throw new UnauthorizedException('Account is not active');
-    }
+    const isValid = await compare(input.password, user.passwordHash);
 
-    const isPasswordValid = await bcrypt.compare(password, user.passwordHash);
-    if (!isPasswordValid) {
+    if (!isValid) {
       throw new UnauthorizedException('Invalid credentials');
     }
 
-    const payload = { sub: user.id, email: user.email, type: user.userType };
-
-    const accessToken = this.jwtService.sign(payload, { expiresIn: '15m' });
-    const refreshToken = this.jwtService.sign(
-      { ...payload, tokenType: 'refresh' },
-      { expiresIn: '7d' },
-    );
-
-    const refreshTokenHash = crypto
-      .createHash('sha256')
-      .update(refreshToken)
-      .digest('hex');
-
-    const expiresAt = new Date();
-    expiresAt.setDate(expiresAt.getDate() + 7);
-
-    await this.authRepository.createSession(
-      user.id,
-      refreshTokenHash,
-      null,
-      expiresAt,
-    );
-
-    return { accessToken, refreshToken };
+    return this.buildAuthResponse(this.authRepository.toSessionUser(user));
   }
 
-  async refresh(refreshToken: string) {
-    let decoded: { sub: string; email: string; type: string };
-    try {
-      decoded = this.jwtService.verify(refreshToken);
-    } catch {
-      throw new UnauthorizedException('Invalid or expired refresh token');
+  async register(input: RegisterInput): Promise<AuthResponse> {
+    const existing = await this.authRepository.findByEmail(input.email);
+
+    if (existing) {
+      throw new ConflictException('Email already exists');
     }
 
-    const refreshTokenHash = crypto
-      .createHash('sha256')
-      .update(refreshToken)
-      .digest('hex');
+    const passwordHash = await hash(input.password, 10);
+    const created = await this.authRepository.createUser({
+      email: input.email,
+      passwordHash,
+      fullName: input.fullName,
+      companyName: input.companyName,
+      registrationNumber: input.registrationNumber,
+    });
 
-    const session =
-      await this.authRepository.findSessionByToken(refreshTokenHash);
-    if (!session) {
-      throw new UnauthorizedException('Refresh token not found or revoked');
-    }
-
-    if (new Date() > session.expiresAt) {
-      await this.authRepository.revokeSession(session.id);
-      throw new UnauthorizedException('Refresh token expired');
-    }
-
-    // Revoke the old session (token rotation)
-    await this.authRepository.revokeSession(session.id);
-
-    const user = await this.authRepository.findUserById(decoded.sub);
-    if (!user || user.status !== 'active') {
-      throw new UnauthorizedException('User not found or inactive');
-    }
-
-    const payload = { sub: user.id, email: user.email, type: user.userType };
-
-    const newAccessToken = this.jwtService.sign(payload, { expiresIn: '15m' });
-    const newRefreshToken = this.jwtService.sign(
-      { ...payload, tokenType: 'refresh' },
-      { expiresIn: '7d' },
-    );
-
-    const newRefreshTokenHash = crypto
-      .createHash('sha256')
-      .update(newRefreshToken)
-      .digest('hex');
-
-    const expiresAt = new Date();
-    expiresAt.setDate(expiresAt.getDate() + 7);
-
-    await this.authRepository.createSession(
-      user.id,
-      newRefreshTokenHash,
-      null,
-      expiresAt,
-    );
-
-    return { accessToken: newAccessToken, refreshToken: newRefreshToken };
+    return this.buildAuthResponse(this.authRepository.toSessionUser(created));
   }
 
-  async getProfile(userId: string) {
-    const user = await this.authRepository.findUserById(userId);
+  async getMe(userId: string): Promise<AuthSessionUser> {
+    const user = await this.authRepository.findById(userId);
+
     if (!user) {
-      throw new UnauthorizedException('User not found');
+      throw new UnauthorizedException('Invalid session');
     }
 
-    const { passwordHash, ...profile } = user;
-    return profile;
+    return this.authRepository.toSessionUser(user);
+  }
+
+  async changePassword(userId: string, currentPassword: string, nextPassword: string): Promise<{ updated: true }> {
+    const user = await this.authRepository.findById(userId);
+
+    if (!user) {
+      throw new UnauthorizedException('Invalid session');
+    }
+
+    const validCurrentPassword = await compare(currentPassword, user.passwordHash);
+
+    if (!validCurrentPassword) {
+      throw new UnauthorizedException('Current password is invalid');
+    }
+
+    const passwordHash = await hash(nextPassword, 10);
+    await this.authRepository.updatePassword(userId, passwordHash);
+    return { updated: true };
+  }
+
+  async updateMyProfile(userId: string, updates: AuthProfileUpdates) {
+    const updated = await this.authRepository.updateProfile(userId, updates);
+
+    if (!updated) {
+      throw new UnauthorizedException('Invalid session');
+    }
+
+    return updated;
+  }
+
+  private async signAccessToken(user: AuthSessionUser): Promise<string> {
+    return this.jwtService.signAsync(
+      {
+        sub: user.id,
+        email: user.email,
+        type: user.userType,
+      },
+      { expiresIn: `${AuthService.TOKEN_TTL_SECONDS}s` },
+    );
+  }
+
+  private async buildAuthResponse(user: AuthSessionUser): Promise<AuthResponse> {
+    return {
+      accessToken: await this.signAccessToken(user),
+      tokenType: 'Bearer',
+      expiresInSeconds: AuthService.TOKEN_TTL_SECONDS,
+      user,
+    };
   }
 }

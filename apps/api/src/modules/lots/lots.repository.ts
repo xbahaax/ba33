@@ -1,14 +1,6 @@
 import { Injectable, Inject } from '@nestjs/common';
 import { DATABASE_TOKEN } from '../../common/database/database.module';
 import type { Database } from '../../common/database/client';
-import {
-  lots,
-  lotPhotos,
-  lotSignatures,
-  lotWeighs,
-  lotLineage,
-} from '../../common/database/schema';
-import { eq, and, or, desc } from 'drizzle-orm';
 
 @Injectable()
 export class LotsRepository {

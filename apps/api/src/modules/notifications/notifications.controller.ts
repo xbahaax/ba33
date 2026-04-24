@@ -1,5 +1,7 @@
-import { Controller, Get, Patch, Param, Query, UseGuards } from '@nestjs/common';
-import { ApiTags, ApiBearerAuth, ApiQuery } from '@nestjs/swagger';
+import { Controller, Delete, Get, Param, Patch, UseGuards } from '@nestjs/common';
+import { ApiTags } from '@nestjs/swagger';
+import { CurrentUser } from '../../common/auth/decorators';
+import { JwtAuthGuard } from '../../common/auth/jwt-auth.guard';
 import { NotificationsService } from './notifications.service';
 import { JwtAuthGuard } from '../../common/auth/jwt-auth.guard';
 import { CurrentUser } from '../../common/auth/decorators';
@@ -11,25 +13,21 @@ import { CurrentUser } from '../../common/auth/decorators';
 export class NotificationsController {
   constructor(private readonly notificationsService: NotificationsService) {}
 
+  @UseGuards(JwtAuthGuard)
   @Get()
-  @ApiQuery({ name: 'unreadOnly', required: false, type: Boolean })
-  async getMyNotifications(
-    @CurrentUser('id') userId: string,
-    @Query('unreadOnly') unreadOnly?: string,
-  ) {
-    return this.notificationsService.getUserNotifications(
-      userId,
-      unreadOnly === 'true',
-    );
+  listNotifications(@CurrentUser('id') userId: string) {
+    return this.notificationsService.list(userId);
   }
 
-  @Patch(':id/read')
-  async markAsRead(@Param('id') id: string) {
-    return this.notificationsService.markAsRead(id);
-  }
-
+  @UseGuards(JwtAuthGuard)
   @Patch('read-all')
-  async markAllAsRead(@CurrentUser('id') userId: string) {
-    return this.notificationsService.markAllAsRead(userId);
+  markAllRead(@CurrentUser('id') userId: string) {
+    return this.notificationsService.markAllRead(userId);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Delete(':id')
+  dismiss(@CurrentUser('id') userId: string, @Param('id') id: string) {
+    return this.notificationsService.dismiss(userId, id);
   }
 }
