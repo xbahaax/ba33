@@ -4,12 +4,6 @@ import {
   CardDescription,
   CardHeader,
   CardTitle,
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
 } from "@ba33/ui-web";
 import {
   getCertificationOverview,
@@ -123,28 +117,47 @@ export default async function DashboardPage() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Événement</TableHead>
-                  <TableHead>Agrégat</TableHead>
-                  <TableHead>Acteur</TableHead>
-                  <TableHead>Horodatage</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
+            <div className="relative w-full overflow-auto">
+              <table className="w-full caption-bottom text-sm">
+                <thead className="[&_tr]:border-b">
+                  <tr className="border-b border-border transition-colors hover:bg-muted/50">
+                    <th className="h-10 px-4 text-left align-middle font-medium text-muted-foreground">
+                      Événement
+                    </th>
+                    <th className="h-10 px-4 text-left align-middle font-medium text-muted-foreground">
+                      Agrégat
+                    </th>
+                    <th className="h-10 px-4 text-left align-middle font-medium text-muted-foreground">
+                      Acteur
+                    </th>
+                    <th className="h-10 px-4 text-left align-middle font-medium text-muted-foreground">
+                      Horodatage
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="[&_tr:last-child]:border-0">
                 {events.map((event) => (
-                  <TableRow key={event.id}>
-                    <TableCell className="font-medium">
+                    <tr
+                      key={event.id}
+                      className="border-b border-border transition-colors hover:bg-muted/50"
+                    >
+                      <td className="p-4 align-middle font-medium">
                       {formatEnumLabel(event.eventType)}
-                    </TableCell>
-                    <TableCell>{formatEnumLabel(event.aggregateType)}</TableCell>
-                    <TableCell>{event.actorName ?? formatEnumLabel(event.actorType)}</TableCell>
-                    <TableCell>{formatDateTime(event.occurredAt)}</TableCell>
-                  </TableRow>
+                      </td>
+                      <td className="p-4 align-middle">
+                        {formatEnumLabel(event.aggregateType)}
+                      </td>
+                      <td className="p-4 align-middle">
+                        {event.actorName ?? formatEnumLabel(event.actorType)}
+                      </td>
+                      <td className="p-4 align-middle">
+                        {formatDateTime(event.occurredAt)}
+                      </td>
+                    </tr>
                 ))}
-              </TableBody>
-            </Table>
+                </tbody>
+              </table>
+            </div>
           </CardContent>
         </Card>
 
@@ -193,30 +206,53 @@ export default async function DashboardPage() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>QR</TableHead>
-                  <TableHead>Source</TableHead>
-                  <TableHead>État</TableHead>
-                  <TableHead>Poids déclaré</TableHead>
-                  <TableHead>Créé le</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
+            <div className="relative w-full overflow-auto">
+              <table className="w-full caption-bottom text-sm">
+                <thead className="[&_tr]:border-b">
+                  <tr className="border-b border-border transition-colors hover:bg-muted/50">
+                    <th className="h-10 px-4 text-left align-middle font-medium text-muted-foreground">
+                      QR
+                    </th>
+                    <th className="h-10 px-4 text-left align-middle font-medium text-muted-foreground">
+                      Source
+                    </th>
+                    <th className="h-10 px-4 text-left align-middle font-medium text-muted-foreground">
+                      État
+                    </th>
+                    <th className="h-10 px-4 text-left align-middle font-medium text-muted-foreground">
+                      Poids déclaré
+                    </th>
+                    <th className="h-10 px-4 text-left align-middle font-medium text-muted-foreground">
+                      Créé le
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="[&_tr:last-child]:border-0">
                 {lots.recentLots.map((lot) => (
-                  <TableRow key={lot.id}>
-                    <TableCell className="font-mono text-xs">{lot.qrCode}</TableCell>
-                    <TableCell>{formatEnumLabel(lot.sourceType)}</TableCell>
-                    <TableCell>
+                    <tr
+                      key={lot.id}
+                      className="border-b border-border transition-colors hover:bg-muted/50"
+                    >
+                      <td className="p-4 align-middle font-mono text-xs">
+                        {lot.qrCode}
+                      </td>
+                      <td className="p-4 align-middle">
+                        {formatEnumLabel(lot.sourceType)}
+                      </td>
+                      <td className="p-4 align-middle">
                       <StatusBadge value={lot.status} />
-                    </TableCell>
-                    <TableCell>{formatWeight(lot.declaredWeightKg)}</TableCell>
-                    <TableCell>{formatDateTime(lot.createdAt)}</TableCell>
-                  </TableRow>
+                      </td>
+                      <td className="p-4 align-middle">
+                        {formatWeight(lot.declaredWeightKg)}
+                      </td>
+                      <td className="p-4 align-middle">
+                        {formatDateTime(lot.createdAt)}
+                      </td>
+                    </tr>
                 ))}
-              </TableBody>
-            </Table>
+                </tbody>
+              </table>
+            </div>
           </CardContent>
         </Card>
 

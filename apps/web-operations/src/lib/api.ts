@@ -1,9 +1,22 @@
-const API_BASE_URL = process.env.BA33_API_URL ?? "http://localhost:3001";
+const SERVER_API_BASE_URL =
+  process.env.BA33_API_URL ??
+  process.env.NEXT_PUBLIC_BA33_API_URL ??
+  "http://localhost:3001";
+
+const CLIENT_API_BASE_URL =
+  process.env.NEXT_PUBLIC_BA33_API_URL ?? "http://localhost:3001";
+
+function getApiBaseUrl() {
+  return typeof window === "undefined"
+    ? SERVER_API_BASE_URL
+    : CLIENT_API_BASE_URL;
+}
 
 async function fetchApi<T>(path: string): Promise<T | null> {
   try {
-    const response = await fetch(`${API_BASE_URL}${path}`, {
+    const response = await fetch(`${getApiBaseUrl()}${path}`, {
       cache: "no-store",
+      signal: AbortSignal.timeout(5000),
     });
 
     if (!response.ok) {

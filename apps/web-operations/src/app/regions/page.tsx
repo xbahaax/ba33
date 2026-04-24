@@ -4,12 +4,6 @@ import {
   CardDescription,
   CardHeader,
   CardTitle,
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
 } from "@ba33/ui-web";
 import { MetricCard } from "@/components/metric-card";
 import { PageHeader } from "@/components/page-header";
@@ -61,32 +55,47 @@ export default async function RegionsPage() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Nom</TableHead>
-                <TableHead>Code</TableHead>
-                <TableHead>Type</TableHead>
-                <TableHead>Parent</TableHead>
-                <TableHead>Coordonnées</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
+          <div className="relative w-full overflow-auto">
+            <table className="w-full caption-bottom text-sm">
+              <thead className="[&_tr]:border-b">
+                <tr className="border-b border-border transition-colors hover:bg-muted/50">
+                  <th className="h-10 px-4 text-left align-middle font-medium text-muted-foreground">
+                    Nom
+                  </th>
+                  <th className="h-10 px-4 text-left align-middle font-medium text-muted-foreground">
+                    Code
+                  </th>
+                  <th className="h-10 px-4 text-left align-middle font-medium text-muted-foreground">
+                    Type
+                  </th>
+                  <th className="h-10 px-4 text-left align-middle font-medium text-muted-foreground">
+                    Parent
+                  </th>
+                  <th className="h-10 px-4 text-left align-middle font-medium text-muted-foreground">
+                    Coordonnées
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="[&_tr:last-child]:border-0">
               {data.regions.map((region) => (
-                <TableRow key={region.id}>
-                  <TableCell className="font-medium">{region.name}</TableCell>
-                  <TableCell className="font-mono text-xs">{region.code}</TableCell>
-                  <TableCell>{formatEnumLabel(region.type)}</TableCell>
-                  <TableCell>{region.parentId ?? "—"}</TableCell>
-                  <TableCell>
+                <tr
+                  key={region.id}
+                  className="border-b border-border transition-colors hover:bg-muted/50"
+                >
+                  <td className="p-4 align-middle font-medium">{region.name}</td>
+                  <td className="p-4 align-middle font-mono text-xs">{region.code}</td>
+                  <td className="p-4 align-middle">{formatEnumLabel(region.type)}</td>
+                  <td className="p-4 align-middle">{region.parentId ?? "—"}</td>
+                  <td className="p-4 align-middle">
                     {region.latitude && region.longitude
                       ? `${region.latitude}, ${region.longitude}`
                       : "—"}
-                  </TableCell>
-                </TableRow>
+                  </td>
+                </tr>
               ))}
-            </TableBody>
-          </Table>
+              </tbody>
+            </table>
+          </div>
         </CardContent>
       </Card>
     </div>

@@ -4,12 +4,6 @@ import {
   CardDescription,
   CardHeader,
   CardTitle,
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
 } from "@ba33/ui-web";
 import { MetricCard } from "@/components/metric-card";
 import { PageHeader } from "@/components/page-header";
@@ -56,34 +50,55 @@ export default async function SalesPage() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Acheteur</TableHead>
-                <TableHead>Canal</TableHead>
-                <TableHead>Statut</TableHead>
-                <TableHead>Paiement</TableHead>
-                <TableHead>Montant</TableHead>
-                <TableHead>Créée le</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
+          <div className="relative w-full overflow-auto">
+            <table className="w-full caption-bottom text-sm">
+              <thead className="[&_tr]:border-b">
+                <tr className="border-b border-border transition-colors hover:bg-muted/50">
+                  <th className="h-10 px-4 text-left align-middle font-medium text-muted-foreground">
+                    Acheteur
+                  </th>
+                  <th className="h-10 px-4 text-left align-middle font-medium text-muted-foreground">
+                    Canal
+                  </th>
+                  <th className="h-10 px-4 text-left align-middle font-medium text-muted-foreground">
+                    Statut
+                  </th>
+                  <th className="h-10 px-4 text-left align-middle font-medium text-muted-foreground">
+                    Paiement
+                  </th>
+                  <th className="h-10 px-4 text-left align-middle font-medium text-muted-foreground">
+                    Montant
+                  </th>
+                  <th className="h-10 px-4 text-left align-middle font-medium text-muted-foreground">
+                    Créée le
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="[&_tr:last-child]:border-0">
               {data.orders.map((order) => (
-                <TableRow key={order.id}>
-                  <TableCell>{order.buyerCompanyName ?? "—"}</TableCell>
-                  <TableCell>{formatEnumLabel(order.channel)}</TableCell>
-                  <TableCell>
+                <tr
+                  key={order.id}
+                  className="border-b border-border transition-colors hover:bg-muted/50"
+                >
+                  <td className="p-4 align-middle">{order.buyerCompanyName ?? "—"}</td>
+                  <td className="p-4 align-middle">
+                    {formatEnumLabel(order.channel)}
+                  </td>
+                  <td className="p-4 align-middle">
                     <StatusBadge value={order.status} />
-                  </TableCell>
-                  <TableCell>
+                  </td>
+                  <td className="p-4 align-middle">
                     <StatusBadge value={order.paymentStatus} />
-                  </TableCell>
-                  <TableCell>{formatCurrency(order.total, order.currency)}</TableCell>
-                  <TableCell>{formatDateTime(order.createdAt)}</TableCell>
-                </TableRow>
+                  </td>
+                  <td className="p-4 align-middle">
+                    {formatCurrency(order.total, order.currency)}
+                  </td>
+                  <td className="p-4 align-middle">{formatDateTime(order.createdAt)}</td>
+                </tr>
               ))}
-            </TableBody>
-          </Table>
+              </tbody>
+            </table>
+          </div>
         </CardContent>
       </Card>
     </div>

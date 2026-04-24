@@ -4,12 +4,6 @@ import {
   CardDescription,
   CardHeader,
   CardTitle,
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
 } from "@ba33/ui-web";
 import { MetricCard } from "@/components/metric-card";
 import { PageHeader } from "@/components/page-header";
@@ -58,32 +52,47 @@ export default async function CertificationPage() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Produit</TableHead>
-                <TableHead>Statut</TableHead>
-                <TableHead>Émis par</TableHead>
-                <TableHead>Émis le</TableHead>
-                <TableHead>Créé le</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
+          <div className="relative w-full overflow-auto">
+            <table className="w-full caption-bottom text-sm">
+              <thead className="[&_tr]:border-b">
+                <tr className="border-b border-border transition-colors hover:bg-muted/50">
+                  <th className="h-10 px-4 text-left align-middle font-medium text-muted-foreground">
+                    Produit
+                  </th>
+                  <th className="h-10 px-4 text-left align-middle font-medium text-muted-foreground">
+                    Statut
+                  </th>
+                  <th className="h-10 px-4 text-left align-middle font-medium text-muted-foreground">
+                    Émis par
+                  </th>
+                  <th className="h-10 px-4 text-left align-middle font-medium text-muted-foreground">
+                    Émis le
+                  </th>
+                  <th className="h-10 px-4 text-left align-middle font-medium text-muted-foreground">
+                    Créé le
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="[&_tr:last-child]:border-0">
               {data.certifications.map((item) => (
-                <TableRow key={item.id}>
-                  <TableCell className="font-mono text-xs">
+                <tr
+                  key={item.id}
+                  className="border-b border-border transition-colors hover:bg-muted/50"
+                >
+                  <td className="p-4 align-middle font-mono text-xs">
                     {item.productCode}
-                  </TableCell>
-                  <TableCell>
+                  </td>
+                  <td className="p-4 align-middle">
                     <StatusBadge value={item.status} />
-                  </TableCell>
-                  <TableCell>{item.issuedByName ?? "—"}</TableCell>
-                  <TableCell>{formatDateTime(item.issuedAt)}</TableCell>
-                  <TableCell>{formatDateTime(item.createdAt)}</TableCell>
-                </TableRow>
+                  </td>
+                  <td className="p-4 align-middle">{item.issuedByName ?? "—"}</td>
+                  <td className="p-4 align-middle">{formatDateTime(item.issuedAt)}</td>
+                  <td className="p-4 align-middle">{formatDateTime(item.createdAt)}</td>
+                </tr>
               ))}
-            </TableBody>
-          </Table>
+              </tbody>
+            </table>
+          </div>
         </CardContent>
       </Card>
     </div>

@@ -4,12 +4,6 @@ import {
   CardDescription,
   CardHeader,
   CardTitle,
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
 } from "@ba33/ui-web";
 import { MetricCard } from "@/components/metric-card";
 import { PageHeader } from "@/components/page-header";
@@ -56,34 +50,59 @@ export default async function TransportPage() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Transporteur</TableHead>
-                <TableHead>Lane</TableHead>
-                <TableHead>Origine</TableHead>
-                <TableHead>Destination</TableHead>
-                <TableHead>Lots</TableHead>
-                <TableHead>Statut</TableHead>
-                <TableHead>SLA</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
+          <div className="relative w-full overflow-auto">
+            <table className="w-full caption-bottom text-sm">
+              <thead className="[&_tr]:border-b">
+                <tr className="border-b border-border transition-colors hover:bg-muted/50">
+                  <th className="h-10 px-4 text-left align-middle font-medium text-muted-foreground">
+                    Transporteur
+                  </th>
+                  <th className="h-10 px-4 text-left align-middle font-medium text-muted-foreground">
+                    Lane
+                  </th>
+                  <th className="h-10 px-4 text-left align-middle font-medium text-muted-foreground">
+                    Origine
+                  </th>
+                  <th className="h-10 px-4 text-left align-middle font-medium text-muted-foreground">
+                    Destination
+                  </th>
+                  <th className="h-10 px-4 text-left align-middle font-medium text-muted-foreground">
+                    Lots
+                  </th>
+                  <th className="h-10 px-4 text-left align-middle font-medium text-muted-foreground">
+                    Statut
+                  </th>
+                  <th className="h-10 px-4 text-left align-middle font-medium text-muted-foreground">
+                    SLA
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="[&_tr:last-child]:border-0">
               {data.jobs.map((job) => (
-                <TableRow key={job.id}>
-                  <TableCell>{job.transporterName ?? "Non affecté"}</TableCell>
-                  <TableCell>{formatEnumLabel(job.lane)}</TableCell>
-                  <TableCell>{formatEnumLabel(job.originType)}</TableCell>
-                  <TableCell>{formatEnumLabel(job.destinationType)}</TableCell>
-                  <TableCell>{job.lotCount}</TableCell>
-                  <TableCell>
+                <tr
+                  key={job.id}
+                  className="border-b border-border transition-colors hover:bg-muted/50"
+                >
+                  <td className="p-4 align-middle">
+                    {job.transporterName ?? "Non affecté"}
+                  </td>
+                  <td className="p-4 align-middle">{formatEnumLabel(job.lane)}</td>
+                  <td className="p-4 align-middle">
+                    {formatEnumLabel(job.originType)}
+                  </td>
+                  <td className="p-4 align-middle">
+                    {formatEnumLabel(job.destinationType)}
+                  </td>
+                  <td className="p-4 align-middle">{job.lotCount}</td>
+                  <td className="p-4 align-middle">
                     <StatusBadge value={job.status} />
-                  </TableCell>
-                  <TableCell>{formatDateTime(job.slaDeadline)}</TableCell>
-                </TableRow>
+                  </td>
+                  <td className="p-4 align-middle">{formatDateTime(job.slaDeadline)}</td>
+                </tr>
               ))}
-            </TableBody>
-          </Table>
+              </tbody>
+            </table>
+          </div>
         </CardContent>
       </Card>
     </div>

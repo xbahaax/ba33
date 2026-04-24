@@ -1,20 +1,3 @@
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@ba33/ui-web";
-import { MetricCard } from "@/components/metric-card";
-import { PageHeader } from "@/components/page-header";
-import { StatusBadge } from "@/components/status-badge";
-import { UnavailableState } from "@/components/unavailable-state";
 import { getLaverieOverview } from "@/lib/api";
 import { formatDateTime, formatNumber, formatWeight } from "@/lib/format";
 
@@ -24,112 +7,134 @@ export default async function LaveriePage() {
   if (!data) {
     return (
       <div className="space-y-8 p-8">
-        <PageHeader
-          title="Laverie"
-          description="Ligne de lavage, contrôles et qualification."
-        />
-        <UnavailableState message="Le module laverie attend l’API backend." />
+        <div>
+          <h1 className="text-3xl font-bold">Laverie</h1>
+          <p className="text-muted-foreground">
+            Ligne de lavage, contrôles et qualification.
+          </p>
+        </div>
+
+        <div className="rounded-lg border p-6 text-muted-foreground">
+          Le module laverie attend l’API backend.
+        </div>
       </div>
     );
   }
 
   return (
     <div className="space-y-8 p-8">
-      <PageHeader
-        title="Laverie"
-        description="Suivi des installations, cycles actifs et qualifications récentes."
-      />
+      <div>
+        <h1 className="text-3xl font-bold">Laverie</h1>
+        <p className="text-muted-foreground">
+          Suivi des installations, cycles actifs et qualifications récentes.
+        </p>
+      </div>
 
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-5">
-        <MetricCard label="Laveries" value={data.summary.totalLaveries.toString()} />
-        <MetricCard
-          label="Laveries actives"
-          value={data.summary.activeLaveries.toString()}
-        />
-        <MetricCard label="Cycles actifs" value={data.summary.activeRuns.toString()} />
-        <MetricCard
-          label="Cycles totaux"
-          value={data.summary.totalWashRuns.toString()}
-        />
-        <MetricCard label="Lots qualifiés" value={data.summary.gradedLots.toString()} />
+        <Metric label="Laveries" value={data.summary.totalLaveries} />
+        <Metric label="Laveries actives" value={data.summary.activeLaveries} />
+        <Metric label="Cycles actifs" value={data.summary.activeRuns} />
+        <Metric label="Cycles totaux" value={data.summary.totalWashRuns} />
+        <Metric label="Lots qualifiés" value={data.summary.gradedLots} />
       </div>
 
       <div className="grid gap-4 xl:grid-cols-2">
-        <Card>
-          <CardHeader>
-            <CardTitle>Cycles actifs</CardTitle>
-            <CardDescription>
-              Lavages en cours sur les installations.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Laverie</TableHead>
-                  <TableHead>Poids entrant</TableHead>
-                  <TableHead>Eau</TableHead>
-                  <TableHead>Température</TableHead>
-                  <TableHead>Démarré</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {data.activeRuns.map((run) => (
-                  <TableRow key={run.id}>
-                    <TableCell>{run.laverieName ?? "—"}</TableCell>
-                    <TableCell>{formatWeight(run.dirtyWeightKg)}</TableCell>
-                    <TableCell>
-                      {run.waterLiters ? `${formatNumber(run.waterLiters)} L` : "—"}
-                    </TableCell>
-                    <TableCell>{run.waterTempC ? `${run.waterTempC}°C` : "—"}</TableCell>
-                    <TableCell>{formatDateTime(run.startedAt)}</TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </CardContent>
-        </Card>
+        <section className="rounded-lg border bg-background p-6">
+          <h2 className="text-xl font-semibold">Cycles actifs</h2>
+          <p className="text-sm text-muted-foreground">
+            Lavages en cours sur les installations.
+          </p>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Qualifications récentes</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Grade</TableHead>
-                  <TableHead>Sécurité</TableHead>
-                  <TableHead>Longueur fibre</TableHead>
-                  <TableHead>Diamètre</TableHead>
-                  <TableHead>Daté</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
+          <div className="mt-4 overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b">
+                  <th className="px-4 py-3 text-left font-medium">Laverie</th>
+                  <th className="px-4 py-3 text-left font-medium">Poids entrant</th>
+                  <th className="px-4 py-3 text-left font-medium">Eau</th>
+                  <th className="px-4 py-3 text-left font-medium">Température</th>
+                  <th className="px-4 py-3 text-left font-medium">Démarré</th>
+                </tr>
+              </thead>
+
+              <tbody>
+                {data.activeRuns.map((run) => (
+                  <tr key={run.id} className="border-b">
+                    <td className="px-4 py-3">{run.laverieName ?? "—"}</td>
+                    <td className="px-4 py-3">{formatWeight(run.dirtyWeightKg)}</td>
+                    <td className="px-4 py-3">
+                      {run.waterLiters
+                        ? `${formatNumber(run.waterLiters)} L`
+                        : "—"}
+                    </td>
+                    <td className="px-4 py-3">
+                      {run.waterTempC ? `${run.waterTempC}°C` : "—"}
+                    </td>
+                    <td className="px-4 py-3">
+                      {formatDateTime(run.startedAt)}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <section className="rounded-lg border bg-background p-6">
+          <h2 className="text-xl font-semibold">Qualifications récentes</h2>
+
+          <div className="mt-4 overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b">
+                  <th className="px-4 py-3 text-left font-medium">Grade</th>
+                  <th className="px-4 py-3 text-left font-medium">Sécurité</th>
+                  <th className="px-4 py-3 text-left font-medium">Longueur fibre</th>
+                  <th className="px-4 py-3 text-left font-medium">Diamètre</th>
+                  <th className="px-4 py-3 text-left font-medium">Daté</th>
+                </tr>
+              </thead>
+
+              <tbody>
                 {data.recentQualifications.map((qualification) => (
-                  <TableRow key={qualification.id}>
-                    <TableCell className="font-medium">{qualification.grade}</TableCell>
-                    <TableCell>
-                      <StatusBadge value={qualification.safetyStatus} />
-                    </TableCell>
-                    <TableCell>
+                  <tr key={qualification.id} className="border-b">
+                    <td className="px-4 py-3 font-medium">
+                      {qualification.grade}
+                    </td>
+                    <td className="px-4 py-3">
+                      <span className="rounded-full border px-2 py-1 text-xs">
+                        {qualification.safetyStatus}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3">
                       {qualification.fiberLengthMm
                         ? `${qualification.fiberLengthMm} mm`
                         : "—"}
-                    </TableCell>
-                    <TableCell>
+                    </td>
+                    <td className="px-4 py-3">
                       {qualification.fiberDiameterMicron
                         ? `${qualification.fiberDiameterMicron} µm`
                         : "—"}
-                    </TableCell>
-                    <TableCell>{formatDateTime(qualification.performedAt)}</TableCell>
-                  </TableRow>
+                    </td>
+                    <td className="px-4 py-3">
+                      {formatDateTime(qualification.performedAt)}
+                    </td>
+                  </tr>
                 ))}
-              </TableBody>
-            </Table>
-          </CardContent>
-        </Card>
+              </tbody>
+            </table>
+          </div>
+        </section>
       </div>
+    </div>
+  );
+}
+
+function Metric({ label, value }: { label: string; value: number }) {
+  return (
+    <div className="rounded-lg border bg-background p-4">
+      <p className="text-sm text-muted-foreground">{label}</p>
+      <p className="mt-2 text-2xl font-bold">{value}</p>
     </div>
   );
 }

@@ -4,12 +4,6 @@ import {
   CardDescription,
   CardHeader,
   CardTitle,
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
 } from "@ba33/ui-web";
 import { MetricCard } from "@/components/metric-card";
 import { PageHeader } from "@/components/page-header";
@@ -52,30 +46,47 @@ export default async function SettingsPage() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Clé</TableHead>
-                <TableHead>Description</TableHead>
-                <TableHead>Version</TableHead>
-                <TableHead>Début</TableHead>
-                <TableHead>Fin</TableHead>
-                <TableHead>Créé par</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
+          <div className="relative w-full overflow-auto">
+            <table className="w-full caption-bottom text-sm">
+              <thead className="[&_tr]:border-b">
+                <tr className="border-b border-border transition-colors hover:bg-muted/50">
+                  <th className="h-10 px-4 text-left align-middle font-medium text-muted-foreground">
+                    Clé
+                  </th>
+                  <th className="h-10 px-4 text-left align-middle font-medium text-muted-foreground">
+                    Description
+                  </th>
+                  <th className="h-10 px-4 text-left align-middle font-medium text-muted-foreground">
+                    Version
+                  </th>
+                  <th className="h-10 px-4 text-left align-middle font-medium text-muted-foreground">
+                    Début
+                  </th>
+                  <th className="h-10 px-4 text-left align-middle font-medium text-muted-foreground">
+                    Fin
+                  </th>
+                  <th className="h-10 px-4 text-left align-middle font-medium text-muted-foreground">
+                    Créé par
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="[&_tr:last-child]:border-0">
               {data.rules.map((rule) => (
-                <TableRow key={rule.id}>
-                  <TableCell className="font-mono text-xs">{rule.ruleKey}</TableCell>
-                  <TableCell>{rule.description ?? "—"}</TableCell>
-                  <TableCell>{rule.version ?? "—"}</TableCell>
-                  <TableCell>{formatDateTime(rule.effectiveFrom)}</TableCell>
-                  <TableCell>{formatDateTime(rule.effectiveTo)}</TableCell>
-                  <TableCell>{rule.createdByName ?? "—"}</TableCell>
-                </TableRow>
+                <tr
+                  key={rule.id}
+                  className="border-b border-border transition-colors hover:bg-muted/50"
+                >
+                  <td className="p-4 align-middle font-mono text-xs">{rule.ruleKey}</td>
+                  <td className="p-4 align-middle">{rule.description ?? "—"}</td>
+                  <td className="p-4 align-middle">{rule.version ?? "—"}</td>
+                  <td className="p-4 align-middle">{formatDateTime(rule.effectiveFrom)}</td>
+                  <td className="p-4 align-middle">{formatDateTime(rule.effectiveTo)}</td>
+                  <td className="p-4 align-middle">{rule.createdByName ?? "—"}</td>
+                </tr>
               ))}
-            </TableBody>
-          </Table>
+              </tbody>
+            </table>
+          </div>
         </CardContent>
       </Card>
     </div>

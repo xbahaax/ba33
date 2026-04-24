@@ -4,12 +4,6 @@ import {
   CardDescription,
   CardHeader,
   CardTitle,
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
 } from "@ba33/ui-web";
 import {
   getCertificationOverview,
@@ -68,22 +62,31 @@ export default async function AnalyticsPage() {
             <CardTitle>Breakdown statuts lots</CardTitle>
           </CardHeader>
           <CardContent>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Statut</TableHead>
-                  <TableHead>Volume</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
+            <div className="relative w-full overflow-auto">
+              <table className="w-full caption-bottom text-sm">
+                <thead className="[&_tr]:border-b">
+                  <tr className="border-b border-border transition-colors hover:bg-muted/50">
+                    <th className="h-10 px-4 text-left align-middle font-medium text-muted-foreground">
+                      Statut
+                    </th>
+                    <th className="h-10 px-4 text-left align-middle font-medium text-muted-foreground">
+                      Volume
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="[&_tr:last-child]:border-0">
                 {lots.summary.statusBreakdown.map((row) => (
-                  <TableRow key={row.status}>
-                    <TableCell>{formatEnumLabel(row.status)}</TableCell>
-                    <TableCell>{row.count}</TableCell>
-                  </TableRow>
+                  <tr
+                    key={row.status}
+                    className="border-b border-border transition-colors hover:bg-muted/50"
+                  >
+                    <td className="p-4 align-middle">{formatEnumLabel(row.status)}</td>
+                    <td className="p-4 align-middle">{row.count}</td>
+                  </tr>
                 ))}
-              </TableBody>
-            </Table>
+                </tbody>
+              </table>
+            </div>
           </CardContent>
         </Card>
 
@@ -92,22 +95,31 @@ export default async function AnalyticsPage() {
             <CardTitle>Breakdown statuts transport</CardTitle>
           </CardHeader>
           <CardContent>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Statut</TableHead>
-                  <TableHead>Volume</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
+            <div className="relative w-full overflow-auto">
+              <table className="w-full caption-bottom text-sm">
+                <thead className="[&_tr]:border-b">
+                  <tr className="border-b border-border transition-colors hover:bg-muted/50">
+                    <th className="h-10 px-4 text-left align-middle font-medium text-muted-foreground">
+                      Statut
+                    </th>
+                    <th className="h-10 px-4 text-left align-middle font-medium text-muted-foreground">
+                      Volume
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="[&_tr:last-child]:border-0">
                 {transport.summary.statusBreakdown.map((row) => (
-                  <TableRow key={row.status}>
-                    <TableCell>{formatEnumLabel(row.status)}</TableCell>
-                    <TableCell>{row.count}</TableCell>
-                  </TableRow>
+                  <tr
+                    key={row.status}
+                    className="border-b border-border transition-colors hover:bg-muted/50"
+                  >
+                    <td className="p-4 align-middle">{formatEnumLabel(row.status)}</td>
+                    <td className="p-4 align-middle">{row.count}</td>
+                  </tr>
                 ))}
-              </TableBody>
-            </Table>
+                </tbody>
+              </table>
+            </div>
           </CardContent>
         </Card>
 
@@ -116,22 +128,31 @@ export default async function AnalyticsPage() {
             <CardTitle>Breakdown statuts ventes</CardTitle>
           </CardHeader>
           <CardContent>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Statut</TableHead>
-                  <TableHead>Volume</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
+            <div className="relative w-full overflow-auto">
+              <table className="w-full caption-bottom text-sm">
+                <thead className="[&_tr]:border-b">
+                  <tr className="border-b border-border transition-colors hover:bg-muted/50">
+                    <th className="h-10 px-4 text-left align-middle font-medium text-muted-foreground">
+                      Statut
+                    </th>
+                    <th className="h-10 px-4 text-left align-middle font-medium text-muted-foreground">
+                      Volume
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="[&_tr:last-child]:border-0">
                 {sales.summary.statusBreakdown.map((row) => (
-                  <TableRow key={row.status}>
-                    <TableCell>{formatEnumLabel(row.status)}</TableCell>
-                    <TableCell>{row.count}</TableCell>
-                  </TableRow>
+                  <tr
+                    key={row.status}
+                    className="border-b border-border transition-colors hover:bg-muted/50"
+                  >
+                    <td className="p-4 align-middle">{formatEnumLabel(row.status)}</td>
+                    <td className="p-4 align-middle">{row.count}</td>
+                  </tr>
                 ))}
-              </TableBody>
-            </Table>
+                </tbody>
+              </table>
+            </div>
           </CardContent>
         </Card>
 
@@ -141,22 +162,33 @@ export default async function AnalyticsPage() {
             <CardDescription>Répartition par type d’acteur.</CardDescription>
           </CardHeader>
           <CardContent>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Type</TableHead>
-                  <TableHead>Volume</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
+            <div className="relative w-full overflow-auto">
+              <table className="w-full caption-bottom text-sm">
+                <thead className="[&_tr]:border-b">
+                  <tr className="border-b border-border transition-colors hover:bg-muted/50">
+                    <th className="h-10 px-4 text-left align-middle font-medium text-muted-foreground">
+                      Type
+                    </th>
+                    <th className="h-10 px-4 text-left align-middle font-medium text-muted-foreground">
+                      Volume
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="[&_tr:last-child]:border-0">
                 {users.summary.typeBreakdown.map((row) => (
-                  <TableRow key={row.userType}>
-                    <TableCell>{formatEnumLabel(row.userType)}</TableCell>
-                    <TableCell>{row.count}</TableCell>
-                  </TableRow>
+                  <tr
+                    key={row.userType}
+                    className="border-b border-border transition-colors hover:bg-muted/50"
+                  >
+                    <td className="p-4 align-middle">
+                      {formatEnumLabel(row.userType)}
+                    </td>
+                    <td className="p-4 align-middle">{row.count}</td>
+                  </tr>
                 ))}
-              </TableBody>
-            </Table>
+                </tbody>
+              </table>
+            </div>
           </CardContent>
         </Card>
       </div>

@@ -4,12 +4,6 @@ import {
   CardDescription,
   CardHeader,
   CardTitle,
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
 } from "@ba33/ui-web";
 import { MetricCard } from "@/components/metric-card";
 import { PageHeader } from "@/components/page-header";
@@ -56,32 +50,51 @@ export default async function UsersPage() {
             <CardTitle>Utilisateurs récents</CardTitle>
           </CardHeader>
           <CardContent>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Nom</TableHead>
-                  <TableHead>Email</TableHead>
-                  <TableHead>Type</TableHead>
-                  <TableHead>Région</TableHead>
-                  <TableHead>Statut</TableHead>
-                  <TableHead>Dernière connexion</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
+            <div className="relative w-full overflow-auto">
+              <table className="w-full caption-bottom text-sm">
+                <thead className="[&_tr]:border-b">
+                  <tr className="border-b border-border transition-colors hover:bg-muted/50">
+                    <th className="h-10 px-4 text-left align-middle font-medium text-muted-foreground">
+                      Nom
+                    </th>
+                    <th className="h-10 px-4 text-left align-middle font-medium text-muted-foreground">
+                      Email
+                    </th>
+                    <th className="h-10 px-4 text-left align-middle font-medium text-muted-foreground">
+                      Type
+                    </th>
+                    <th className="h-10 px-4 text-left align-middle font-medium text-muted-foreground">
+                      Région
+                    </th>
+                    <th className="h-10 px-4 text-left align-middle font-medium text-muted-foreground">
+                      Statut
+                    </th>
+                    <th className="h-10 px-4 text-left align-middle font-medium text-muted-foreground">
+                      Dernière connexion
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="[&_tr:last-child]:border-0">
                 {data.users.map((user) => (
-                  <TableRow key={user.id}>
-                    <TableCell className="font-medium">{user.fullName}</TableCell>
-                    <TableCell>{user.email}</TableCell>
-                    <TableCell>{formatEnumLabel(user.userType)}</TableCell>
-                    <TableCell>{user.regionName ?? "—"}</TableCell>
-                    <TableCell>
+                  <tr
+                    key={user.id}
+                    className="border-b border-border transition-colors hover:bg-muted/50"
+                  >
+                    <td className="p-4 align-middle font-medium">{user.fullName}</td>
+                    <td className="p-4 align-middle">{user.email}</td>
+                    <td className="p-4 align-middle">
+                      {formatEnumLabel(user.userType)}
+                    </td>
+                    <td className="p-4 align-middle">{user.regionName ?? "—"}</td>
+                    <td className="p-4 align-middle">
                       <StatusBadge value={user.status} />
-                    </TableCell>
-                    <TableCell>{formatDateTime(user.lastLoginAt)}</TableCell>
-                  </TableRow>
+                    </td>
+                    <td className="p-4 align-middle">{formatDateTime(user.lastLoginAt)}</td>
+                  </tr>
                 ))}
-              </TableBody>
-            </Table>
+                </tbody>
+              </table>
+            </div>
           </CardContent>
         </Card>
 

@@ -4,12 +4,6 @@ import {
   CardDescription,
   CardHeader,
   CardTitle,
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
 } from "@ba33/ui-web";
 import { MetricCard } from "@/components/metric-card";
 import { PageHeader } from "@/components/page-header";
@@ -66,34 +60,53 @@ export default async function DepotPage() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Nom</TableHead>
-                <TableHead>Région</TableHead>
-                <TableHead>Responsable</TableHead>
-                <TableHead>Stock</TableHead>
-                <TableHead>Occupation</TableHead>
-                <TableHead>État</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
+          <div className="relative w-full overflow-auto">
+            <table className="w-full caption-bottom text-sm">
+              <thead className="[&_tr]:border-b">
+                <tr className="border-b border-border transition-colors hover:bg-muted/50">
+                  <th className="h-10 px-4 text-left align-middle font-medium text-muted-foreground">
+                    Nom
+                  </th>
+                  <th className="h-10 px-4 text-left align-middle font-medium text-muted-foreground">
+                    Région
+                  </th>
+                  <th className="h-10 px-4 text-left align-middle font-medium text-muted-foreground">
+                    Responsable
+                  </th>
+                  <th className="h-10 px-4 text-left align-middle font-medium text-muted-foreground">
+                    Stock
+                  </th>
+                  <th className="h-10 px-4 text-left align-middle font-medium text-muted-foreground">
+                    Occupation
+                  </th>
+                  <th className="h-10 px-4 text-left align-middle font-medium text-muted-foreground">
+                    État
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="[&_tr:last-child]:border-0">
               {data.depots.map((depot) => (
-                <TableRow key={depot.id}>
-                  <TableCell className="font-medium">{depot.name}</TableCell>
-                  <TableCell>{depot.regionName ?? "—"}</TableCell>
-                  <TableCell>{depot.managerName ?? "—"}</TableCell>
-                  <TableCell>
+                <tr
+                  key={depot.id}
+                  className="border-b border-border transition-colors hover:bg-muted/50"
+                >
+                  <td className="p-4 align-middle font-medium">{depot.name}</td>
+                  <td className="p-4 align-middle">{depot.regionName ?? "—"}</td>
+                  <td className="p-4 align-middle">{depot.managerName ?? "—"}</td>
+                  <td className="p-4 align-middle">
                     {formatWeight(depot.currentWeightKg)} / {formatWeight(depot.capacityKg)}
-                  </TableCell>
-                  <TableCell>{formatPercent(depot.occupancyRate)}</TableCell>
-                  <TableCell>
+                  </td>
+                  <td className="p-4 align-middle">
+                    {formatPercent(depot.occupancyRate)}
+                  </td>
+                  <td className="p-4 align-middle">
                     <StatusBadge value={depot.active ? "active" : "suspended"} />
-                  </TableCell>
-                </TableRow>
+                  </td>
+                </tr>
               ))}
-            </TableBody>
-          </Table>
+              </tbody>
+            </table>
+          </div>
         </CardContent>
       </Card>
 
@@ -103,25 +116,41 @@ export default async function DepotPage() {
             <CardTitle>Réceptions récentes</CardTitle>
           </CardHeader>
           <CardContent>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Dépôt</TableHead>
-                  <TableHead>Lot</TableHead>
-                  <TableHead>Poids</TableHead>
-                  <TableHead>Écart</TableHead>
-                  <TableHead>Reçu le</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
+            <div className="relative w-full overflow-auto">
+              <table className="w-full caption-bottom text-sm">
+                <thead className="[&_tr]:border-b">
+                  <tr className="border-b border-border transition-colors hover:bg-muted/50">
+                    <th className="h-10 px-4 text-left align-middle font-medium text-muted-foreground">
+                      Dépôt
+                    </th>
+                    <th className="h-10 px-4 text-left align-middle font-medium text-muted-foreground">
+                      Lot
+                    </th>
+                    <th className="h-10 px-4 text-left align-middle font-medium text-muted-foreground">
+                      Poids
+                    </th>
+                    <th className="h-10 px-4 text-left align-middle font-medium text-muted-foreground">
+                      Écart
+                    </th>
+                    <th className="h-10 px-4 text-left align-middle font-medium text-muted-foreground">
+                      Reçu le
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="[&_tr:last-child]:border-0">
                 {data.recentReceptions.map((reception) => (
-                  <TableRow key={reception.id}>
-                    <TableCell>{reception.depotName ?? "—"}</TableCell>
-                    <TableCell className="font-mono text-xs">
+                  <tr
+                    key={reception.id}
+                    className="border-b border-border transition-colors hover:bg-muted/50"
+                  >
+                    <td className="p-4 align-middle">{reception.depotName ?? "—"}</td>
+                    <td className="p-4 align-middle font-mono text-xs">
                       {reception.lotQrCode ?? "—"}
-                    </TableCell>
-                    <TableCell>{formatWeight(reception.actualWeightKg)}</TableCell>
-                    <TableCell>
+                    </td>
+                    <td className="p-4 align-middle">
+                      {formatWeight(reception.actualWeightKg)}
+                    </td>
+                    <td className="p-4 align-middle">
                       <span
                         className={
                           reception.toleranceExceeded ? "text-destructive" : "text-muted-foreground"
@@ -129,12 +158,15 @@ export default async function DepotPage() {
                       >
                         {formatWeight(reception.discrepancyKg)}
                       </span>
-                    </TableCell>
-                    <TableCell>{formatDateTime(reception.receivedAt)}</TableCell>
-                  </TableRow>
+                    </td>
+                    <td className="p-4 align-middle">
+                      {formatDateTime(reception.receivedAt)}
+                    </td>
+                  </tr>
                 ))}
-              </TableBody>
-            </Table>
+                </tbody>
+              </table>
+            </div>
           </CardContent>
         </Card>
 
@@ -143,30 +175,45 @@ export default async function DepotPage() {
             <CardTitle>Alertes A1</CardTitle>
           </CardHeader>
           <CardContent>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Dépôt</TableHead>
-                  <TableHead>Sévérité</TableHead>
-                  <TableHead>Statut</TableHead>
-                  <TableHead>Déclenchée</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
+            <div className="relative w-full overflow-auto">
+              <table className="w-full caption-bottom text-sm">
+                <thead className="[&_tr]:border-b">
+                  <tr className="border-b border-border transition-colors hover:bg-muted/50">
+                    <th className="h-10 px-4 text-left align-middle font-medium text-muted-foreground">
+                      Dépôt
+                    </th>
+                    <th className="h-10 px-4 text-left align-middle font-medium text-muted-foreground">
+                      Sévérité
+                    </th>
+                    <th className="h-10 px-4 text-left align-middle font-medium text-muted-foreground">
+                      Statut
+                    </th>
+                    <th className="h-10 px-4 text-left align-middle font-medium text-muted-foreground">
+                      Déclenchée
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="[&_tr:last-child]:border-0">
                 {data.recentAlerts.map((alert) => (
-                  <TableRow key={alert.id}>
-                    <TableCell>{alert.depotName ?? "—"}</TableCell>
-                    <TableCell>
+                  <tr
+                    key={alert.id}
+                    className="border-b border-border transition-colors hover:bg-muted/50"
+                  >
+                    <td className="p-4 align-middle">{alert.depotName ?? "—"}</td>
+                    <td className="p-4 align-middle">
                       <StatusBadge value={alert.severity} />
-                    </TableCell>
-                    <TableCell>
+                    </td>
+                    <td className="p-4 align-middle">
                       <StatusBadge value={alert.status} />
-                    </TableCell>
-                    <TableCell>{formatDateTime(alert.firedAt)}</TableCell>
-                  </TableRow>
+                    </td>
+                    <td className="p-4 align-middle">
+                      {formatDateTime(alert.firedAt)}
+                    </td>
+                  </tr>
                 ))}
-              </TableBody>
-            </Table>
+                </tbody>
+              </table>
+            </div>
           </CardContent>
         </Card>
       </div>

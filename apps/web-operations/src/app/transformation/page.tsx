@@ -4,12 +4,6 @@ import {
   CardDescription,
   CardHeader,
   CardTitle,
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
 } from "@ba33/ui-web";
 import { MetricCard } from "@/components/metric-card";
 import { PageHeader } from "@/components/page-header";
@@ -63,30 +57,47 @@ export default async function TransformationPage() {
             <CardTitle>Runs actifs</CardTitle>
           </CardHeader>
           <CardContent>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Site</TableHead>
-                  <TableHead>Entrée</TableHead>
-                  <TableHead>Sortie</TableHead>
-                  <TableHead>Opérateur</TableHead>
-                  <TableHead>Démarré</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
+            <div className="relative w-full overflow-auto">
+              <table className="w-full caption-bottom text-sm">
+                <thead className="[&_tr]:border-b">
+                  <tr className="border-b border-border transition-colors hover:bg-muted/50">
+                    <th className="h-10 px-4 text-left align-middle font-medium text-muted-foreground">
+                      Site
+                    </th>
+                    <th className="h-10 px-4 text-left align-middle font-medium text-muted-foreground">
+                      Entrée
+                    </th>
+                    <th className="h-10 px-4 text-left align-middle font-medium text-muted-foreground">
+                      Sortie
+                    </th>
+                    <th className="h-10 px-4 text-left align-middle font-medium text-muted-foreground">
+                      Opérateur
+                    </th>
+                    <th className="h-10 px-4 text-left align-middle font-medium text-muted-foreground">
+                      Démarré
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="[&_tr:last-child]:border-0">
                 {data.activeRuns.map((run) => (
-                  <TableRow key={run.id}>
-                    <TableCell>{run.transformerName ?? "—"}</TableCell>
-                    <TableCell>{formatWeight(run.inputWeightKg)}</TableCell>
-                    <TableCell>
+                  <tr
+                    key={run.id}
+                    className="border-b border-border transition-colors hover:bg-muted/50"
+                  >
+                    <td className="p-4 align-middle">{run.transformerName ?? "—"}</td>
+                    <td className="p-4 align-middle">
+                      {formatWeight(run.inputWeightKg)}
+                    </td>
+                    <td className="p-4 align-middle">
                       {run.outputWeightKg ? formatWeight(run.outputWeightKg) : "—"}
-                    </TableCell>
-                    <TableCell>{run.operatorName ?? "—"}</TableCell>
-                    <TableCell>{formatDateTime(run.startedAt)}</TableCell>
-                  </TableRow>
+                    </td>
+                    <td className="p-4 align-middle">{run.operatorName ?? "—"}</td>
+                    <td className="p-4 align-middle">{formatDateTime(run.startedAt)}</td>
+                  </tr>
                 ))}
-              </TableBody>
-            </Table>
+                </tbody>
+              </table>
+            </div>
           </CardContent>
         </Card>
 
@@ -98,32 +109,47 @@ export default async function TransformationPage() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Code</TableHead>
-                  <TableHead>Piste</TableHead>
-                  <TableHead>Type</TableHead>
-                  <TableHead>Poids</TableHead>
-                  <TableHead>Statut</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
+            <div className="relative w-full overflow-auto">
+              <table className="w-full caption-bottom text-sm">
+                <thead className="[&_tr]:border-b">
+                  <tr className="border-b border-border transition-colors hover:bg-muted/50">
+                    <th className="h-10 px-4 text-left align-middle font-medium text-muted-foreground">
+                      Code
+                    </th>
+                    <th className="h-10 px-4 text-left align-middle font-medium text-muted-foreground">
+                      Piste
+                    </th>
+                    <th className="h-10 px-4 text-left align-middle font-medium text-muted-foreground">
+                      Type
+                    </th>
+                    <th className="h-10 px-4 text-left align-middle font-medium text-muted-foreground">
+                      Poids
+                    </th>
+                    <th className="h-10 px-4 text-left align-middle font-medium text-muted-foreground">
+                      Statut
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="[&_tr:last-child]:border-0">
                 {data.recentProducts.map((product) => (
-                  <TableRow key={product.id}>
-                    <TableCell className="font-mono text-xs">
+                  <tr
+                    key={product.id}
+                    className="border-b border-border transition-colors hover:bg-muted/50"
+                  >
+                    <td className="p-4 align-middle font-mono text-xs">
                       {product.productCode}
-                    </TableCell>
-                    <TableCell>{formatEnumLabel(product.track)}</TableCell>
-                    <TableCell>{product.productTypeCode}</TableCell>
-                    <TableCell>{formatWeight(product.weightKg)}</TableCell>
-                    <TableCell>
+                    </td>
+                    <td className="p-4 align-middle">{formatEnumLabel(product.track)}</td>
+                    <td className="p-4 align-middle">{product.productTypeCode}</td>
+                    <td className="p-4 align-middle">{formatWeight(product.weightKg)}</td>
+                    <td className="p-4 align-middle">
                       <StatusBadge value={product.status} />
-                    </TableCell>
-                  </TableRow>
+                    </td>
+                  </tr>
                 ))}
-              </TableBody>
-            </Table>
+                </tbody>
+              </table>
+            </div>
           </CardContent>
         </Card>
       </div>
