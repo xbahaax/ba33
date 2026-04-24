@@ -10,6 +10,7 @@ import { EventsService } from '../events/events.service';
 import { RulesService } from '../rules/rules.service';
 import { NotificationsService } from '../notifications/notifications.service';
 import { LotsService } from '../lots/lots.service';
+import { DepotService } from '../depot/depot.service';
 import { v4 as uuid } from 'uuid';
 
 @Injectable()
@@ -22,6 +23,7 @@ export class TransportService {
     private readonly rulesService: RulesService,
     private readonly notificationsService: NotificationsService,
     private readonly lotsService: LotsService,
+    private readonly depotService: DepotService,
   ) {}
 
   // ── Jobs ──────────────────────────────────────────────────
@@ -296,6 +298,15 @@ export class TransportService {
       job.destinationType,
     );
 
+    // Update lot status to received_depot (mirrors loadLot → in_transit)
+    if (job.destinationType === 'depot') {
+      await this.lotsService.updateLotStatus(
+        lotId,
+        'received_depot',
+        job.transporterId ?? 'system',
+      );
+    }
+
     await this.eventsService.emit({
       eventType: 'transport.lot.delivered',
       aggregateType: 'transport_job',
@@ -355,6 +366,30 @@ export class TransportService {
             lane: job.lane,
           },
         });
+      }
+    }
+
+    // Auto-receive all delivered lots at the destination depot
+    if (job.destinationType === 'depot') {
+      const lots = await this.transportRepository.findJobLots(jobId);
+      for (const lot of lots) {
+        if (lot.deliveredWeightKg) {
+          try {
+            await this.depotService.receiveLot(
+              {
+                depotId: job.destinationId,
+                lotId: lot.lotId,
+                actualWeightKg: parseFloat(lot.deliveredWeightKg),
+              },
+              job.transporterId ?? 'system',
+              'transporter',
+            );
+          } catch (e) {
+            this.logger.warn(
+              `Auto depot receive failed for lot ${lot.lotId} in job ${jobId}: ${e}`,
+            );
+          }
+        }
       }
     }
 

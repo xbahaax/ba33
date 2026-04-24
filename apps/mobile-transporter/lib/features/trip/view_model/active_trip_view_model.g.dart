@@ -6,7 +6,7 @@ part of 'active_trip_view_model.dart';
 // RiverpodGenerator
 // **************************************************************************
 
-String _$activeTripHash() => r'eff77af8425f748af8725d8deb51a46032194531';
+String _$activeTripHash() => r'7eaa93b3424a7a1e10aa92361ac9e0e0c49d16ac';
 
 /// See also [ActiveTrip].
 @ProviderFor(ActiveTrip)

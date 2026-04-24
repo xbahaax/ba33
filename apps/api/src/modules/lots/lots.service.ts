@@ -126,7 +126,7 @@ export class LotsService {
         source: data.initialWeigh.source,
         recordedBy: actorId,
         recordedAt: now,
-        eventId: event.id,
+        eventId: event?.id,
       });
     }
 
@@ -168,7 +168,7 @@ export class LotsService {
       throw new NotFoundException(`Lot ${id} not found`);
     }
 
-    const updated = await this.lotsRepository.update(id, { status: newStatus });
+    const updated = await this.lotsRepository.update(id, { status: newStatus as any });
 
     // Emit status change event
     const now = new Date();
@@ -451,6 +451,36 @@ export class LotsService {
     );
 
     return { parents, merged: mergedLot };
+  }
+
+  // ── Summary ──────────────────────────────────────────────
+
+  async getSummary() {
+    return this.lotsRepository.getSummary();
+  }
+
+  // ── Update Lot ──────────────────────────────────────────
+
+  async updateLot(
+    id: string,
+    data: {
+      actualWeightKg?: string;
+      stateQuick?: string;
+      urgency?: string;
+      coldChainTempC?: string;
+      gpsLat?: string;
+      gpsLng?: string;
+      isUrgent?: boolean;
+      currentLocationId?: string;
+      currentLocationType?: string;
+      notes?: string;
+    },
+  ) {
+    const lot = await this.lotsRepository.findById(id);
+    if (!lot) {
+      throw new NotFoundException(`Lot ${id} not found`);
+    }
+    return this.lotsRepository.update(id, data as any);
   }
 
   // ── Lineage Query ─────────────────────────────────────────

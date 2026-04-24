@@ -19,7 +19,8 @@ class Auth extends _$Auth {
       final accessToken = tokens['accessToken'] as String;
       apiClient.setAccessToken(accessToken);
 
-      final profile = await authSvc.me();
+      final meResponse = await authSvc.me();
+      final profile = meResponse['user'] as Map<String, dynamic>? ?? meResponse;
       state = User(
         id: profile['id'] as String,
         phone: profile['phone'] as String? ?? '',

@@ -51,12 +51,11 @@ class LotRepository extends _$LotRepository {
       final lotsService = ref.read(lotsServiceProvider);
       await lotsService.createLot({
         'sourceId': lot.sourceId ?? lot.collectorId,
-        'sourceType': lot.sourceType.name,
+        'sourceType': _sourceTypeToApi(lot.sourceType),
         'collectorId': lot.collectorId,
         'qrCode': lot.id,
         'declaredWeightKg': lot.weight.toStringAsFixed(2),
         'stateQuick': _woolStateToApi(lot.woolState),
-        'status': 'collected',
         'isUrgent': lot.isUrgent,
         'gpsLat': lot.latitude.toStringAsFixed(6),
         'gpsLng': lot.longitude.toStringAsFixed(6),
@@ -123,6 +122,17 @@ class LotRepository extends _$LotRepository {
         return LotStatus.receivedDepot;
       default:
         return LotStatus.collected;
+    }
+  }
+
+  static String _sourceTypeToApi(SourceType type) {
+    switch (type) {
+      case SourceType.c1:
+        return 'c1_shepherd';
+      case SourceType.c2:
+        return 'c2_slaughterhouse';
+      case SourceType.c3:
+        return 'c3_aggregator';
     }
   }
 

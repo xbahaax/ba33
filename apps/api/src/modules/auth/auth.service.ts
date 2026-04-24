@@ -56,25 +56,62 @@ export class AuthService {
       throw new BadRequestException('Email or phone login is required.');
     }
 
-    const user = input.email
+    // Try buyer first
+    const buyerUser = input.email
       ? await this.authRepository.findBuyerByEmail(input.email)
       : input.phone
         ? await this.authRepository.findBuyerByPhone(input.phone)
         : undefined;
 
-    if (!user) {
+    if (buyerUser) {
+      const isValid = await compare(input.password, buyerUser.passwordHash);
+      if (!isValid) {
+        throw new UnauthorizedException('Invalid credentials');
+      }
+      await this.authRepository.touchLastLogin(buyerUser.id);
+      const refreshedUser = (await this.authRepository.findBuyerById(buyerUser.id)) ?? buyerUser;
+      return this.buildBuyerAuthResponse(this.authRepository.toSessionUser(refreshedUser));
+    }
+
+    // Fallback to operations user (collector, shepherd, transporter, etc.)
+    const opsUser = input.email
+      ? await this.authRepository.findOperationsUserByEmail(input.email)
+      : input.phone
+        ? await this.authRepository.findOperationsUserByPhone(input.phone)
+        : undefined;
+
+    if (!opsUser) {
       throw new NotFoundException('The current user no longer exists.');
     }
 
-    const isValid = await compare(input.password, user.passwordHash);
-
+    const isValid = await compare(input.password, opsUser.passwordHash);
     if (!isValid) {
       throw new UnauthorizedException('Invalid credentials');
     }
 
-    await this.authRepository.touchLastLogin(user.id);
-    const refreshedUser = (await this.authRepository.findBuyerById(user.id)) ?? user;
-    return this.buildBuyerAuthResponse(this.authRepository.toSessionUser(refreshedUser));
+    await this.authRepository.touchLastLogin(opsUser.id);
+    const refreshedUser = (await this.authRepository.findOperationsUserById(opsUser.id)) ?? opsUser;
+    const session = await this.authRepository.toOperationsSession(refreshedUser);
+
+    return {
+      accessToken: await this.signAccessToken({
+        email: session.user.email,
+        fullName: session.user.fullName,
+        id: session.user.id,
+        permissions: session.permissions,
+        regionId: session.user.regionId,
+        userType: session.user.userType,
+      }),
+      tokenType: 'Bearer',
+      expiresInSeconds: AuthService.TOKEN_TTL_SECONDS,
+      user: {
+        id: session.user.id,
+        email: session.user.email,
+        fullName: session.user.fullName,
+        userType: session.user.userType,
+        profile: null,
+      },
+    };
   }
 
   async register(input: RegisterInput): Promise<AuthResponse> {
@@ -172,6 +209,44 @@ export class AuthService {
     }
 
     return updated;
+  }
+
+  async refreshToken(refreshToken: string): Promise<{ accessToken: string; refreshToken: string }> {
+    try {
+      const payload = await this.jwtService.verifyAsync(refreshToken);
+      const userId = payload.sub;
+
+      // Re-issue tokens for the user
+      const opsUser = await this.authRepository.findOperationsUserById(userId);
+      if (opsUser) {
+        const session = await this.authRepository.toOperationsSession(opsUser);
+        const accessToken = await this.signAccessToken({
+          email: session.user.email,
+          fullName: session.user.fullName,
+          id: session.user.id,
+          permissions: session.permissions,
+          regionId: session.user.regionId,
+          userType: session.user.userType,
+        });
+        return { accessToken, refreshToken };
+      }
+
+      const buyerUser = await this.authRepository.findBuyerById(userId);
+      if (buyerUser) {
+        const sessionUser = this.authRepository.toSessionUser(buyerUser);
+        const accessToken = await this.signAccessToken({
+          email: sessionUser.email,
+          fullName: sessionUser.fullName,
+          id: sessionUser.id,
+          userType: sessionUser.userType,
+        });
+        return { accessToken, refreshToken };
+      }
+
+      throw new UnauthorizedException('User not found');
+    } catch {
+      throw new UnauthorizedException('Invalid or expired refresh token');
+    }
   }
 
   private async signAccessToken(input: {

@@ -16,6 +16,13 @@ class CollectionService {
     return response.data as Map<String, dynamic>;
   }
 
+  Future<Map<String, dynamic>> declareWoolOnBehalf(
+      Map<String, dynamic> data) async {
+    final response = await _client.dio
+        .post('/collection/pre-lots/declare-on-behalf', data: data);
+    return response.data as Map<String, dynamic>;
+  }
+
   Future<List<dynamic>> listPreLots(
       {String? status,
       String? assignedCollectorId,

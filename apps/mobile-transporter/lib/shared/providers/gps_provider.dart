@@ -1,9 +1,11 @@
+import 'dart:async';
 import 'dart:math' as math;
 
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../database/app_database.dart';
 import '../services/gps_service.dart';
+import 'api_provider.dart';
 import 'database_provider.dart';
 import '../../features/jobs/model/transport_job.dart';
 
@@ -65,15 +67,21 @@ class GpsTrackerState {
 @Riverpod(keepAlive: true)
 class GpsTracker extends _$GpsTracker {
   late final GpsService _service;
+  Timer? _syncTimer;
+  String? _currentJobId;
 
   @override
   GpsTrackerState build() {
     _service = GpsService(ref.read(appDatabaseProvider));
-    ref.onDispose(_service.stopTracking);
+    ref.onDispose(() {
+      _syncTimer?.cancel();
+      _service.stopTracking();
+    });
     return const GpsTrackerState();
   }
 
   Future<void> startTracking(String jobId) async {
+    _currentJobId = jobId;
     final started = await _service.startTracking(jobId, onUpdate: (point) {
       final newCount = state.pointsRecorded + 1;
       state = state.copyWith(
@@ -93,11 +101,52 @@ class GpsTracker extends _$GpsTracker {
         pointsRecorded: count,
       );
     }
+
+    // Start periodic GPS sync to server (every 30 seconds)
+    _syncTimer?.cancel();
+    _syncTimer = Timer.periodic(const Duration(seconds: 30), (_) {
+      _syncGpsToServer(jobId);
+    });
   }
 
   void stopTracking() {
+    _syncTimer?.cancel();
+    _syncTimer = null;
     _service.stopTracking();
     state = state.copyWith(isTracking: false);
+
+    // Final sync attempt
+    if (_currentJobId != null) {
+      _syncGpsToServer(_currentJobId!);
+    }
+  }
+
+  Future<void> _syncGpsToServer(String jobId) async {
+    try {
+      final db = ref.read(appDatabaseProvider);
+      final transportSvc = ref.read(transportServiceProvider);
+      final unsynced = await db.getUnsyncedGpsRecords(jobId);
+      if (unsynced.isEmpty) return;
+
+      final syncedIds = <int>[];
+      for (final record in unsynced) {
+        try {
+          await transportSvc.addGpsPoint(jobId, {
+            'lat': record.lat.toString(),
+            'lng': record.lng.toString(),
+            'recordedAt': record.recordedAt.toIso8601String(),
+          });
+          syncedIds.add(record.id);
+        } catch (_) {
+          break; // Stop on first failure, retry next cycle
+        }
+      }
+      if (syncedIds.isNotEmpty) {
+        await db.markGpsRecordsSynced(syncedIds);
+      }
+    } catch (_) {
+      // Sync failure is non-blocking
+    }
   }
 
   Future<List<GpsPoint>> getPoints(String jobId) =>

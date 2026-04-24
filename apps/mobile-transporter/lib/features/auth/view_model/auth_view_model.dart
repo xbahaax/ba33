@@ -31,7 +31,8 @@ class AuthState extends _$AuthState {
       final tokens = await authSvc.loginWithPhone(phone, password);
       apiClient.setAccessToken(tokens['accessToken'] as String);
 
-      final profile = await authSvc.me();
+      final meResponse = await authSvc.me();
+      final profile = meResponse['user'] as Map<String, dynamic>? ?? meResponse;
       state = AuthInfo(
         isAuthenticated: true,
         userId: profile['id'] as String?,

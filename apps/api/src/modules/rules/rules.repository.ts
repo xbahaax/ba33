@@ -52,6 +52,18 @@ export class RulesRepository {
     };
   }
 
+  async getActiveRuleValue<T = unknown>(ruleKey: string): Promise<T | null> {
+    const [row] = await this.db
+      .select({ value: rulesConfig.value })
+      .from(rulesConfig)
+      .where(
+        sql`${rulesConfig.ruleKey} = ${ruleKey} AND ${rulesConfig.effectiveTo} IS NULL`,
+      )
+      .orderBy(desc(rulesConfig.effectiveFrom))
+      .limit(1);
+    return (row?.value as T) ?? null;
+  }
+
   async versionRule(ruleId: string, input: UpdateRuleDto, actorId: string) {
     const [existingRule] = await this.db
       .select({

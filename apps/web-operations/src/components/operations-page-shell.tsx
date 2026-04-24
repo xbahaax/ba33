@@ -96,7 +96,7 @@ export function OperationsPageShell({
   }, [error, loading, session, sessionLoading, updatedAt]);
 
   return (
-    <div className="min-h-screen bg-[radial-gradient(circle_at_top_left,rgba(160,174,192,0.18),transparent_30%),linear-gradient(180deg,rgba(255,255,255,0.96),rgba(244,247,250,0.96))]">
+    <div className="min-h-screen bg-background">
       <div className="mx-auto flex w-full max-w-[1600px] flex-col gap-6 p-4 sm:p-6 lg:p-8">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
           <PageHeader title={title} description={description} />

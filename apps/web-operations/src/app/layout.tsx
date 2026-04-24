@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import { Inter, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
-import { AppSidebar } from "@/components/app-sidebar";
 import { SessionProvider } from "@/components/session-provider";
 
 const inter = Inter({
@@ -27,10 +26,7 @@ export default function RootLayout({
   return (
     <html lang="fr" className={`${inter.variable} ${jetbrainsMono.variable}`}>
       <body className="min-h-screen bg-background text-foreground">
-        <SessionProvider>
-          <AppSidebar />
-          <main className="min-w-0 lg:ml-72">{children}</main>
-        </SessionProvider>
+        <SessionProvider>{children}</SessionProvider>
       </body>
     </html>
   );

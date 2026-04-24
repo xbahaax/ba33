@@ -13,4 +13,8 @@ export class RulesService {
   versionRule(ruleId: string, input: UpdateRuleDto, actorId: string) {
     return this.rulesRepository.versionRule(ruleId, input, actorId);
   }
+
+  async getRuleValue<T = unknown>(ruleKey: string): Promise<T | null> {
+    return this.rulesRepository.getActiveRuleValue<T>(ruleKey);
+  }
 }

@@ -1,6 +1,7 @@
 import 'package:ba33_domain/ba33_domain.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
+import '../../../shared/providers/auth_provider.dart';
 import '../../../shared/providers/id_generator_provider.dart';
 import '../../../shared/providers/lot_repository_provider.dart';
 
@@ -96,7 +97,7 @@ class LotCreateViewModel extends _$LotCreateViewModel {
 
     final lot = Lot(
       id: lotId,
-      collectorId: 'COL-001',
+      collectorId: ref.read(authProvider)?.id ?? 'COL-001',
       sourceType: state.sourceType,
       weight: state.weight,
       woolState: state.woolState,

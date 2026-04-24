@@ -29,6 +29,7 @@ import { CreateRouteDto } from './dto/create-route.dto';
 import { UpdateRouteStopDto } from './dto/update-route-stop.dto';
 import { IssueBookletDto } from './dto/issue-booklet.dto';
 import { DeclareWoolDto } from './dto/declare-wool.dto';
+import { DeclareWoolOnBehalfDto } from './dto/declare-wool-on-behalf.dto';
 
 @ApiTags('collection')
 @ApiBearerAuth()
@@ -45,6 +46,15 @@ export class CollectionController {
   })
   async declareWool(@Body() dto: DeclareWoolDto) {
     return this.collectionService.declareWool(dto);
+  }
+
+  @Post('pre-lots/declare-on-behalf')
+  @ApiOperation({
+    summary:
+      'Transporter/collector declares wool on behalf of a farmer — creates source + pre-lot',
+  })
+  async declareWoolOnBehalf(@Body() dto: DeclareWoolOnBehalfDto) {
+    return this.collectionService.declareWoolOnBehalf(dto);
   }
 
   @Post('pre-lots')

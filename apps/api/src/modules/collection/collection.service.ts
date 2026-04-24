@@ -65,6 +65,75 @@ export class CollectionService {
     });
   }
 
+  // ── On-Behalf Declaration (transporter / collector) ────
+
+  async declareWoolOnBehalf(data: {
+    farmerName: string;
+    farmerPhone?: string;
+    estimatedWeightKg: string;
+    estimatedRange?: string;
+    latitude?: string;
+    longitude?: string;
+    notes?: string;
+    surnom?: string;
+    mazraa?: string;
+    regionId?: string;
+    photoId?: string;
+    declaringUserId: string;
+  }) {
+    // Resolve regionId from declaring user if not provided
+    let regionId = data.regionId;
+    if (!regionId) {
+      const user = await this.collectionRepository.findUserById(
+        data.declaringUserId,
+      );
+      regionId = user?.regionId ?? undefined;
+    }
+    if (!regionId) {
+      throw new BadRequestException(
+        'regionId is required — provide it or ensure the declaring user has one',
+      );
+    }
+
+    // Create a source record for this farmer
+    const sourceId = uuid();
+    await this.collectionRepository.createSource({
+      id: sourceId,
+      sourceType: 'c1_shepherd',
+      name: data.farmerName,
+      contactPhone: data.farmerPhone,
+      regionId,
+      latitude: data.latitude,
+      longitude: data.longitude,
+      address: data.mazraa,
+      status: 'active',
+      registeredBy: data.declaringUserId,
+    });
+
+    // Build notes
+    const notesParts = [
+      data.surnom ? `surnom: ${data.surnom}` : null,
+      data.mazraa ? `mazraa: ${data.mazraa}` : null,
+      data.farmerPhone ? `tel: ${data.farmerPhone}` : null,
+      data.photoId ? `photoId: ${data.photoId}` : null,
+      data.notes,
+    ]
+      .filter(Boolean)
+      .join(' | ') || undefined;
+
+    // Create pre-lot (which auto-dispatches transport job)
+    return this.createPreLot({
+      sourceId,
+      estimatedWeightKg: data.estimatedWeightKg,
+      estimatedRange: data.estimatedRange,
+      locationLat: data.latitude,
+      locationLng: data.longitude,
+      regionId,
+      notes: notesParts,
+      voiceNoteId: undefined,
+    });
+  }
+
   private async ensureSourceForUser(
     userId: string,
     details: {

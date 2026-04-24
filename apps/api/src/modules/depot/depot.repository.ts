@@ -28,6 +28,14 @@ import { CreateDepotReceptionDto } from './dto/create-depot-reception.dto';
 export class DepotRepository {
   constructor(@Inject(DATABASE_TOKEN) private readonly db: Database) {}
 
+  async findAllDepots() {
+    return this.db
+      .select()
+      .from(depots)
+      .where(eq(depots.active, true))
+      .orderBy(depots.name);
+  }
+
   async getOverview() {
     const [
       depotRows,

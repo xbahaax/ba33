@@ -16,3 +16,23 @@ enum WeightCategory {
   /// Custom weight — shepherd enters exact kg manually
   custom,
 }
+
+extension WeightCategoryEstimate on WeightCategory {
+  /// Midpoint estimate in kg as a string (for API submission).
+  String get estimatedKg => switch (this) {
+        WeightCategory.oneSheep => '2.5',
+        WeightCategory.oneBag => '5',
+        WeightCategory.smallPile => '15',
+        WeightCategory.largePile => '50',
+        WeightCategory.custom => '0',
+      };
+
+  /// Human-readable range string.
+  String get estimatedRange => switch (this) {
+        WeightCategory.oneSheep => '2-3',
+        WeightCategory.oneBag => '4-6',
+        WeightCategory.smallPile => '10-20',
+        WeightCategory.largePile => '50+',
+        WeightCategory.custom => 'custom',
+      };
+}

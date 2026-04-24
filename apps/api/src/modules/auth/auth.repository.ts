@@ -136,6 +136,21 @@ export class AuthRepository {
     return rows[0]?.buyer ? this.toBuyerAuthUser(rows[0].user, rows[0].buyer) : undefined;
   }
 
+  async findOperationsUserByPhone(phone: string): Promise<OperationsAuthUser | undefined> {
+    const rows = await this.db
+      .select({
+        user: users,
+        regionName: regions.name,
+      })
+      .from(users)
+      .leftJoin(regions, eq(users.regionId, regions.id))
+      .where(eq(users.phone, phone))
+      .limit(1);
+
+    const user = rows[0] ? this.toOperationsAuthUser(rows[0].user, rows[0].regionName) : undefined;
+    return user ?? undefined;
+  }
+
   async findOperationsUserByEmail(email: string): Promise<OperationsAuthUser | undefined> {
     const rows = await this.db
       .select({

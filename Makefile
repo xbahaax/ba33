@@ -104,6 +104,11 @@ collector:
 	$(call log,"Launching collector app → $(API_URL)")
 	@cd apps/mobile-collector && flutter run -d $(SIMULATOR_ID) --dart-define=API_URL=$(API_URL)
 
+.PHONY: shepherd
+shepherd:
+	$(call log,"Launching shepherd app → $(API_URL)")
+	@cd apps/mobile-shepherd && flutter run -d $(SIMULATOR_ID) --dart-define=API_URL=$(API_URL)
+
 .PHONY: transporter
 transporter:
 	$(call log,"Launching transporter app → $(API_URL)")

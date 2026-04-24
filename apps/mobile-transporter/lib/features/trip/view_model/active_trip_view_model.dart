@@ -2,7 +2,9 @@ import 'dart:typed_data';
 
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
+import '../../auth/view_model/auth_view_model.dart';
 import '../../jobs/model/transport_job.dart';
+import '../../../shared/providers/api_provider.dart';
 import '../../../shared/providers/database_provider.dart';
 import '../../../shared/providers/gps_provider.dart';
 import '../../../shared/providers/sync_provider.dart';
@@ -43,20 +45,31 @@ class ActiveTrip extends _$ActiveTrip {
     ).copyWith(pendingSyncCount: pendingCount);
   }
 
-  // ── Mutations ─────────────────────────────────────────
+  // ── Mutations (API-first, event queue as offline fallback) ──
 
-  void startJob(TransportJob job) {
+  Future<void> startJob(TransportJob job) async {
     final newState = ActiveTripState(
       job: _cloneJob(job),
       phase: TripPhase.loading,
     );
     state = newState;
     _persist(newState);
-    _queueEvent('job.accepted', job.id, {'lane': job.lane.name});
+
+    try {
+      final transportSvc = ref.read(transportServiceProvider);
+      final auth = ref.read(authStateProvider);
+      await transportSvc.acceptJob(
+        job.id,
+        {'transporterId': auth.userId ?? ''},
+      );
+    } catch (_) {
+      await _queueEvent('job.accepted', job.id, {'lane': job.lane.name});
+    }
   }
 
-  void loadLot(String qrCode, double weight) {
+  Future<void> loadLot(String qrCode, double weight) async {
     if (state == null) return;
+    final lot = state!.job.lots.firstWhere((l) => l.qrCode == qrCode);
     final lots = state!.job.lots
         .map((l) => l.qrCode == qrCode
             ? l.copyWith(loadedWeight: weight, isLoaded: true)
@@ -65,40 +78,57 @@ class ActiveTrip extends _$ActiveTrip {
     final newState = state!.copyWith(job: _cloneJob(state!.job, lots: lots));
     state = newState;
     _persist(newState);
-    _queueEvent('lot.weigh_in', state!.job.id, {
-      'qrCode': qrCode,
-      'weight': weight,
-      'recordedAt': DateTime.now().toIso8601String(),
-    });
+
+    try {
+      final transportSvc = ref.read(transportServiceProvider);
+      await transportSvc.loadLot(
+        state!.job.id,
+        lot.id,
+        {'weight': weight.toString()},
+      );
+    } catch (_) {
+      await _queueEvent('lot.weigh_in', state!.job.id, {
+        'qrCode': qrCode,
+        'lotId': lot.id,
+        'weight': weight,
+        'recordedAt': DateTime.now().toIso8601String(),
+      });
+    }
   }
 
-  void startTrip() {
+  Future<void> startTrip() async {
     if (state == null) return;
     final newState = state!.copyWith(phase: TripPhase.inTransit);
     state = newState;
     _persist(newState);
-    _queueEvent('trip.started', state!.job.id, {
-      'totalLoadedWeight': state!.job.totalLoadedWeight,
-    });
+
+    try {
+      await ref.read(transportServiceProvider).startJob(state!.job.id);
+    } catch (_) {
+      await _queueEvent('trip.started', state!.job.id, {
+        'totalLoadedWeight': state!.job.totalLoadedWeight,
+      });
+    }
+
     // Start GPS tracking
     ref.read(gpsTrackerProvider.notifier).startTracking(state!.job.id);
   }
 
-  void startDelivering() {
+  Future<void> startDelivering() async {
     if (state == null) return;
     final newState = state!.copyWith(phase: TripPhase.delivering);
     state = newState;
     _persist(newState);
     // Stop GPS when arrived
     ref.read(gpsTrackerProvider.notifier).stopTracking();
-    _queueEvent('trip.arrived', state!.job.id, {
-      'gpsPointsRecorded':
-          ref.read(gpsTrackerProvider).pointsRecorded,
+    await _queueEvent('trip.arrived', state!.job.id, {
+      'gpsPointsRecorded': ref.read(gpsTrackerProvider).pointsRecorded,
     });
   }
 
-  void deliverLot(String qrCode, double weight) {
+  Future<void> deliverLot(String qrCode, double weight) async {
     if (state == null) return;
+    final lot = state!.job.lots.firstWhere((l) => l.qrCode == qrCode);
     final lots = state!.job.lots
         .map((l) => l.qrCode == qrCode
             ? l.copyWith(deliveredWeight: weight, isDelivered: true)
@@ -107,14 +137,25 @@ class ActiveTrip extends _$ActiveTrip {
     final newState = state!.copyWith(job: _cloneJob(state!.job, lots: lots));
     state = newState;
     _persist(newState);
-    _queueEvent('lot.weigh_out', state!.job.id, {
-      'qrCode': qrCode,
-      'weight': weight,
-      'recordedAt': DateTime.now().toIso8601String(),
-    });
+
+    try {
+      final transportSvc = ref.read(transportServiceProvider);
+      await transportSvc.deliverLot(
+        state!.job.id,
+        lot.id,
+        {'weight': weight.toString()},
+      );
+    } catch (_) {
+      await _queueEvent('lot.weigh_out', state!.job.id, {
+        'qrCode': qrCode,
+        'lotId': lot.id,
+        'weight': weight,
+        'recordedAt': DateTime.now().toIso8601String(),
+      });
+    }
   }
 
-  void logTemperature(double temp) {
+  Future<void> logTemperature(double temp) async {
     if (state == null) return;
     final readings = [
       ...state!.temperatureReadings,
@@ -123,7 +164,7 @@ class ActiveTrip extends _$ActiveTrip {
     final newState = state!.copyWith(temperatureReadings: readings);
     state = newState;
     _persist(newState);
-    _queueEvent('temperature.logged', state!.job.id, {
+    await _queueEvent('temperature.logged', state!.job.id, {
       'temperature': temp,
       'isAlert': temp > TemperatureReading.coldChainMax,
       'recordedAt': DateTime.now().toIso8601String(),
@@ -140,16 +181,21 @@ class ActiveTrip extends _$ActiveTrip {
     _persist(newState);
   }
 
-  void completeDelivery() {
+  Future<void> completeDelivery() async {
     if (state == null) return;
     final newState = state!.copyWith(phase: TripPhase.completed);
     state = newState;
     _persist(newState);
-    _queueEvent('trip.completed', state!.job.id, {
-      'totalDeliveredWeight': state!.job.totalDeliveredWeight,
-      'hasMismatch': state!.job.hasMismatch,
-      'receiverName': state!.receiverName,
-    });
+
+    try {
+      await ref.read(transportServiceProvider).completeJob(state!.job.id);
+    } catch (_) {
+      await _queueEvent('trip.completed', state!.job.id, {
+        'totalDeliveredWeight': state!.job.totalDeliveredWeight,
+        'hasMismatch': state!.job.hasMismatch,
+        'receiverName': state!.receiverName,
+      });
+    }
   }
 
   /// Update GPS points from the live stream (called by GPS provider listener)

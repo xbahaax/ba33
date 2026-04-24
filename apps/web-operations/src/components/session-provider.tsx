@@ -30,17 +30,6 @@ type SessionContextValue = {
 
 const SessionContext = createContext<SessionContextValue | null>(null);
 
-function getDefaultPersona(personas: DevPersona[]) {
-  return (
-    personas.find(
-      (persona) =>
-        persona.userType === "central_admin" && persona.status === "active",
-    ) ??
-    personas.find((persona) => persona.status === "active") ??
-    null
-  );
-}
-
 export function SessionProvider({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
@@ -80,29 +69,7 @@ export function SessionProvider({
         setStoredAccessToken(null);
       }
 
-      const fallbackPersona = getDefaultPersona(availablePersonas);
-
-      if (!fallbackPersona) {
-        setSession(null);
-        setLoading(false);
-        return;
-      }
-
-      const loginResponse = await loginWithDevPersona({
-        email: fallbackPersona.email,
-      });
-
-      if (!active) {
-        return;
-      }
-
-      if (loginResponse) {
-        setStoredAccessToken(loginResponse.accessToken);
-        setSession(loginResponse.session);
-      } else {
-        setSession(null);
-      }
-
+      setSession(null);
       setLoading(false);
     }
 

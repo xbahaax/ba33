@@ -7,7 +7,7 @@ part of 'farmer_declaration_view_model.dart';
 // **************************************************************************
 
 String _$farmerDeclarationViewModelHash() =>
-    r'12426c31824e0672b157beb88cb7aa0fbccc130d';
+    r'a26ade151350d1f01dd30702cd7741efd0916525';
 
 /// See also [FarmerDeclarationViewModel].
 @ProviderFor(FarmerDeclarationViewModel)

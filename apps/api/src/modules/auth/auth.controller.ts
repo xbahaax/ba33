@@ -82,6 +82,13 @@ export class AuthController {
     return this.authService.updateMyProfile(userId, body);
   }
 
+  @Post('refresh')
+  refresh(@Body() body: { refreshToken: string }) {
+    // For now, refresh just validates the token and returns the same session.
+    // In a full implementation this would verify the refresh token from the sessions table.
+    return this.authService.refreshToken(body.refreshToken);
+  }
+
   @Post('logout')
   logout() {
     return { loggedOut: true };

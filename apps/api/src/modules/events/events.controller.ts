@@ -1,4 +1,4 @@
-import { BadRequestException, Controller, Get, Query, UseGuards } from '@nestjs/common';
+import { BadRequestException, Body, Controller, Get, Post, Query, UseGuards } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags, ApiOperation, ApiQuery } from '@nestjs/swagger';
 import { RequirePermissions } from '../../common/auth/decorators';
 import { JwtAuthGuard } from '../../common/auth/jwt-auth.guard';
@@ -7,11 +7,39 @@ import { EventsService } from './events.service';
 
 @ApiTags('events')
 @ApiBearerAuth()
-@UseGuards(JwtAuthGuard, PermissionsGuard)
+@UseGuards(JwtAuthGuard)
 @Controller('events')
 export class EventsController {
   constructor(private readonly eventsService: EventsService) {}
 
+  @Post()
+  @ApiOperation({ summary: 'Post a batch of events from mobile (offline sync)' })
+  async postEvents(
+    @Body() body: Array<{
+      eventType: string;
+      jobId: string;
+      payload: Record<string, any>;
+      recordedAt: string;
+    }>,
+  ) {
+    const results = [];
+    for (const evt of body) {
+      const result = await this.eventsService.emit({
+        eventType: evt.eventType,
+        aggregateType: 'transport_job',
+        aggregateId: evt.jobId,
+        actorType: 'transporter',
+        payload: evt.payload,
+        occurredAt: new Date(evt.recordedAt),
+        version: 1,
+        syncSource: 'mobile',
+      });
+      results.push(result);
+    }
+    return { accepted: results.length };
+  }
+
+  @UseGuards(PermissionsGuard)
   @RequirePermissions('dashboard.view')
   @Get('recent')
   getRecent() {

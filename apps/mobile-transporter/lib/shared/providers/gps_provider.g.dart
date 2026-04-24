@@ -6,7 +6,7 @@ part of 'gps_provider.dart';
 // RiverpodGenerator
 // **************************************************************************
 
-String _$gpsTrackerHash() => r'0024a89f7dac0fc51a07e788c667979d75306c07';
+String _$gpsTrackerHash() => r'4bad4ebb18d1fa2f09528c281173af6cb672425f';
 
 /// See also [GpsTracker].
 @ProviderFor(GpsTracker)

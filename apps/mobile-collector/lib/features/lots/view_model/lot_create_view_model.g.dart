@@ -7,7 +7,7 @@ part of 'lot_create_view_model.dart';
 // **************************************************************************
 
 String _$lotCreateViewModelHash() =>
-    r'7d748d67e5795b8adb61db6d0974fad0982a4fd6';
+    r'7201d6f82cd037ef4038f3f29533c5b0a7bc4d19';
 
 /// See also [LotCreateViewModel].
 @ProviderFor(LotCreateViewModel)

@@ -2,6 +2,7 @@ import 'package:ba33_domain/ba33_domain.dart';
 import 'package:ba33_ui/ba33_ui.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../../shared/providers/lot_repository_provider.dart';
 
@@ -116,13 +117,20 @@ class LotDetailScreen extends ConsumerWidget {
             const SizedBox(height: Ba33Spacing.spacing4),
 
             // Location
-            _DetailSection(
-              icon: Icons.location_on_rounded,
-              title: 'GPS Location',
-              value:
-                  '${lot.latitude.toStringAsFixed(4)}, ${lot.longitude.toStringAsFixed(4)}',
-              colors: colors,
-              mono: true,
+            GestureDetector(
+              onTap: () {
+                final url = Uri.parse(
+                    'https://www.google.com/maps/search/?api=1&query=${lot.latitude},${lot.longitude}');
+                launchUrl(url, mode: LaunchMode.externalApplication);
+              },
+              child: _DetailSection(
+                icon: Icons.location_on_rounded,
+                title: 'GPS Location',
+                value:
+                    '${lot.latitude.toStringAsFixed(4)}, ${lot.longitude.toStringAsFixed(4)}',
+                colors: colors,
+                mono: true,
+              ),
             ),
 
             const SizedBox(height: Ba33Spacing.spacing4),

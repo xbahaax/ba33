@@ -6,7 +6,7 @@ part of 'auth_view_model.dart';
 // RiverpodGenerator
 // **************************************************************************
 
-String _$authStateHash() => r'074231b023e5336fe8f32d95239e098445234417';
+String _$authStateHash() => r'34b14024f26415ced11077e983aa4ad46354807e';
 
 /// See also [AuthState].
 @ProviderFor(AuthState)

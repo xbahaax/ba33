@@ -4,12 +4,12 @@ function resolveApiProxyTarget() {
   const candidates = [
     process.env.BA33_API_URL,
     process.env.NEXT_PUBLIC_BA33_API_URL,
-    "http://127.0.0.1:3001",
+    "http://127.0.0.1:3100",
   ];
 
   const absoluteTarget =
     candidates.find((candidate) => candidate && /^https?:\/\//.test(candidate)) ??
-    "http://127.0.0.1:3001";
+    "http://127.0.0.1:3100";
 
   const trimmedTarget = absoluteTarget.replace(/\/$/, "");
   return trimmedTarget.endsWith("/api/v1")

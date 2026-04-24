@@ -79,6 +79,7 @@ export class SeedService {
     const password = await bcrypt.hash('password123', SALT_ROUNDS);
 
     // ── 2. Users ──
+    // ── Shepherd users ──
     const [shepherd1] = await this.db
       .insert(users)
       .values({
@@ -86,7 +87,7 @@ export class SeedService {
         passwordHash: password,
         fullName: 'عمر الراعي',
         phone: '0555000001',
-        userType: 'collector', // shepherd is not a user type in the DB enum, using collector
+        userType: 'shepherd',
         status: 'active',
         regionId,
       })
@@ -99,12 +100,13 @@ export class SeedService {
         passwordHash: password,
         fullName: 'محمد بن أحمد',
         phone: '0555000002',
-        userType: 'collector',
+        userType: 'shepherd',
         status: 'active',
         regionId,
       })
       .returning();
 
+    // ── Collector ──
     const [collector1] = await this.db
       .insert(users)
       .values({
@@ -118,6 +120,7 @@ export class SeedService {
       })
       .returning();
 
+    // ── Transporter ──
     const [transporter1] = await this.db
       .insert(users)
       .values({
@@ -125,12 +128,13 @@ export class SeedService {
         passwordHash: password,
         fullName: 'كريم الناقل',
         phone: '0555000020',
-        userType: 'collector', // transporter not in enum — using collector
+        userType: 'transporter',
         status: 'active',
         regionId,
       })
       .returning();
 
+    // ── Depot manager ──
     const [depotManager] = await this.db
       .insert(users)
       .values({
@@ -144,6 +148,63 @@ export class SeedService {
       })
       .returning();
 
+    // ── Laverie operator ──
+    const [laverieOp] = await this.db
+      .insert(users)
+      .values({
+        email: 'laverie1@ba33.dz',
+        passwordHash: password,
+        fullName: 'فاطمة مشرفة الغسيل',
+        phone: '0555000040',
+        userType: 'laverie_operator',
+        status: 'active',
+        regionId,
+      })
+      .returning();
+
+    // ── Transformer operator ──
+    const [transformerOp] = await this.db
+      .insert(users)
+      .values({
+        email: 'transformer1@ba33.dz',
+        passwordHash: password,
+        fullName: 'سعيد مسؤول التحويل',
+        phone: '0555000050',
+        userType: 'transformer_operator',
+        status: 'active',
+        regionId,
+      })
+      .returning();
+
+    // ── Sales agent ──
+    const [salesAgent] = await this.db
+      .insert(users)
+      .values({
+        email: 'sales1@ba33.dz',
+        passwordHash: password,
+        fullName: 'نادية مسؤولة المبيعات',
+        phone: '0555000060',
+        userType: 'sales_agent',
+        status: 'active',
+        regionId,
+      })
+      .returning();
+
+    // ── Certification authority ──
+    const [certAuth] = await this.db
+      .insert(users)
+      .values({
+        email: 'cert1@ba33.dz',
+        passwordHash: password,
+        fullName: 'خالد مسؤول الشهادات',
+        phone: '0555000070',
+        userType: 'certification_authority',
+        status: 'active',
+        regionId,
+      })
+      .returning();
+
+    // ── Admin ──
     const [admin] = await this.db
       .insert(users)
       .values({
@@ -157,7 +218,7 @@ export class SeedService {
       })
       .returning();
 
-    this.logger.log(`Created ${6} users`);
+    this.logger.log(`Created 9 users (all 9 pipeline roles)`);
 
     // ── 3. Sources (shepherds as wool sources) ──
     const [source1] = await this.db

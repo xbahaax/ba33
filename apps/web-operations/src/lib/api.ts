@@ -20,7 +20,7 @@ function normalizeApiBaseUrl(rawBaseUrl: string) {
 const SERVER_API_BASE_URL = normalizeApiBaseUrl(
   process.env.BA33_API_URL ??
     process.env.NEXT_PUBLIC_BA33_API_URL ??
-    "http://127.0.0.1:3001",
+    "http://127.0.0.1:3100",
 );
 
 const CLIENT_API_BASE_URL = normalizeApiBaseUrl(
@@ -61,10 +61,12 @@ export function setStoredAccessToken(token: string | null) {
 
   if (!token) {
     window.localStorage.removeItem(ACCESS_TOKEN_STORAGE_KEY);
+    document.cookie = "ba33-token=; path=/; max-age=0";
     return;
   }
 
   window.localStorage.setItem(ACCESS_TOKEN_STORAGE_KEY, token);
+  document.cookie = `ba33-token=${token}; path=/; max-age=86400; samesite=lax`;
 }
 
 async function requestApi<T>(

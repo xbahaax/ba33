@@ -1,6 +1,7 @@
 import 'package:ba33_domain/ba33_domain.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
+import '../../../features/auth/view_model/auth_view_model.dart';
 import '../../../shared/providers/api_provider.dart';
 
 part 'farmer_declaration_view_model.g.dart';
@@ -127,35 +128,34 @@ class FarmerDeclarationViewModel extends _$FarmerDeclarationViewModel {
       final collectionSvc = ref.read(collectionServiceProvider);
 
       // Upload photo if present
-      String? photoUrl;
+      String? photoId;
       if (state.photoPath != null) {
         try {
           final filesSvc = ref.read(filesServiceProvider);
           final uploaded =
-              await filesSvc.upload(state.photoPath!, 'declaration-photo');
-          photoUrl = uploaded['url'] as String?;
+              await filesSvc.upload(state.photoPath!, 'photo');
+          photoId = uploaded['id'] as String?;
         } catch (_) {
           // Photo upload failure is non-blocking
         }
       }
 
-      final noteParts = <String>[
-        if (state.farmerPhone.isNotEmpty) 'tel: ${state.farmerPhone}',
-        if (state.surnom.isNotEmpty) 'surnom: ${state.surnom}',
-        if (state.mazraa.isNotEmpty) 'mazraa: ${state.mazraa}',
-        if (state.notes.isNotEmpty) state.notes,
-      ];
+      final auth = ref.read(authStateProvider);
+      final category = state.weightCategory!;
 
-      await collectionSvc.createPreLot({
+      await collectionSvc.declareWoolOnBehalf({
         'farmerName': state.farmerName,
-        'farmerPhone': state.farmerPhone.isNotEmpty ? state.farmerPhone : null,
-        'weightCategory': state.weightCategory!.name,
-        'latitude': state.latitude,
-        'longitude': state.longitude,
-        'locationName': state.locationName,
-        'notes': noteParts.isNotEmpty ? noteParts.join(' | ') : null,
-        'photoUrl': photoUrl,
-        'source': 'transporter-declaration',
+        'farmerPhone':
+            state.farmerPhone.isNotEmpty ? state.farmerPhone : null,
+        'estimatedWeightKg': category.estimatedKg,
+        'estimatedRange': category.estimatedRange,
+        'latitude': state.latitude?.toString(),
+        'longitude': state.longitude?.toString(),
+        'surnom': state.surnom.isNotEmpty ? state.surnom : null,
+        'mazraa': state.mazraa.isNotEmpty ? state.mazraa : null,
+        'notes': state.notes.isNotEmpty ? state.notes : null,
+        if (photoId != null) 'photoId': photoId,
+        'declaringUserId': auth.userId,
       });
 
       state = state.copyWith(isSubmitting: false, isSubmitted: true);

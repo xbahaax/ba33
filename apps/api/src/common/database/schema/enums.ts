@@ -5,11 +5,14 @@ export const regionTypeEnum = pgEnum('region_type', ['wilaya', 'commune', 'villa
 
 // users
 export const userTypeEnum = pgEnum('user_type', [
+  'shepherd',
   'collector',
+  'transporter',
   'depot_manager',
   'laverie_operator',
   'transformer_operator',
   'sales_agent',
+  'certification_authority',
   'central_admin',
   'regional_manager',
   'buyer',

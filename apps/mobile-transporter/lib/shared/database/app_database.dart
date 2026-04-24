@@ -88,6 +88,21 @@ class AppDatabase extends _$AppDatabase {
     return row.read(count) ?? 0;
   }
 
+  Future<List<DbGpsRecord>> getUnsyncedGpsRecords(String jobId,
+          {int limit = 50}) =>
+      (select(gpsRecords)
+            ..where(
+                (t) => t.jobId.equals(jobId) & t.synced.equals(false))
+            ..orderBy([(t) => OrderingTerm.asc(t.recordedAt)])
+            ..limit(limit))
+          .get();
+
+  Future<void> markGpsRecordsSynced(List<int> ids) async {
+    if (ids.isEmpty) return;
+    await (update(gpsRecords)..where((t) => t.id.isIn(ids)))
+        .write(const GpsRecordsCompanion(synced: Value(true)));
+  }
+
   // ── Event queue ───────────────────────────────────────
 
   Future<void> queueEvent({
