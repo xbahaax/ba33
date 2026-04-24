@@ -1,4 +1,9 @@
-import { Injectable, NotFoundException, Logger } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+  Logger,
+} from '@nestjs/common';
 import { LotsRepository } from './lots.repository';
 import { EventsService } from '../events/events.service';
 import { NotificationsService } from '../notifications/notifications.service';
@@ -213,5 +218,216 @@ export class LotsService {
       signedByName,
       capturedAt: new Date(),
     });
+  }
+
+  // ── Location Tracking ─────────────────────────────────────
+
+  async updateLocation(
+    lotId: string,
+    locationId: string,
+    locationType: string,
+  ) {
+    return this.lotsRepository.update(lotId, {
+      currentLocationId: locationId,
+      currentLocationType: locationType,
+    });
+  }
+
+  // ── Split / Merge ─────────────────────────────────────────
+
+  async splitLot(
+    parentLotId: string,
+    splits: Array<{
+      weightKg: string;
+      stateQuick?: 'clean' | 'dirty' | 'very_dirty' | 'contaminated' | 'with_meat';
+      notes?: string;
+    }>,
+    performedBy: string,
+  ) {
+    const parent = await this.lotsRepository.findById(parentLotId);
+    if (!parent) {
+      throw new NotFoundException(`Lot ${parentLotId} not found`);
+    }
+
+    if (splits.length < 2) {
+      throw new BadRequestException('Split requires at least 2 child lots');
+    }
+
+    const now = new Date();
+    const childLots = [];
+
+    for (const split of splits) {
+      const childId = uuid();
+      const childQr = `${parent.qrCode}-${childLots.length + 1}`;
+
+      const child = await this.lotsRepository.create({
+        id: childId,
+        sourceId: parent.sourceId,
+        sourceType: parent.sourceType ?? undefined,
+        collectorId: parent.collectorId ?? undefined,
+        qrCode: childQr,
+        declaredWeightKg: split.weightKg,
+        stateQuick: split.stateQuick ?? parent.stateQuick ?? undefined,
+        urgency: parent.urgency ?? undefined,
+        status: parent.status,
+        isUrgent: parent.isUrgent,
+        currentLocationId: parent.currentLocationId ?? undefined,
+        currentLocationType: parent.currentLocationType ?? undefined,
+        notes: split.notes,
+      });
+
+      // Record lineage
+      await this.lotsRepository.addLineage({
+        id: uuid(),
+        childLotId: childId,
+        parentLotId,
+        weightContributionKg: split.weightKg,
+        operation: 'split',
+        performedBy,
+        performedAt: now,
+      });
+
+      // Add initial weigh for child
+      await this.lotsRepository.addWeigh({
+        lotId: childId,
+        phase: 'split',
+        weightKg: split.weightKg,
+        source: 'manual',
+        recordedBy: performedBy,
+        recordedAt: now,
+      });
+
+      childLots.push(child);
+    }
+
+    // Emit split event
+    await this.eventsService.emit({
+      eventType: 'lot.split',
+      aggregateType: 'lot',
+      aggregateId: parentLotId,
+      actorId: performedBy,
+      actorType: 'user',
+      payload: {
+        parentLotId,
+        childLotIds: childLots.map((c) => c.id),
+        splits: splits.map((s, i) => ({
+          childLotId: childLots[i].id,
+          weightKg: s.weightKg,
+          stateQuick: s.stateQuick,
+        })),
+      },
+      occurredAt: now,
+      version: 1,
+    });
+
+    this.logger.log(
+      `Lot ${parentLotId} split into ${childLots.length} children: ${childLots.map((c) => c.id).join(', ')}`,
+    );
+
+    return { parent, children: childLots };
+  }
+
+  async mergeLots(
+    parentLotIds: string[],
+    mergedData: {
+      qrCode: string;
+      notes?: string;
+    },
+    performedBy: string,
+  ) {
+    if (parentLotIds.length < 2) {
+      throw new BadRequestException('Merge requires at least 2 parent lots');
+    }
+
+    const parents = [];
+    let totalWeight = 0;
+
+    for (const parentId of parentLotIds) {
+      const parent = await this.lotsRepository.findById(parentId);
+      if (!parent) {
+        throw new NotFoundException(`Lot ${parentId} not found`);
+      }
+      parents.push(parent);
+
+      // Get latest weight for each parent
+      const latestWeigh = await this.lotsRepository.getLatestWeigh(parentId);
+      if (latestWeigh) {
+        totalWeight += parseFloat(latestWeigh.weightKg);
+      }
+    }
+
+    const now = new Date();
+    const childId = uuid();
+    const firstParent = parents[0];
+
+    // Create the merged lot
+    const mergedLot = await this.lotsRepository.create({
+      id: childId,
+      sourceId: firstParent.sourceId,
+      sourceType: firstParent.sourceType ?? undefined,
+      qrCode: mergedData.qrCode,
+      declaredWeightKg: totalWeight.toFixed(2),
+      status: firstParent.status,
+      isUrgent: parents.some((p) => p.isUrgent),
+      currentLocationId: firstParent.currentLocationId ?? undefined,
+      currentLocationType: firstParent.currentLocationType ?? undefined,
+      notes: mergedData.notes,
+    });
+
+    // Record lineage for each parent
+    for (const parent of parents) {
+      const parentWeigh = await this.lotsRepository.getLatestWeigh(parent.id);
+      await this.lotsRepository.addLineage({
+        id: uuid(),
+        childLotId: childId,
+        parentLotId: parent.id,
+        weightContributionKg: parentWeigh?.weightKg,
+        operation: 'merge',
+        performedBy,
+        performedAt: now,
+      });
+    }
+
+    // Add merge weigh
+    await this.lotsRepository.addWeigh({
+      lotId: childId,
+      phase: 'merge',
+      weightKg: totalWeight.toFixed(2),
+      source: 'manual',
+      recordedBy: performedBy,
+      recordedAt: now,
+    });
+
+    // Emit merge event
+    await this.eventsService.emit({
+      eventType: 'lot.merged',
+      aggregateType: 'lot',
+      aggregateId: childId,
+      actorId: performedBy,
+      actorType: 'user',
+      payload: {
+        parentLotIds,
+        childLotId: childId,
+        totalWeightKg: totalWeight.toFixed(2),
+      },
+      occurredAt: now,
+      version: 1,
+    });
+
+    this.logger.log(
+      `Lots [${parentLotIds.join(', ')}] merged into ${childId} (${totalWeight.toFixed(2)}kg)`,
+    );
+
+    return { parents, merged: mergedLot };
+  }
+
+  // ── Lineage Query ─────────────────────────────────────────
+
+  async getLineage(lotId: string) {
+    const lot = await this.lotsRepository.findById(lotId);
+    if (!lot) {
+      throw new NotFoundException(`Lot ${lotId} not found`);
+    }
+    return this.lotsRepository.getLineage(lotId);
   }
 }

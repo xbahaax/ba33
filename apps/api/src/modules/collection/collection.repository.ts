@@ -9,6 +9,7 @@ import {
   routeStops,
   sources,
   shepherds,
+  users,
 } from '../../common/database/schema';
 import { eq, and, desc } from 'drizzle-orm';
 
@@ -116,6 +117,15 @@ export class CollectionRepository {
       .values({ sourceId, ...details })
       .returning();
     return shepherd;
+  }
+
+  async findUserById(userId: string) {
+    const [user] = await this.db
+      .select()
+      .from(users)
+      .where(eq(users.id, userId))
+      .limit(1);
+    return user ?? null;
   }
 
   // ── Collectors ────────────────────────────────────────────

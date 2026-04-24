@@ -8,6 +8,7 @@ import { TransportRepository } from './transport.repository';
 import { EventsService } from '../events/events.service';
 import { RulesService } from '../rules/rules.service';
 import { NotificationsService } from '../notifications/notifications.service';
+import { LotsService } from '../lots/lots.service';
 import { v4 as uuid } from 'uuid';
 
 @Injectable()
@@ -19,6 +20,7 @@ export class TransportService {
     private readonly eventsService: EventsService,
     private readonly rulesService: RulesService,
     private readonly notificationsService: NotificationsService,
+    private readonly lotsService: LotsService,
   ) {}
 
   // ── Jobs ──────────────────────────────────────────────────
@@ -176,6 +178,10 @@ export class TransportService {
       },
     );
 
+    // Update lot status and location → in transit on this job
+    await this.lotsService.updateLotStatus(lotId, 'in_transit', job.transporterId ?? 'system');
+    await this.lotsService.updateLocation(lotId, jobId, 'transport_job');
+
     await this.eventsService.emit({
       eventType: 'transport.lot.loaded',
       aggregateType: 'transport_job',
@@ -246,6 +252,13 @@ export class TransportService {
         });
       }
     }
+
+    // Update lot location to destination
+    await this.lotsService.updateLocation(
+      lotId,
+      job.destinationId,
+      job.destinationType,
+    );
 
     await this.eventsService.emit({
       eventType: 'transport.lot.delivered',

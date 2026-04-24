@@ -1,6 +1,7 @@
 import 'package:ba33_domain/ba33_domain.dart';
 import 'package:ba33_ui/ba33_ui.dart';
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 
 /// Displays a single lot summary in the list.
 class LotCard extends StatelessWidget {
@@ -12,8 +13,10 @@ class LotCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final colors = Theme.of(context).ba33;
 
-    return Ba33Card(
-      child: Column(
+    return GestureDetector(
+      onTap: () => context.push('/lots/${Uri.encodeComponent(lot.id)}'),
+      child: Ba33Card(
+        child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // Header row: ID + urgency
@@ -98,6 +101,7 @@ class LotCard extends StatelessWidget {
             ),
           ),
         ],
+      ),
       ),
     );
   }

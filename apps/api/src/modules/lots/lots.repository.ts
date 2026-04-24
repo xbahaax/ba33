@@ -6,8 +6,9 @@ import {
   lotPhotos,
   lotSignatures,
   lotWeighs,
+  lotLineage,
 } from '../../common/database/schema';
-import { eq, and, desc } from 'drizzle-orm';
+import { eq, and, or, desc } from 'drizzle-orm';
 
 @Injectable()
 export class LotsRepository {
@@ -182,5 +183,47 @@ export class LotsRepository {
       .from(lotWeighs)
       .where(eq(lotWeighs.lotId, lotId))
       .orderBy(desc(lotWeighs.recordedAt));
+  }
+
+  // ── Lineage ──────────────────────────────────────────────
+
+  async addLineage(data: {
+    id: string;
+    childLotId: string;
+    parentLotId: string;
+    weightContributionKg?: string;
+    operation: 'split' | 'merge';
+    performedBy?: string;
+    performedAt: Date;
+    notes?: string;
+  }) {
+    const [record] = await this.db
+      .insert(lotLineage)
+      .values(data)
+      .returning();
+    return record;
+  }
+
+  async getLineage(lotId: string) {
+    return this.db
+      .select()
+      .from(lotLineage)
+      .where(
+        or(
+          eq(lotLineage.parentLotId, lotId),
+          eq(lotLineage.childLotId, lotId),
+        ),
+      )
+      .orderBy(desc(lotLineage.performedAt));
+  }
+
+  async getLatestWeigh(lotId: string) {
+    const [weigh] = await this.db
+      .select()
+      .from(lotWeighs)
+      .where(eq(lotWeighs.lotId, lotId))
+      .orderBy(desc(lotWeighs.recordedAt))
+      .limit(1);
+    return weigh ?? null;
   }
 }

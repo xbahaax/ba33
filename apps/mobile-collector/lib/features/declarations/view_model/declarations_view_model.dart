@@ -56,8 +56,19 @@ class DeclarationsViewModel extends _$DeclarationsViewModel {
     await _loadDeclarations();
   }
 
-  void schedulePickup(String declarationId) {
-    // Will call API to assign pre-lot
+  Future<void> schedulePickup(String declarationId) async {
+    final user = ref.read(authProvider);
+    if (user == null) return;
+
+    try {
+      final collectionService = ref.read(collectionServiceProvider);
+      await collectionService.assignPreLot(declarationId, {
+        'assignedCollectorId': user.id,
+      });
+      await refresh();
+    } catch (e, st) {
+      state = AsyncValue.error(e, st);
+    }
   }
 
   static DeclarationStatus _mapStatus(String? status) {

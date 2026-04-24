@@ -1,7 +1,7 @@
 import { Injectable, Inject } from '@nestjs/common';
 import { DATABASE_TOKEN } from '../../common/database/database.module';
 import type { Database } from '../../common/database/client';
-import { audits } from '../../common/database/schema';
+import { audits, reconciliations } from '../../common/database/schema';
 import { eq, and, desc } from 'drizzle-orm';
 
 @Injectable()
@@ -48,5 +48,35 @@ export class AuditRepository {
       .from(audits)
       .where(conditions.length > 0 ? and(...conditions) : undefined)
       .orderBy(desc(audits.performedAt));
+  }
+
+  // ── Reconciliation ──────────────────────────────────────
+
+  async createReconciliation(data: {
+    id: string;
+    lotId: string;
+    phaseFrom: string;
+    phaseTo: string;
+    weightOutKg: string;
+    weightInKg: string;
+    deltaKg: string;
+    toleranceKg: string;
+    withinTolerance: boolean;
+    flagged: boolean;
+    computedAt: Date;
+  }) {
+    const [record] = await this.db
+      .insert(reconciliations)
+      .values(data)
+      .returning();
+    return record;
+  }
+
+  async findReconciliationsByLot(lotId: string) {
+    return this.db
+      .select()
+      .from(reconciliations)
+      .where(eq(reconciliations.lotId, lotId))
+      .orderBy(desc(reconciliations.computedAt));
   }
 }

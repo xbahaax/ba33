@@ -70,6 +70,16 @@ export class CollectionService {
       await this.collectionRepository.findSourceByRegisteredBy(userId);
     if (existing) return existing.id;
 
+    // If no regionId provided, look up the user's regionId
+    let regionId = details.regionId;
+    if (!regionId) {
+      const user = await this.collectionRepository.findUserById(userId);
+      regionId = user?.regionId ?? undefined;
+    }
+    if (!regionId) {
+      throw new BadRequestException('regionId is required to create a source');
+    }
+
     // Create a new source record for this shepherd
     const sourceId = uuid();
     await this.collectionRepository.createSource({
@@ -77,7 +87,7 @@ export class CollectionService {
       sourceType: 'c1_shepherd',
       name:
         details.surnom || details.mazraa || `فلاح-${userId.slice(0, 8)}`,
-      regionId: details.regionId ?? '00000000-0000-0000-0000-000000000000',
+      regionId,
       latitude: details.latitude,
       longitude: details.longitude,
       address: details.mazraa,

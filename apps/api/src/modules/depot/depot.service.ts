@@ -3,6 +3,8 @@ import { DepotRepository } from './depot.repository';
 import { EventsService } from '../events/events.service';
 import { RulesService } from '../rules/rules.service';
 import { NotificationsService } from '../notifications/notifications.service';
+import { LotsService } from '../lots/lots.service';
+import { AuditService } from '../audit/audit.service';
 import { v4 as uuid } from 'uuid';
 
 @Injectable()
@@ -14,6 +16,8 @@ export class DepotService {
     private readonly eventsService: EventsService,
     private readonly rulesService: RulesService,
     private readonly notificationsService: NotificationsService,
+    private readonly lotsService: LotsService,
+    private readonly auditService: AuditService,
   ) {}
 
   async createDepot(data: {
@@ -104,6 +108,38 @@ export class DepotService {
       currentWeightKg: newWeight.toString(),
     });
 
+    // Update lot: status → received_depot, location → this depot
+    await this.lotsService.updateLotStatus(lotId, 'received_depot', receivedBy);
+    await this.lotsService.updateLocation(lotId, depotId, 'depot');
+
+    // Create formal E1 entry audit record
+    await this.auditService.logAudit({
+      auditType: 'entry_e1',
+      subjectType: 'lot',
+      subjectId: lotId,
+      findings: {
+        depotId,
+        declaredWeightKg: declaredWeight,
+        actualWeightKg: actualWeight,
+        discrepancyKg: discrepancy,
+        tolerancePercent,
+        toleranceExceeded,
+        zoneId,
+      },
+      passed: !toleranceExceeded,
+      auditorId: receivedBy,
+    });
+
+    // Create cross-phase weight reconciliation (collection → depot)
+    await this.auditService.reconcileWeight({
+      lotId,
+      phaseFrom: 'collection',
+      phaseTo: 'depot',
+      weightOutKg: declaredWeight,
+      weightInKg: actualWeight,
+      tolerancePercent,
+    });
+
     // Emit E1 event
     await this.eventsService.emit({
       eventType: 'depot.lot.received',
@@ -178,6 +214,28 @@ export class DepotService {
         lot.weightKg.toString(),
       );
     }
+
+    // Update lot statuses and locations
+    for (const lot of lotIds) {
+      await this.lotsService.updateLotStatus(lot.lotId, 'dispatched_to_laverie', dispatchedBy);
+      await this.lotsService.updateLocation(lot.lotId, laverieId, 'laverie');
+    }
+
+    // Create formal S1 exit audit record
+    await this.auditService.logAudit({
+      auditType: 'exit_s1',
+      subjectType: 'dispatch',
+      subjectId: dispatchId,
+      findings: {
+        depotId,
+        destinationLaverieId: laverieId,
+        manifestWeightKg: manifestWeight,
+        lotCount: lotIds.length,
+        lots: lotIds,
+      },
+      passed: true,
+      auditorId: dispatchedBy,
+    });
 
     // Update depot current weight
     const newWeight = parseFloat(depot.currentWeightKg) - manifestWeight;

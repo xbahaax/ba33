@@ -6,6 +6,7 @@ import '../features/auth/view/login_screen.dart';
 import '../features/declarations/view/declarations_screen.dart';
 import '../features/home/view/home_shell.dart';
 import '../features/lots/view/lot_create_screen.dart';
+import '../features/lots/view/lot_detail_screen.dart';
 import '../features/lots/view/lot_list_screen.dart';
 import '../features/profile/view/profile_screen.dart';
 import '../shared/providers/auth_provider.dart';
@@ -74,6 +75,13 @@ GoRouter router(RouterRef ref) {
         path: '/lots/create',
         name: 'create-lot',
         builder: (context, state) => const LotCreateScreen(),
+      ),
+      GoRoute(
+        path: '/lots/:id',
+        name: 'lot-detail',
+        builder: (context, state) => LotDetailScreen(
+          lotId: state.pathParameters['id']!,
+        ),
       ),
     ],
   );

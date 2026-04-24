@@ -58,9 +58,7 @@ class ProfileScreen extends ConsumerWidget {
               title: 'اللغة',
               subtitle: 'عربي / دارجة',
               colors: colors,
-              onTap: () {
-                // TODO(BA33-025): language picker
-              },
+              onTap: () => _showLanguagePicker(context, colors),
             ),
             const SizedBox(height: Ba33Spacing.spacing3),
             _SettingsTile(
@@ -68,18 +66,14 @@ class ProfileScreen extends ConsumerWidget {
               title: 'الإشعارات',
               subtitle: 'مفعلة',
               colors: colors,
-              onTap: () {
-                // TODO(BA33-026): notification settings
-              },
+              onTap: () => _showNotificationSettings(context, colors),
             ),
             const Spacer(),
             SizedBox(
               width: double.infinity,
               height: 52,
               child: OutlinedButton(
-                onPressed: () {
-                  ref.read(authProvider.notifier).logout();
-                },
+                onPressed: () => _confirmLogout(context, ref, colors),
                 style: OutlinedButton.styleFrom(
                   foregroundColor: colors.destructive,
                   side: BorderSide(color: colors.destructive),
@@ -92,6 +86,179 @@ class ProfileScreen extends ConsumerWidget {
       ),
     );
   }
+}
+
+void _showLanguagePicker(BuildContext context, Ba33Colors colors) {
+  showModalBottomSheet(
+    context: context,
+    shape: const RoundedRectangleBorder(
+      borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+    ),
+    builder: (ctx) => Padding(
+      padding: const EdgeInsets.all(Ba33Spacing.spacing6),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Center(
+            child: Container(
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(
+                color: colors.border,
+                borderRadius: Ba33Radii.borderRadiusFull,
+              ),
+            ),
+          ),
+          const SizedBox(height: Ba33Spacing.spacing6),
+          Text(
+            'اختار اللغة',
+            style: Theme.of(ctx).textTheme.titleLarge,
+          ),
+          const SizedBox(height: Ba33Spacing.spacing4),
+          ListTile(
+            leading: const Text('🇩🇿', style: TextStyle(fontSize: 24)),
+            title: const Text('دارجة'),
+            trailing: Icon(Icons.check_circle, color: colors.primary),
+            shape: RoundedRectangleBorder(
+              borderRadius: Ba33Radii.borderRadiusLg,
+            ),
+            onTap: () => Navigator.of(ctx).pop(),
+          ),
+          ListTile(
+            leading: const Text('🇸🇦', style: TextStyle(fontSize: 24)),
+            title: const Text('العربية الفصحى'),
+            shape: RoundedRectangleBorder(
+              borderRadius: Ba33Radii.borderRadiusLg,
+            ),
+            onTap: () {
+              Navigator.of(ctx).pop();
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('اللغة العربية الفصحى قريبا'),
+                  behavior: SnackBarBehavior.floating,
+                ),
+              );
+            },
+          ),
+          ListTile(
+            leading: const Text('🇫🇷', style: TextStyle(fontSize: 24)),
+            title: const Text('Français'),
+            shape: RoundedRectangleBorder(
+              borderRadius: Ba33Radii.borderRadiusLg,
+            ),
+            onTap: () {
+              Navigator.of(ctx).pop();
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('Français bientôt disponible'),
+                  behavior: SnackBarBehavior.floating,
+                ),
+              );
+            },
+          ),
+          const SizedBox(height: Ba33Spacing.spacing4),
+        ],
+      ),
+    ),
+  );
+}
+
+void _showNotificationSettings(BuildContext context, Ba33Colors colors) {
+  showModalBottomSheet(
+    context: context,
+    shape: const RoundedRectangleBorder(
+      borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+    ),
+    builder: (ctx) => StatefulBuilder(
+      builder: (ctx, setState) {
+        return Padding(
+          padding: const EdgeInsets.all(Ba33Spacing.spacing6),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Center(
+                child: Container(
+                  width: 40,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: colors.border,
+                    borderRadius: Ba33Radii.borderRadiusFull,
+                  ),
+                ),
+              ),
+              const SizedBox(height: Ba33Spacing.spacing6),
+              Text(
+                'الإشعارات',
+                style: Theme.of(ctx).textTheme.titleLarge,
+              ),
+              const SizedBox(height: Ba33Spacing.spacing4),
+              SwitchListTile.adaptive(
+                title: const Text('إشعارات الجمع'),
+                subtitle: Text(
+                  'كي يجي الجامع',
+                  style: TextStyle(color: colors.mutedForeground),
+                ),
+                value: true,
+                activeColor: colors.primary,
+                onChanged: (_) {},
+              ),
+              SwitchListTile.adaptive(
+                title: const Text('تحديثات الوصل'),
+                subtitle: Text(
+                  'حالة الصوف',
+                  style: TextStyle(color: colors.mutedForeground),
+                ),
+                value: true,
+                activeColor: colors.primary,
+                onChanged: (_) {},
+              ),
+              SwitchListTile.adaptive(
+                title: const Text('تنبيهات عامة'),
+                subtitle: Text(
+                  'أخبار المنصة',
+                  style: TextStyle(color: colors.mutedForeground),
+                ),
+                value: false,
+                activeColor: colors.primary,
+                onChanged: (_) {},
+              ),
+              const SizedBox(height: Ba33Spacing.spacing4),
+            ],
+          ),
+        );
+      },
+    ),
+  );
+}
+
+void _confirmLogout(
+    BuildContext context, WidgetRef ref, Ba33Colors colors) {
+  showDialog(
+    context: context,
+    builder: (ctx) => AlertDialog(
+      title: const Text('تأكيد الخروج'),
+      content: const Text('واش راك متأكد تخرج؟'),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(ctx).pop(),
+          child: const Text('إلغاء'),
+        ),
+        ElevatedButton(
+          onPressed: () {
+            Navigator.of(ctx).pop();
+            ref.read(authProvider.notifier).logout();
+          },
+          style: ElevatedButton.styleFrom(
+            backgroundColor: colors.destructive,
+            foregroundColor: colors.destructiveForeground,
+          ),
+          child: const Text('خروج'),
+        ),
+      ],
+    ),
+  );
 }
 
 class _SettingsTile extends StatelessWidget {

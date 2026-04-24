@@ -2,6 +2,7 @@ import { Injectable, NotFoundException, BadRequestException, Logger } from '@nes
 import { TransformationRepository } from './transformation.repository';
 import { EventsService } from '../events/events.service';
 import { NotificationsService } from '../notifications/notifications.service';
+import { LotsService } from '../lots/lots.service';
 import { v4 as uuid } from 'uuid';
 
 const YIELD_DEVIATION_THRESHOLD_PERCENT = 10;
@@ -14,6 +15,7 @@ export class TransformationService {
     private readonly transformationRepository: TransformationRepository,
     private readonly eventsService: EventsService,
     private readonly notificationsService: NotificationsService,
+    private readonly lotsService: LotsService,
   ) {}
 
   // --- Transformers ---
