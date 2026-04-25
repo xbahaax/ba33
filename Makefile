@@ -109,11 +109,6 @@ shepherd:
 	$(call log,"Launching shepherd app → $(API_URL)")
 	@cd apps/mobile-shepherd && flutter run -d $(SIMULATOR_ID) --dart-define=API_URL=$(API_URL)
 
-.PHONY: transporter
-transporter:
-	$(call log,"Launching transporter app → $(API_URL)")
-	@cd apps/mobile-transporter && flutter run -d $(SIMULATOR_ID) --dart-define=API_URL=$(API_URL)
-
 # ── Utilities ─────────────────────────────────────────────────────────────────
 .PHONY: logs
 logs:
@@ -148,6 +143,5 @@ help:
 	@printf "  $(GREEN)make studio$(NC)   Open Drizzle Studio\n"
 	@printf "  $(GREEN)make logs$(NC)     Tail Docker logs\n"
 	@printf "  $(GREEN)make build$(NC)    Build all packages\n"
-	@printf "  $(GREEN)make install$(NC)  pnpm install\n"
-	@printf "  $(GREEN)make transporter$(NC)  Run transporter app on iOS 26.2 simulator\n\n"
+	@printf "  $(GREEN)make install$(NC)  pnpm install\n\n"
 	@printf "  Ports:  API :3333 · web-operations :3003 · web-buyer :3001 · web-institutional :3002\n\n"
