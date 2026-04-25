@@ -241,3 +241,31 @@ Things that will get a PR rejected, both repos:
 5. Organize by feature, not by layer, inside every app.
 6. Apps never import apps. Packages never import apps. Domain is framework-free.
 7. Everything is lowercase `ba33` in code and branding.
+
+---
+
+## 11. Standalone Service Modules
+
+Some capabilities must be prepared before they are integrated into the live backend. These modules are allowed to exist in `apps/api/src/modules/` without being imported into `src/app.module.ts` yet.
+
+### `sheep-ai`
+
+- Purpose: infer probable ram breed and extracted physical traits from an uploaded image.
+- Structure: `controller -> service -> provider interface -> provider implementation`.
+- Initial provider: Google Gemini Vision API.
+- Future provider: local CV/ML model with no controller contract changes.
+- Contract: strict JSON response with normalized traits and confidence handling.
+- Rule: Gemini SDK or HTTP calls never happen in the controller.
+
+### `sms-gateway`
+
+- Purpose: receive inbound SMS traffic from rural actors, persist messages, resolve senders by phone number, and capture geolocation when available.
+- Structure: `controller -> service -> repository -> database/events`.
+- Matching source of truth: `sources.contactPhone`.
+- Persistence: dedicated `sms_messages` table plus append-only `sms.inbound.received` events.
+- Rule: provider-specific webhook handling remains isolated from the rest of the domain modules.
+
+### Boundary rule
+
+- Standalone modules can depend on shared infrastructure such as `DatabaseModule` and `EventsModule`.
+- Standalone modules are not imported into the main `AppModule` until the contract, webhook shape, env vars, and operational validation are complete.

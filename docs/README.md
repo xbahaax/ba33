@@ -24,7 +24,7 @@ cross-referenced.
 |---|---|---|
 | 2 | **[ARCHITECTURE.md](ARCHITECTURE.md)** | Monorepo layout, tech stack, dependency graph |
 | 3 | **[DATA_MODEL.md](DATA_MODEL.md)** | Database schema, event log, key relationships |
-| 4 | **[API_REFERENCE.md](API_REFERENCE.md)** | All 137 endpoints, organized by module |
+| 4 | **[API_REFERENCE.md](API_REFERENCE.md)** | All live endpoints plus documented standalone module endpoints |
 | 5 | **[PIPELINE.md](PIPELINE.md)** | End-to-end data flow from source to sale |
 | 6 | **[WORKFLOWS.md](WORKFLOWS.md)** | Each phase (collection / depot / laverie / etc.) deep dive |
 
@@ -130,6 +130,13 @@ reconciled against tolerance. Buyers verify the NFN seal on a public page.
 
 This is a **single backend** serving three web apps and two Flutter apps. The
 API at `/api/v1/*` is shared; mobile and web hit identical endpoints.
+
+Two additional backend capabilities are currently prepared in isolation:
+`sheep-ai` for ram breed inference from images, and `sms-gateway` for inbound
+SMS ingestion with source lookup and geolocation capture. `sms-gateway`
+already includes a Twilio provider adapter behind a swappable provider
+interface. Both capabilities are documented in the docs set but intentionally
+remain outside the main NestJS module graph until validation is complete.
 
 For the full feature spec, see **[PRD.md](PRD.md)**.
 For the data flow with sequence diagrams, see **[PIPELINE.md](PIPELINE.md)**.

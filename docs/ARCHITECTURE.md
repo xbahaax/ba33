@@ -142,6 +142,22 @@ Plus three transverse modules:
 
 Total: **20 modules** wired into `AppModule`, exposing **137 endpoints**.
 
+### Standalone modules prepared but not integrated
+
+Two backend capabilities are scaffolded in `apps/api/src/modules/` but are
+**not imported into `AppModule` yet**. They are intentionally isolated until
+their contracts and operations are validated.
+
+| Module | Purpose | Current shape |
+|---|---|---|
+| `sheep-ai` | Ram breed inference from image input | `controller -> service -> provider interface -> Gemini provider / local provider` |
+| `sms-gateway` | Inbound SMS ingestion, source phone lookup, geolocation capture | `controller -> service -> repository -> database/events` |
+
+Rules for these standalone modules:
+- Controllers never call external AI/webhook providers directly.
+- Shared infrastructure like `DatabaseModule` and `EventsModule` is allowed.
+- Integration into the main backend happens only after endpoint and env validation.
+
 ---
 
 ## 5. The two-actor collection model
@@ -174,6 +190,23 @@ job completes, transport jobs fire automatically downstream. See
 | **ID generation** | Server: `uuid` v4. Mobile: also v4 (no namespacing collision risk yet — IDs are random 128-bit). |
 | **Logging** | Pino structured JSON. Audit interceptor logs every API call with actor + duration + status. |
 | **OpenAPI** | Generated from `@ApiTags`/`@ApiOperation` decorators. Available at `GET /api/openapi.json` (planned for codegen — not wired yet). |
+
+### Standalone service notes
+
+**`sheep-ai`**
+- Accepts image uploads for ram analysis.
+- Normalizes extracted traits such as wool color, horn shape, face shape,
+  body proportion, tail type, and estimated body mass.
+- Uses a provider contract so Gemini can be replaced later by a local model
+  without changing the controller contract.
+
+**`sms-gateway`**
+- Accepts inbound SMS payloads from a gateway/webhook provider.
+- Resolves sender phone numbers against `sources.contactPhone`.
+- Stores normalized message text, optional geolocation, and emits an
+  append-only `sms.inbound.received` event.
+- Initial provider: Twilio, behind a provider interface so another SMS
+  provider can replace it later without changing the service contract.
 
 ---
 

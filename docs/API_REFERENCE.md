@@ -251,7 +251,28 @@ Access token TTL: 24 h. See **[AUTH_AND_RBAC.md](AUTH_AND_RBAC.md)**.
 
 ---
 
-## 13. Institutional
+## 13. Standalone services *(not wired into `AppModule` yet)*
+
+These endpoints are documented because the modules are scaffolded, but they
+are intentionally not active in the main backend until validation is complete.
+
+### 13.1 Sheep AI
+
+| Method | Path | Roles | Notes |
+|---|---|---|---|
+| POST | `/sheep-ai/detect-breed` | bearer or internal validation flow | multipart upload with `file` and optional `provider`. Returns normalized breed prediction + traits + confidence handling. |
+
+### 13.2 SMS gateway
+
+| Method | Path | Roles | Notes |
+|---|---|---|---|
+| POST | `/sms-gateway/inbound` | provider webhook / internal test flow | body: `{ from, message, providerMessageId?, latitude?, longitude?, geolocationPrecisionMeters? }`. Resolves sender against `sources.contactPhone`, persists inbound SMS, emits event. |
+| POST | `/sms-gateway/providers/twilio/webhook` | Twilio webhook | `application/x-www-form-urlencoded` payload from Twilio. Signature-validated, normalized through the provider contract, then persisted through the same gateway service flow. |
+| GET | `/sms-gateway/recent` | internal validation flow | lists recently received SMS records |
+
+---
+
+## 14. Institutional
 
 | Method | Path | Roles | Notes |
 |---|---|---|---|

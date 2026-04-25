@@ -17,3 +17,4 @@ export * from './rules';
 export * from './files';
 export * from './notifications';
 export * from './sync';
+export * from './sms-gateway';

@@ -162,6 +162,13 @@ audit_type            : entry_e1 | exit_s1 | internal_ex |
 - **slaughterhouses** — source_id (PK FK), license_number, daily_capacity_heads, has_cold_storage
 - **aggregators** — source_id (PK FK), business_registration, registered_upstream_count, premium_certified
 
+### `sms-gateway` *(standalone, not yet integrated into AppModule)*
+- **sms_messages** — id, provider_message_id, sender_phone, source_id (nullable),
+  message_text, normalized_text, parsed_payload (jsonb), latitude, longitude,
+  geolocation_precision_meters, geolocation_provided, source_matched,
+  processed_at, created_at.
+  Matching source of truth: `sources.contact_phone`.
+
 ### `collection`
 - **collectors** — user_id (PK FK), assigned_regions (jsonb), certifications (jsonb), active
 - **collector_booklets** — pre-printed QR sticker tracking
@@ -255,6 +262,12 @@ audit_type            : entry_e1 | exit_s1 | internal_ex |
   occurred_at, recorded_at, sync_source, device_id, version (per-aggregate sequence), checksum (SHA-256).
   **Indexes:** `(aggregate_type, aggregate_id, version)`, `(event_type, occurred_at)`, `(recorded_at)`.
 - **event_subscriptions** — event_type_pattern, handler_name, active
+
+Standalone event usage:
+- `sms-gateway` emits `sms.inbound.received` with sender, matched source, and
+  geolocation availability.
+- `sheep-ai` is currently inference-only and does not persist inference rows
+  yet; that stays deferred until the operational workflow is validated.
 
 ### `audit`
 - **audits** — audit_type, subject_type, subject_id, findings (jsonb), passed, auditor_id, performed_at

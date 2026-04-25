@@ -36,6 +36,13 @@ The NFN platform is composed of fourteen distinct applications / modules, organi
 
 All modules share a single backend, a single lot database, and a single event log. The distinction between "applications" and "modules" reflects deployment (mobile app vs web page) and user access (role-gated), not separate systems.
 
+Two additional backend capabilities may be prepared in isolation before operational rollout:
+
+- `SMS Gateway`: inbound SMS/webhook ingestion for shepherd and source communication, linked to known actors by phone number and optionally by geolocation.
+- `Sheep AI Service`: image-based ram breed inference and trait extraction, initially powered by Gemini behind a provider interface.
+
+These capabilities follow the same event-log and traceability rules as the rest of the platform, but they can remain detached from the main backend module graph until validated.
+
 ---
 
 ## 1. Collector App (mobile, offline-first)
