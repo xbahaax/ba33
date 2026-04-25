@@ -13,10 +13,10 @@ FAIL=0
 SKIP=0
 
 # Persona phones from seed (apps/api/src/scripts/seed.ts)
-SHEPHERD_PHONE="0555000001"
-COLLECTOR_PHONE="0555000010"
-DEPOT_PHONE="0555000030"
-ADMIN_PHONE="0555000099"
+SHEPHERD_PHONE="0555000010"
+COLLECTOR_PHONE="0555000002"
+DEPOT_PHONE="0555000003"
+ADMIN_PHONE="0555000001"
 
 # ── helpers ────────────────────────────────────────────────────────────────
 green=$'\e[32m'; red=$'\e[31m'; yellow=$'\e[33m'; gray=$'\e[90m'; bold=$'\e[1m'; nc=$'\e[0m'
@@ -339,6 +339,39 @@ echo "$JOBS_ME" | grep -q "\\[" && ok "/collection/jobs/me works" \
 
 SYNC_DEV=$(req GET "/sync/devices" "$COL_TOK")
 echo "$SYNC_DEV" | grep -q "\\[" && ok "/sync/devices works" || fail "sync/devices" ""
+
+# ── 10b. Web-ops: collectors list endpoint (for assignment dropdown) ───────
+step "10b" "Web-ops new endpoints"
+
+COLLECTORS=$(req GET "/collection/collectors" "$ADMIN_TOK")
+echo "$COLLECTORS" | grep -q "\"userId\"" \
+  && ok "/collection/collectors returns roster" \
+  || fail "collectors list" "$(echo "$COLLECTORS" | head -c 200)"
+
+ASSIGN=$(req PATCH "/collection/jobs/$JOB_ID/assign" "$ADMIN_TOK" "{\"collectorId\":\"$COL_ID\"}")
+# This call actually fails because the job is already past 'pending' (we completed it).
+# The POINT here is that the endpoint exists and returns a coherent error, not 404.
+echo "$ASSIGN" | grep -qE "\"id\"|\"statusCode\":(400|409)" \
+  && ok "/collection/jobs/:id/assign endpoint mounted" \
+  || fail "assign endpoint" "$(echo "$ASSIGN" | head -c 200)"
+
+# ── 10c. Public certificate verify (no auth) ───────────────────────────────
+step "10c" "Public certificate verification (no token)"
+
+VERIFY_VALID=$(curl -s "$API/certification/verify/NFN-P1-00042-X7")
+echo "$VERIFY_VALID" | grep -q '"status":"valid"' \
+  && ok "verify NFN-P1-00042-X7 → valid" \
+  || fail "verify valid" "$(echo "$VERIFY_VALID" | head -c 200)"
+
+VERIFY_REVOKED=$(curl -s "$API/certification/verify/NFN-P2-00148-M2")
+echo "$VERIFY_REVOKED" | grep -q '"status":"revoked"' \
+  && ok "verify NFN-P2-00148-M2 → revoked" \
+  || fail "verify revoked" "$(echo "$VERIFY_REVOKED" | head -c 200)"
+
+VERIFY_BAD=$(curl -s "$API/certification/verify/BOGUS-123")
+echo "$VERIFY_BAD" | grep -q '"status":"not_found"' \
+  && ok "verify BOGUS → not_found" \
+  || fail "verify not_found" "$(echo "$VERIFY_BAD" | head -c 200)"
 
 # ── 11. Web-only / dashboards ──────────────────────────────────────────────
 step "11" "Web-side overview endpoints"

@@ -157,6 +157,21 @@ export class CollectionController {
     return this.collectionService.getCollectorProfile(req.user.id);
   }
 
+  @Get('collectors')
+  @Roles('central_admin', 'regional_manager', 'depot_manager')
+  @ApiOperation({ summary: 'List active collectors (for job assignment)' })
+  @ApiQuery({ name: 'regionId', required: false })
+  @ApiQuery({ name: 'active', required: false, type: Boolean })
+  async listCollectors(
+    @Query('regionId') regionId?: string,
+    @Query('active') active?: string,
+  ) {
+    return this.collectionService.listCollectors({
+      regionId,
+      active: active === undefined ? true : active === 'true',
+    });
+  }
+
   // ── Routes ────────────────────────────────────────────────
 
   @Post('routes')

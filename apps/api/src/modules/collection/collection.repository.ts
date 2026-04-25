@@ -329,6 +329,28 @@ export class CollectionRepository {
     return row;
   }
 
+  async findCollectors(filters?: { active?: boolean; regionId?: string }) {
+    const conditions = [];
+    if (filters?.active !== undefined) {
+      conditions.push(eq(collectors.active, filters.active));
+    }
+    if (filters?.regionId) {
+      conditions.push(eq(users.regionId, filters.regionId));
+    }
+    return this.db
+      .select({
+        userId: collectors.userId,
+        assignedRegions: collectors.assignedRegions,
+        active: collectors.active,
+        fullName: users.fullName,
+        phone: users.phone,
+        regionId: users.regionId,
+      })
+      .from(collectors)
+      .leftJoin(users, eq(collectors.userId, users.id))
+      .where(conditions.length > 0 ? and(...conditions) : undefined);
+  }
+
   async findCollectorByUserId(userId: string) {
     const [collector] = await this.db
       .select({

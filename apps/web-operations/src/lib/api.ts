@@ -1019,6 +1019,102 @@ export function getUserAccessOverview() {
   return fetchApi<UserAccessOverviewResponse>("/users/access-overview");
 }
 
+// ── Collection jobs ───────────────────────────────────────────────────────
+// The two-actor model: the depot/admin issues + assigns these to collectors.
+
+export interface CollectionJobSummary {
+  id: string;
+  status:
+    | "pending"
+    | "assigned"
+    | "accepted"
+    | "in_progress"
+    | "arrived"
+    | "completed"
+    | "cancelled";
+  urgency: "normal" | "urgent";
+  preLotId: string;
+  sourceId: string;
+  destinationDepotId: string;
+  collectorId: string | null;
+  originLat: string | null;
+  originLng: string | null;
+  notes: string | null;
+  issuedAt: string;
+  assignedAt: string | null;
+  acceptedAt: string | null;
+  startedAt: string | null;
+  arrivedAt: string | null;
+  completedAt: string | null;
+  cancelledAt: string | null;
+  cancelReason: string | null;
+  lotId: string | null;
+  source: {
+    id: string;
+    name: string;
+    profession: string | null;
+    sourceType: string;
+    contactPhone: string | null;
+    address: string | null;
+    latitude: string | null;
+    longitude: string | null;
+  } | null;
+  preLot: {
+    id: string;
+    estimatedWeightKg: string;
+    notes: string | null;
+    locationLat: string | null;
+    locationLng: string | null;
+  } | null;
+  depot: {
+    id: string;
+    name: string;
+    address: string | null;
+  } | null;
+}
+
+export interface CollectorOption {
+  userId: string;
+  fullName: string | null;
+  phone: string | null;
+  regionId: string | null;
+  active: boolean;
+}
+
+export function listCollectionJobs(params?: {
+  status?: string;
+  collectorId?: string;
+  depotId?: string;
+}) {
+  const qs = new URLSearchParams();
+  if (params?.status) qs.set("status", params.status);
+  if (params?.collectorId) qs.set("collectorId", params.collectorId);
+  if (params?.depotId) qs.set("depotId", params.depotId);
+  const suffix = qs.toString() ? `?${qs}` : "";
+  return fetchApi<CollectionJobSummary[]>(`/collection/jobs${suffix}`);
+}
+
+export function listCollectors(params?: { regionId?: string }) {
+  const qs = new URLSearchParams();
+  if (params?.regionId) qs.set("regionId", params.regionId);
+  const suffix = qs.toString() ? `?${qs}` : "";
+  return fetchApi<CollectorOption[]>(`/collection/collectors${suffix}`);
+}
+
+export function assignCollectionJob(jobId: string, collectorId: string) {
+  return mutateApi<CollectionJobSummary>(
+    `/collection/jobs/${jobId}/assign`,
+    { method: "PATCH", body: { collectorId } },
+  );
+}
+
+export function cancelCollectionJob(jobId: string, reason?: string) {
+  return mutateApi<CollectionJobSummary>(
+    `/collection/jobs/${jobId}/cancel`,
+    { method: "PATCH", body: { reason } },
+  );
+}
+
 export function createDepotReception(input: DepotReceptionActionInput) {
   return mutateApi<{ id: string; lotId: string; status: string; receivedAt: string }>(
     "/depot/receptions",

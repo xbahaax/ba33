@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { useEffect, useState } from "react";
 import { CheckCircle, Download, HelpCircle, LoaderCircle, QrCode, ShieldCheck, XCircle } from "lucide-react";
 import { Button, Card, CardContent, CardDescription, CardHeader, CardTitle } from "@ba33/ui-web";
@@ -130,19 +129,23 @@ export function VerifyCertificateClient({
                       <p>Region : {result.originRegion}</p>
                       <p>Date certification : {result.certifiedAt ? new Date(result.certifiedAt).toLocaleDateString("fr-FR") : "-"}</p>
                     </div>
+                    {result.traceabilitySummary ? (
+                      <div className="rounded-lg border border-primary/30 bg-background p-3 text-xs space-y-1">
+                        <p className="font-medium text-foreground">Traçabilité</p>
+                        <p>Date de collecte : {result.traceabilitySummary.collectionDate ? new Date(result.traceabilitySummary.collectionDate).toLocaleDateString("fr-FR") : "-"}</p>
+                        <p>Rendement de lavage : {result.traceabilitySummary.washingYieldPercent}%</p>
+                        <p>Audits passés : {(result.traceabilitySummary.auditsPassed ?? []).join(" · ")}</p>
+                        <p>Sources d&apos;origine : {result.traceabilitySummary.sourceCount}</p>
+                      </div>
+                    ) : null}
                     <div className="flex flex-col gap-3 sm:flex-row">
-                      {result.productId ? (
-                        <Button asChild>
-                          <Link href={`/catalog/${result.productId}`}>Voir la tracabilite complete</Link>
-                        </Button>
-                      ) : null}
                       <Button
                         variant="outline"
                         type="button"
                         onClick={() =>
                           downloadTextFile(
                             `${result.code}.txt`,
-                            `Certificat NFN\nCode: ${result.code}\nProduit: ${result.productType}\nRegion: ${result.originRegion}`,
+                            `Certificat NFN\nCode: ${result.code}\nProduit: ${result.productType}\nGrade: ${result.grade}\nRegion: ${result.originRegion}\nCertifie le: ${result.certifiedAt ?? "-"}`,
                           )
                         }
                       >

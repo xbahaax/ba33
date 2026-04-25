@@ -16,6 +16,7 @@ import {
   WorkflowSelect,
   WorkflowTextarea,
 } from "@/components/workflow-form-controls";
+import { CollectionJobsPanel } from "@/components/collection-jobs-panel";
 import { useAsyncData } from "@/hooks/use-async-data";
 import {
   createDepotDispatch,
@@ -226,6 +227,8 @@ export function DepotWorkflowPage() {
 
       {data ? (
         <>
+          <CollectionJobsPanel />
+
           <div className="grid gap-4 xl:grid-cols-[1.2fr_1fr_1fr]">
             <Card>
               <CardHeader>

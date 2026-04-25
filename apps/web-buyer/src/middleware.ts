@@ -4,7 +4,6 @@ import { AUTH_COOKIE_NAME } from "@/lib/api/buyer-api";
 
 const PROTECTED_ROUTES = [
   "/catalog",
-  "/verify",
   "/cart",
   "/checkout",
   "/orders",

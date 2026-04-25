@@ -470,6 +470,10 @@ export class CollectionService {
     });
   }
 
+  async listCollectors(filters?: { active?: boolean; regionId?: string }) {
+    return this.collectionRepository.findCollectors(filters);
+  }
+
   async getCollectorProfile(userId: string) {
     const collector =
       await this.collectionRepository.findCollectorByUserId(userId);
