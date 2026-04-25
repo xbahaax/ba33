@@ -41,6 +41,11 @@ export class CollectionService {
     profession?: string;
     regionId?: string;
     photoId?: string;
+    shearingDate?: string;
+    sheepBreed?: string;
+    bagCount?: number;
+    bagType?: 'PP' | 'jute';
+    lastParasiteTreatmentDate?: string;
   }) {
     // 1. Find or create source for this user
     const sourceId = await this.ensureSourceForUser(data.userId, {
@@ -71,6 +76,11 @@ export class CollectionService {
           .filter(Boolean)
           .join(' | ') || undefined,
       voiceNoteId: undefined,
+      shearingDate: data.shearingDate,
+      sheepBreed: data.sheepBreed,
+      bagCount: data.bagCount,
+      bagType: data.bagType,
+      lastParasiteTreatmentDate: data.lastParasiteTreatmentDate,
     });
   }
 
@@ -221,6 +231,11 @@ export class CollectionService {
     regionId?: string;
     notes?: string;
     voiceNoteId?: string;
+    shearingDate?: string;
+    sheepBreed?: string;
+    bagCount?: number;
+    bagType?: 'PP' | 'jute';
+    lastParasiteTreatmentDate?: string;
   }) {
     const id = uuid();
     const preLot = await this.collectionRepository.createPreLot({

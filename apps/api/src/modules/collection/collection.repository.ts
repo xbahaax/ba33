@@ -147,6 +147,11 @@ export class CollectionRepository {
     status: string;
     createdAt: Date;
     updatedAt: Date;
+    shearingDate?: string;
+    sheepBreed?: string;
+    bagCount?: number;
+    bagType?: 'PP' | 'jute';
+    lastParasiteTreatmentDate?: string;
   }) {
     const [row] = await this.db
       .insert(preLots)
@@ -163,6 +168,11 @@ export class CollectionRepository {
         status: data.status as any,
         createdAt: data.createdAt,
         updatedAt: data.updatedAt,
+        shearingDate: data.shearingDate,
+        sheepBreed: data.sheepBreed,
+        bagCount: data.bagCount,
+        bagType: data.bagType as any,
+        lastParasiteTreatmentDate: data.lastParasiteTreatmentDate,
       })
       .returning();
     return row;

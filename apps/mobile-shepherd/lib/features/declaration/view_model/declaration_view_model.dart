@@ -1,4 +1,3 @@
-import 'package:ba33_domain/ba33_domain.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../../../shared/providers/api_provider.dart';
@@ -7,10 +6,27 @@ import '../../../shared/providers/profession_provider.dart';
 
 part 'declaration_view_model.g.dart';
 
+enum BagType { pp, jute }
+
+extension BagTypeX on BagType {
+  String get apiValue => switch (this) {
+        BagType.pp => 'PP',
+        BagType.jute => 'jute',
+      };
+  String labelArabic() => switch (this) {
+        BagType.pp => 'كياس بلاستيك (PP)',
+        BagType.jute => 'كياس جوت',
+      };
+}
+
 class DeclarationFormState {
   const DeclarationFormState({
-    this.weightCategory,
-    this.customWeight,
+    this.weightKg,
+    this.bagCount,
+    this.bagType,
+    this.shearingDate,
+    this.sheepBreed = '',
+    this.lastParasiteTreatmentDate,
     this.surnom = '',
     this.mazraa = '',
     this.notes = '',
@@ -23,8 +39,12 @@ class DeclarationFormState {
     this.error,
   });
 
-  final WeightCategory? weightCategory;
-  final double? customWeight;
+  final double? weightKg;
+  final int? bagCount;
+  final BagType? bagType;
+  final DateTime? shearingDate;
+  final String sheepBreed;
+  final DateTime? lastParasiteTreatmentDate;
   final String surnom;
   final String mazraa;
   final String notes;
@@ -37,15 +57,18 @@ class DeclarationFormState {
   final String? error;
 
   bool get isValid =>
-      weightCategory != null &&
+      weightKg != null &&
+      weightKg! > 0 &&
       latitude != null &&
-      (weightCategory != WeightCategory.custom ||
-          (customWeight != null && customWeight! > 0));
+      longitude != null;
 
   DeclarationFormState copyWith({
-    WeightCategory? weightCategory,
-    double? customWeight,
-    bool clearCustomWeight = false,
+    double? weightKg,
+    int? bagCount,
+    BagType? bagType,
+    DateTime? shearingDate,
+    String? sheepBreed,
+    DateTime? lastParasiteTreatmentDate,
     String? surnom,
     String? mazraa,
     String? notes,
@@ -56,11 +79,16 @@ class DeclarationFormState {
     bool? isSubmitting,
     bool? isSubmitted,
     String? error,
+    bool clearError = false,
   }) {
     return DeclarationFormState(
-      weightCategory: weightCategory ?? this.weightCategory,
-      customWeight:
-          clearCustomWeight ? null : (customWeight ?? this.customWeight),
+      weightKg: weightKg ?? this.weightKg,
+      bagCount: bagCount ?? this.bagCount,
+      bagType: bagType ?? this.bagType,
+      shearingDate: shearingDate ?? this.shearingDate,
+      sheepBreed: sheepBreed ?? this.sheepBreed,
+      lastParasiteTreatmentDate:
+          lastParasiteTreatmentDate ?? this.lastParasiteTreatmentDate,
       surnom: surnom ?? this.surnom,
       mazraa: mazraa ?? this.mazraa,
       notes: notes ?? this.notes,
@@ -70,7 +98,7 @@ class DeclarationFormState {
       photoPath: photoPath ?? this.photoPath,
       isSubmitting: isSubmitting ?? this.isSubmitting,
       isSubmitted: isSubmitted ?? this.isSubmitted,
-      error: error,
+      error: clearError ? null : (error ?? this.error),
     );
   }
 }
@@ -80,22 +108,31 @@ class DeclarationViewModel extends _$DeclarationViewModel {
   @override
   DeclarationFormState build() => const DeclarationFormState();
 
-  void selectWeight(WeightCategory category) {
-    if (category != WeightCategory.custom) {
-      state = state.copyWith(weightCategory: category, clearCustomWeight: true);
-    } else {
-      state = state.copyWith(weightCategory: category);
-    }
-  }
+  void setWeight(double? weight) =>
+      state = state.copyWith(weightKg: weight, clearError: true);
 
-  void setCustomWeight(double? weight) =>
-      state = state.copyWith(customWeight: weight);
+  void setBagCount(int? count) =>
+      state = state.copyWith(bagCount: count, clearError: true);
+
+  void setBagType(BagType type) =>
+      state = state.copyWith(bagType: type, clearError: true);
+
+  void setShearingDate(DateTime? date) =>
+      state = state.copyWith(shearingDate: date, clearError: true);
+
+  void setSheepBreed(String breed) =>
+      state = state.copyWith(sheepBreed: breed, clearError: true);
+
+  void setParasiteTreatmentDate(DateTime? date) =>
+      state =
+          state.copyWith(lastParasiteTreatmentDate: date, clearError: true);
 
   void setLocation(double lat, double lng, {String? name}) =>
       state = state.copyWith(
         latitude: lat,
         longitude: lng,
         locationName: name,
+        clearError: true,
       );
 
   void setSurnom(String surnom) => state = state.copyWith(surnom: surnom);
@@ -106,28 +143,10 @@ class DeclarationViewModel extends _$DeclarationViewModel {
 
   void setNotes(String notes) => state = state.copyWith(notes: notes);
 
-  double _estimateWeight() {
-    if (state.weightCategory == WeightCategory.custom) {
-      return state.customWeight ?? 0;
-    }
-    switch (state.weightCategory!) {
-      case WeightCategory.oneSheep:
-        return 2.5;
-      case WeightCategory.oneBag:
-        return 5.0;
-      case WeightCategory.smallPile:
-        return 15.0;
-      case WeightCategory.largePile:
-        return 50.0;
-      case WeightCategory.custom:
-        return state.customWeight ?? 0;
-    }
-  }
-
   Future<void> submit() async {
     if (!state.isValid) {
       state = state.copyWith(
-        error: 'اختار الكمية و خلي الموقع يخدم',
+        error: 'حدد الوزن و الموقع باش تكمل التصريح',
       );
       return;
     }
@@ -138,12 +157,12 @@ class DeclarationViewModel extends _$DeclarationViewModel {
       return;
     }
 
-    state = state.copyWith(isSubmitting: true);
+    state = state.copyWith(isSubmitting: true, clearError: true);
 
     try {
       final collectionService = ref.read(collectionServiceProvider);
 
-      // Upload photo if present
+      // Upload photo if present (non-blocking on failure)
       String? photoFileId;
       if (state.photoPath != null) {
         try {
@@ -155,7 +174,7 @@ class DeclarationViewModel extends _$DeclarationViewModel {
           );
           photoFileId = fileResult['id'] as String?;
         } catch (_) {
-          // Photo upload failure is non-blocking
+          // Photo upload failure is non-blocking — proceed with the declaration.
         }
       }
 
@@ -163,19 +182,27 @@ class DeclarationViewModel extends _$DeclarationViewModel {
 
       await collectionService.declareWool({
         'userId': user.id,
-        'estimatedWeightKg': _estimateWeight().toStringAsFixed(1),
-        if (state.latitude != null) 'latitude': state.latitude.toString(),
-        if (state.longitude != null) 'longitude': state.longitude.toString(),
+        'estimatedWeightKg': state.weightKg!.toStringAsFixed(1),
+        'latitude': state.latitude!.toString(),
+        'longitude': state.longitude!.toString(),
         if (state.surnom.isNotEmpty) 'surnom': state.surnom,
         if (state.mazraa.isNotEmpty) 'mazraa': state.mazraa,
         if (state.notes.isNotEmpty) 'notes': state.notes,
         if (user.regionId.isNotEmpty) 'regionId': user.regionId,
         if (photoFileId != null) 'photoId': photoFileId,
         if (profession != null) 'profession': profession.apiValue,
+        if (state.shearingDate != null)
+          'shearingDate': _isoDate(state.shearingDate!),
+        if (state.sheepBreed.isNotEmpty) 'sheepBreed': state.sheepBreed,
+        if (state.bagCount != null) 'bagCount': state.bagCount,
+        if (state.bagType != null) 'bagType': state.bagType!.apiValue,
+        if (state.lastParasiteTreatmentDate != null)
+          'lastParasiteTreatmentDate':
+              _isoDate(state.lastParasiteTreatmentDate!),
       });
 
       state = state.copyWith(isSubmitting: false, isSubmitted: true);
-    } catch (e) {
+    } catch (_) {
       state = state.copyWith(
         isSubmitting: false,
         error: 'فشل الإرسال، عاود حاول',
@@ -186,4 +213,11 @@ class DeclarationViewModel extends _$DeclarationViewModel {
   void reset() {
     state = const DeclarationFormState();
   }
+}
+
+String _isoDate(DateTime d) {
+  final y = d.year.toString().padLeft(4, '0');
+  final m = d.month.toString().padLeft(2, '0');
+  final dd = d.day.toString().padLeft(2, '0');
+  return '$y-$m-$dd';
 }
