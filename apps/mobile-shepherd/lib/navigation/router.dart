@@ -6,27 +6,35 @@ import '../features/declaration/view/declaration_form_screen.dart';
 import '../features/declaration/view/declaration_screen.dart';
 import '../features/declaration/view/declaration_success_screen.dart';
 import '../features/home/view/home_shell.dart';
+import '../features/onboarding/view/intro_screen.dart';
 import '../features/onboarding/view/profession_picker_screen.dart';
 import '../features/profile/view/profile_screen.dart';
 import '../features/receipts/view/receipts_screen.dart';
+import '../features/splash/view/splash_screen.dart';
 
 final _rootNavigatorKey = GlobalKey<NavigatorState>();
 
 /// Main application router.
-/// Auth-gated: unauthenticated users see the login screen.
-/// Onboarding-gated: authenticated users without a profession set are sent
-/// to the profession picker before they can declare wool.
+/// Splash → Onboarding (first time) → Login (if not authed) → Profession picker
+/// (if no profession) → Home tabs.
 GoRouter createRouter({
   required bool isAuthenticated,
   required bool hasProfession,
+  required bool onboardingSeen,
 }) {
   return GoRouter(
     navigatorKey: _rootNavigatorKey,
-    initialLocation: '/',
+    initialLocation: '/splash',
     redirect: (context, state) {
-      final loggingIn = state.matchedLocation == '/login';
-      final picking = state.matchedLocation == '/onboarding/profession';
+      final loc = state.matchedLocation;
+      // Splash + onboarding routes are always reachable from anywhere — they
+      // self-redirect once the underlying state is known.
+      if (loc == '/splash' || loc == '/onboarding') return null;
 
+      final picking = loc == '/onboarding/profession';
+      final loggingIn = loc == '/login';
+
+      if (!onboardingSeen) return '/onboarding';
       if (!isAuthenticated && !loggingIn) return '/login';
       if (isAuthenticated && loggingIn) {
         return hasProfession ? '/' : '/onboarding/profession';
@@ -37,6 +45,16 @@ GoRouter createRouter({
       return null;
     },
     routes: [
+      GoRoute(
+        path: '/splash',
+        name: 'splash',
+        builder: (context, state) => const SplashScreen(),
+      ),
+      GoRoute(
+        path: '/onboarding',
+        name: 'onboarding',
+        builder: (context, state) => const IntroOnboardingScreen(),
+      ),
       GoRoute(
         path: '/login',
         name: 'login',

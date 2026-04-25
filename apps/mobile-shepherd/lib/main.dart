@@ -5,6 +5,7 @@ import 'package:ba33_ui/ba33_ui.dart';
 
 import 'navigation/router.dart';
 import 'shared/providers/auth_provider.dart';
+import 'shared/providers/onboarding_provider.dart';
 import 'shared/providers/profession_provider.dart';
 
 void main() {
@@ -18,14 +19,17 @@ class ShepherdApp extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final isLoggedIn = ref.watch(isAuthenticatedProvider);
-    // The profession is loaded asynchronously from SharedPreferences. Until
-    // it resolves we treat it as "unknown" and let the redirect run again
-    // once available.
+    // The profession + onboarding flag are loaded async from SharedPreferences.
+    // Until they resolve we treat them as "unknown" — the splash screen
+    // already absorbs that delay, and the redirect re-runs when state lands.
     final professionAsync = ref.watch(professionProvider);
+    final onboardingAsync = ref.watch(onboardingSeenProvider);
     final hasProfession = professionAsync.value != null;
+    final onboardingSeen = onboardingAsync.value ?? false;
     final router = createRouter(
       isAuthenticated: isLoggedIn,
       hasProfession: hasProfession,
+      onboardingSeen: onboardingSeen,
     );
 
     return MaterialApp.router(
