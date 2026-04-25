@@ -19,6 +19,7 @@ dependencies:
   ba33_api_client:
     path: ../../packages/ba33_api_client
   url_launcher: ^6.3.1
+  geolocator: ^13.0.2
 
 dev_dependencies:
   flutter_test:

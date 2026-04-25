@@ -3,11 +3,11 @@ import 'package:go_router/go_router.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../features/auth/view/login_screen.dart';
-import '../features/declarations/view/declarations_screen.dart';
 import '../features/home/view/home_shell.dart';
-import '../features/lots/view/lot_create_screen.dart';
-import '../features/lots/view/lot_detail_screen.dart';
-import '../features/lots/view/lot_list_screen.dart';
+import '../features/jobs/view/active_job_screen.dart';
+import '../features/jobs/view/arrival_form_screen.dart';
+import '../features/jobs/view/job_detail_screen.dart';
+import '../features/jobs/view/job_list_screen.dart';
 import '../features/profile/view/profile_screen.dart';
 import '../shared/providers/auth_provider.dart';
 
@@ -46,17 +46,8 @@ GoRouter router(RouterRef ref) {
             routes: [
               GoRoute(
                 path: '/',
-                name: 'lots',
-                builder: (context, state) => const LotListScreen(),
-              ),
-            ],
-          ),
-          StatefulShellBranch(
-            routes: [
-              GoRoute(
-                path: '/pickups',
-                name: 'pickups',
-                builder: (context, state) => const DeclarationsScreen(),
+                name: 'jobs',
+                builder: (context, state) => const JobListScreen(),
               ),
             ],
           ),
@@ -72,15 +63,24 @@ GoRouter router(RouterRef ref) {
         ],
       ),
       GoRoute(
-        path: '/lots/create',
-        name: 'create-lot',
-        builder: (context, state) => const LotCreateScreen(),
+        path: '/jobs/:id',
+        name: 'job-detail',
+        builder: (context, state) => JobDetailScreen(
+          jobId: state.pathParameters['id']!,
+        ),
       ),
       GoRoute(
-        path: '/lots/:id',
-        name: 'lot-detail',
-        builder: (context, state) => LotDetailScreen(
-          lotId: state.pathParameters['id']!,
+        path: '/jobs/:id/active',
+        name: 'job-active',
+        builder: (context, state) => ActiveJobScreen(
+          jobId: state.pathParameters['id']!,
+        ),
+      ),
+      GoRoute(
+        path: '/jobs/:id/arrival',
+        name: 'job-arrival',
+        builder: (context, state) => ArrivalFormScreen(
+          jobId: state.pathParameters['id']!,
         ),
       ),
     ],

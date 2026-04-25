@@ -5,9 +5,15 @@ import { CollectionRepository } from './collection.repository';
 import { EventsModule } from '../events/events.module';
 import { NotificationsModule } from '../notifications/notifications.module';
 import { TransportModule } from '../transport/transport.module';
+import { LotsModule } from '../lots/lots.module';
 
 @Module({
-  imports: [EventsModule, NotificationsModule, forwardRef(() => TransportModule)],
+  imports: [
+    EventsModule,
+    NotificationsModule,
+    forwardRef(() => TransportModule),
+    forwardRef(() => LotsModule),
+  ],
   controllers: [CollectionController],
   providers: [CollectionService, CollectionRepository],
   exports: [CollectionService],

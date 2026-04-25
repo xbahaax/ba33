@@ -8,6 +8,20 @@
       "when": 1777038567504,
       "tag": "0000_dark_korvac",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1777920000000,
+      "tag": "0001_add_collection_jobs",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1777920100000,
+      "tag": "0002_fill_user_type_enum",
+      "breakpoints": true
     }
   ]
 }

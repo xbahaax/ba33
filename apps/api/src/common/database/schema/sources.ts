@@ -7,13 +7,14 @@ import {
   integer,
   boolean,
 } from 'drizzle-orm/pg-core';
-import { sourceTypeEnum, sourceStatusEnum } from './enums';
+import { sourceTypeEnum, sourceStatusEnum, sourceProfessionEnum } from './enums';
 import { regions } from './regions';
 import { users } from './users';
 
 export const sources = pgTable('sources', {
   id: uuid('id').primaryKey().defaultRandom(),
   sourceType: sourceTypeEnum('source_type').notNull(),
+  profession: sourceProfessionEnum('profession'),
   name: text('name').notNull(),
   contactPhone: text('contact_phone'),
   contactEmail: text('contact_email'),

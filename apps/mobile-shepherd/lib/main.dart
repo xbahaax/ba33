@@ -5,6 +5,7 @@ import 'package:ba33_ui/ba33_ui.dart';
 
 import 'navigation/router.dart';
 import 'shared/providers/auth_provider.dart';
+import 'shared/providers/profession_provider.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -17,7 +18,15 @@ class ShepherdApp extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final isLoggedIn = ref.watch(isAuthenticatedProvider);
-    final router = createRouter(isAuthenticated: isLoggedIn);
+    // The profession is loaded asynchronously from SharedPreferences. Until
+    // it resolves we treat it as "unknown" and let the redirect run again
+    // once available.
+    final professionAsync = ref.watch(professionProvider);
+    final hasProfession = professionAsync.value != null;
+    final router = createRouter(
+      isAuthenticated: isLoggedIn,
+      hasProfession: hasProfession,
+    );
 
     return MaterialApp.router(
       title: 'ba33 راعي',

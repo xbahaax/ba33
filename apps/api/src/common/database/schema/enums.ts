@@ -31,6 +31,14 @@ export const sourceTypeEnum = pgEnum('source_type', [
 
 export const sourceStatusEnum = pgEnum('source_status', ['pending', 'active', 'suspended']);
 
+export const sourceProfessionEnum = pgEnum('source_profession', [
+  'shepherd',
+  'slaughterhouse',
+  'butcher',
+  'aggregator',
+  'other',
+]);
+
 // collection
 export const preLotStatusEnum = pgEnum('pre_lot_status', [
   'announced',
@@ -46,6 +54,16 @@ export const routeStopStatusEnum = pgEnum('route_stop_status', [
   'pending',
   'completed',
   'skipped',
+]);
+
+export const collectionJobStatusEnum = pgEnum('collection_job_status', [
+  'pending',
+  'assigned',
+  'accepted',
+  'in_progress',
+  'arrived',
+  'completed',
+  'cancelled',
 ]);
 
 // lots
