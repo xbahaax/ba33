@@ -28,8 +28,8 @@ interface InfoListCardProps {
 const toneClasses: Record<ItemTone, string> = {
   default: "text-foreground",
   muted: "text-muted-foreground",
-  success: "text-success",
-  warning: "text-warning-dark",
+  success: "text-primary",
+  warning: "text-amber-600",
   destructive: "text-destructive",
 };
 

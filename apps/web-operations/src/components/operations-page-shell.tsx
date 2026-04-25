@@ -51,7 +51,7 @@ export function OperationsPageShell({
     if (sessionLoading) {
       return {
         detail: "Initialisation du profil opérateur",
-        icon: <Wifi className="h-4 w-4 text-warning-dark" />,
+        icon: <Wifi className="h-4 w-4 text-amber-600" />,
         label: "Session en cours",
       };
     }
@@ -67,7 +67,7 @@ export function OperationsPageShell({
     if (loading) {
       return {
         detail: getClientApiBaseUrl(),
-        icon: <Wifi className="h-4 w-4 text-warning-dark" />,
+        icon: <Wifi className="h-4 w-4 text-amber-600" />,
         label: "Connexion en cours",
       };
     }
@@ -75,7 +75,7 @@ export function OperationsPageShell({
     if (updatedAt) {
       return {
         detail: `Dernière mise à jour ${formatDateTime(new Date(updatedAt).toISOString())}`,
-        icon: <Wifi className="h-4 w-4 text-success" />,
+        icon: <Wifi className="h-4 w-4 text-primary" />,
         label: "API connectée",
       };
     }
@@ -90,7 +90,7 @@ export function OperationsPageShell({
 
     return {
       detail: getClientApiBaseUrl(),
-      icon: <Wifi className="h-4 w-4 text-success" />,
+      icon: <Wifi className="h-4 w-4 text-primary" />,
       label: "Console prête",
     };
   }, [error, loading, session, sessionLoading, updatedAt]);

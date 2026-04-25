@@ -59,7 +59,7 @@ export function ActionFeedback({
         "rounded-lg border px-3 py-2 text-sm",
         tone === "destructive" &&
           "border-destructive/30 bg-destructive/5 text-destructive",
-        tone === "success" && "border-success/30 bg-success/5 text-success",
+        tone === "success" && "border-primary/30 bg-primary/5 text-primary",
         tone === "default" && "border-border bg-muted/40 text-muted-foreground",
       )}
     >

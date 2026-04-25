@@ -44,7 +44,7 @@ export function OperationsRoutePage({
   const headerMeta = useMemo(() => {
     if (sessionLoading) {
       return {
-        icon: <Wifi className="h-4 w-4 text-warning-dark" />,
+        icon: <Wifi className="h-4 w-4 text-amber-600" />,
         label: "Session en cours",
         detail: "Initialisation du profil opérateur",
       };
@@ -60,7 +60,7 @@ export function OperationsRoutePage({
 
     if (loading && !data) {
       return {
-        icon: <Wifi className="h-4 w-4 text-warning-dark" />,
+        icon: <Wifi className="h-4 w-4 text-amber-600" />,
         label: "Connexion en cours",
         detail: getClientApiBaseUrl(),
       };
@@ -68,7 +68,7 @@ export function OperationsRoutePage({
 
     if (data) {
       return {
-        icon: <Wifi className="h-4 w-4 text-success" />,
+        icon: <Wifi className="h-4 w-4 text-primary" />,
         label: "API connectee",
         detail: updatedAt
           ? `Derniere mise a jour ${formatDateTime(new Date(updatedAt).toISOString())}`

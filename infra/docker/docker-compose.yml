@@ -76,6 +76,58 @@ services:
       - ba33-web-operations-workspace-node-modules:/app/apps/web-operations/node_modules
       - ba33-web-operations-next:/app/apps/web-operations/.next
 
+  web-buyer:
+    build:
+      context: ../..
+      dockerfile: infra/docker/Dockerfile.dev
+    container_name: ba33-web-buyer
+    restart: unless-stopped
+    working_dir: /app
+    environment:
+      BA33_API_URL: http://api:3001
+      NEXT_PUBLIC_BA33_API_URL: /_ba33_api
+      NEXT_PUBLIC_API_URL: /_ba33_api
+      NEXT_TELEMETRY_DISABLED: "1"
+      WATCHPACK_POLLING: "true"
+      CHOKIDAR_USEPOLLING: "true"
+    command: sh -c "pnpm install --frozen-lockfile && pnpm --filter @ba33/web-buyer exec next dev --hostname 0.0.0.0 --port 3001"
+    depends_on:
+      api:
+        condition: service_started
+    ports:
+      - "3010:3001"
+    volumes:
+      - ../..:/app
+      - ba33-web-buyer-node-modules:/app/node_modules
+      - ba33-web-buyer-workspace-node-modules:/app/apps/web-buyer/node_modules
+      - ba33-web-buyer-next:/app/apps/web-buyer/.next
+
+  web-institutional:
+    build:
+      context: ../..
+      dockerfile: infra/docker/Dockerfile.dev
+    container_name: ba33-web-institutional
+    restart: unless-stopped
+    working_dir: /app
+    environment:
+      BA33_API_URL: http://api:3001
+      NEXT_PUBLIC_BA33_API_URL: /_ba33_api
+      NEXT_PUBLIC_API_URL: /_ba33_api
+      NEXT_TELEMETRY_DISABLED: "1"
+      WATCHPACK_POLLING: "true"
+      CHOKIDAR_USEPOLLING: "true"
+    command: sh -c "pnpm install --frozen-lockfile && pnpm --filter @ba33/web-institutional exec next dev --hostname 0.0.0.0 --port 3002"
+    depends_on:
+      api:
+        condition: service_started
+    ports:
+      - "3020:3002"
+    volumes:
+      - ../..:/app
+      - ba33-web-institutional-node-modules:/app/node_modules
+      - ba33-web-institutional-workspace-node-modules:/app/apps/web-institutional/node_modules
+      - ba33-web-institutional-next:/app/apps/web-institutional/.next
+
 volumes:
   ba33-postgres-data:
   ba33-redis-data:
@@ -84,3 +136,9 @@ volumes:
   ba33-web-operations-node-modules:
   ba33-web-operations-workspace-node-modules:
   ba33-web-operations-next:
+  ba33-web-buyer-node-modules:
+  ba33-web-buyer-workspace-node-modules:
+  ba33-web-buyer-next:
+  ba33-web-institutional-node-modules:
+  ba33-web-institutional-workspace-node-modules:
+  ba33-web-institutional-next:
