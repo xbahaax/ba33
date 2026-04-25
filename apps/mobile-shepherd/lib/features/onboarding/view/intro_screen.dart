@@ -85,15 +85,22 @@ class _IntroOnboardingScreenState
           padding: const EdgeInsets.all(Ba33Spacing.spacing6),
           child: Column(
             children: [
-              Align(
-                alignment: AlignmentDirectional.centerStart,
-                child: TextButton(
-                  onPressed: _finish,
-                  child: Text(
-                    'تخطّى',
-                    style: TextStyle(color: colors.mutedForeground),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  TextButton(
+                    onPressed: _finish,
+                    child: Text(
+                      'تخطّى',
+                      style: TextStyle(color: colors.mutedForeground),
+                    ),
                   ),
-                ),
+                  Image.asset(
+                    'assets/images/logo_green.png',
+                    width: 48,
+                    height: 48,
+                  ),
+                ],
               ),
               Expanded(
                 child: PageView.builder(

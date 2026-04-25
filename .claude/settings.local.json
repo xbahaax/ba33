@@ -8,7 +8,13 @@
       "Bash(bash C:/Users/DELL/Desktop/ba33/scripts/test-pipeline.sh)",
       "Bash(docker exec *)",
       "Bash(curl -s http://localhost:3100/api-json)",
-      "Bash(node -e \"const d=JSON.parse\\(require\\('fs'\\).readFileSync\\('/dev/stdin','utf8'\\)\\); console.log\\(Object.keys\\(d.paths\\).sort\\(\\).join\\('\\\\n'\\)\\)\")"
+      "Bash(node -e \"const d=JSON.parse\\(require\\('fs'\\).readFileSync\\('/dev/stdin','utf8'\\)\\); console.log\\(Object.keys\\(d.paths\\).sort\\(\\).join\\('\\\\n'\\)\\)\")",
+      "Bash(mkdir -p /Users/mac/Desktop/ba33/apps/mobile-collector/assets/images)",
+      "Bash(mkdir -p /Users/mac/Desktop/ba33/apps/mobile-shepherd/assets/images)",
+      "Bash(cp /Users/mac/Desktop/ba33/logo.png /Users/mac/Desktop/ba33/apps/mobile-collector/assets/images/logo_green.png)",
+      "Bash(cp /Users/mac/Desktop/ba33/logo_1.png /Users/mac/Desktop/ba33/apps/mobile-collector/assets/images/logo_white.png)",
+      "Bash(cp /Users/mac/Desktop/ba33/logo.png /Users/mac/Desktop/ba33/apps/mobile-shepherd/assets/images/logo_green.png)",
+      "Bash(cp /Users/mac/Desktop/ba33/logo_1.png /Users/mac/Desktop/ba33/apps/mobile-shepherd/assets/images/logo_white.png)"
     ]
   }
 }

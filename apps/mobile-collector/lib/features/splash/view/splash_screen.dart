@@ -51,26 +51,12 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Container(
-                width: 96,
-                height: 96,
-                decoration: BoxDecoration(
-                  color: colors.primaryForeground.withAlpha(40),
-                  borderRadius: Ba33Radii.borderRadiusXl,
-                ),
-                child: Icon(Icons.assignment_turned_in_rounded,
-                    size: 56, color: colors.primaryForeground),
+              Image.asset(
+                'assets/images/logo_white.png',
+                width: 120,
+                height: 120,
               ),
               const SizedBox(height: Ba33Spacing.spacing6),
-              Text(
-                'ba33',
-                style: Ba33Typography.serif(
-                  fontSize: 48,
-                  fontWeight: FontWeight.w700,
-                  color: colors.primaryForeground,
-                ),
-              ),
-              const SizedBox(height: Ba33Spacing.spacing2),
               Text(
                 'Collecteur · Wool collection',
                 style: Theme.of(context).textTheme.bodyLarge?.copyWith(

@@ -14,8 +14,9 @@ extension BagTypeX on BagType {
         BagType.jute => 'jute',
       };
   String labelArabic() => switch (this) {
-        BagType.pp => 'كياس بلاستيك (PP)',
-        BagType.jute => 'كياس جوت',
+        BagType.pp => 'اكياس بلاستيك (PP)',
+        BagType.jute => 'اكياس قماش',
+
       };
 }
 
@@ -56,11 +57,7 @@ class DeclarationFormState {
   final bool isSubmitted;
   final String? error;
 
-  bool get isValid =>
-      weightKg != null &&
-      weightKg! > 0 &&
-      latitude != null &&
-      longitude != null;
+  bool get isValid => weightKg != null && weightKg! > 0;
 
   DeclarationFormState copyWith({
     double? weightKg,
@@ -183,8 +180,8 @@ class DeclarationViewModel extends _$DeclarationViewModel {
       await collectionService.declareWool({
         'userId': user.id,
         'estimatedWeightKg': state.weightKg!.toStringAsFixed(1),
-        'latitude': state.latitude!.toString(),
-        'longitude': state.longitude!.toString(),
+        if (state.latitude != null) 'latitude': state.latitude!.toString(),
+        if (state.longitude != null) 'longitude': state.longitude!.toString(),
         if (state.surnom.isNotEmpty) 'surnom': state.surnom,
         if (state.mazraa.isNotEmpty) 'mazraa': state.mazraa,
         if (state.notes.isNotEmpty) 'notes': state.notes,
