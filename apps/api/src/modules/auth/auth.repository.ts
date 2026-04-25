@@ -1,5 +1,5 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { asc, eq } from 'drizzle-orm';
+import { asc, eq, inArray } from 'drizzle-orm';
 import {
   defaultRoleTemplates,
   getDefaultPermissionsForUserType,
@@ -115,11 +115,12 @@ export class AuthRepository {
   }
 
   async findBuyerByPhone(phone: string): Promise<BuyerAuthUser | undefined> {
+    const phoneVariants = normalizePhoneVariants(phone);
     const rows = await this.db
       .select({ user: users, buyer: buyers })
       .from(users)
       .leftJoin(buyers, eq(users.id, buyers.userId))
-      .where(eq(users.phone, phone))
+      .where(inArray(users.phone, phoneVariants))
       .limit(1);
 
     return rows[0]?.buyer ? this.toBuyerAuthUser(rows[0].user, rows[0].buyer) : undefined;
@@ -137,6 +138,7 @@ export class AuthRepository {
   }
 
   async findOperationsUserByPhone(phone: string): Promise<OperationsAuthUser | undefined> {
+    const phoneVariants = normalizePhoneVariants(phone);
     const rows = await this.db
       .select({
         user: users,
@@ -144,7 +146,7 @@ export class AuthRepository {
       })
       .from(users)
       .leftJoin(regions, eq(users.regionId, regions.id))
-      .where(eq(users.phone, phone))
+      .where(inArray(users.phone, phoneVariants))
       .limit(1);
 
     const user = rows[0] ? this.toOperationsAuthUser(rows[0].user, rows[0].regionName) : undefined;
@@ -445,4 +447,32 @@ export class AuthRepository {
       notifications: profile.notifications,
     };
   }
+}
+
+function normalizePhoneVariants(phone: string) {
+  const trimmed = phone.trim().replace(/[\s.-]/g, '');
+  const digits = trimmed.replace(/^\+/, '');
+  const variants = new Set<string>([trimmed]);
+
+  if (digits.startsWith('213') && digits.length > 3) {
+    const national = `0${digits.slice(3)}`;
+    variants.add(national);
+    variants.add(`+${digits}`);
+    variants.add(digits);
+  }
+
+  if (digits.startsWith('0') && digits.length > 1) {
+    const significant = digits.slice(1);
+    variants.add(significant);
+    variants.add(`213${significant}`);
+    variants.add(`+213${significant}`);
+  }
+
+  if (!digits.startsWith('0') && !digits.startsWith('213')) {
+    variants.add(`0${digits}`);
+    variants.add(`213${digits}`);
+    variants.add(`+213${digits}`);
+  }
+
+  return [...variants];
 }

@@ -6,6 +6,11 @@ COMPOSE  := docker compose -f infra/docker/docker-compose.yml
 API_PORT ?= 3100
 HOST     := $(shell ipconfig getifaddr en0 2>/dev/null || ipconfig getifaddr en1 2>/dev/null || echo localhost)
 API_URL  := http://$(HOST):$(API_PORT)
+DATABASE_URL ?= postgres://ba33:ba33_dev_password@localhost:5450/ba33_platform
+REDIS_URL    ?= redis://localhost:6390
+
+export DATABASE_URL
+export REDIS_URL
 
 # ── Colors ────────────────────────────────────────────────────────────────────
 CYAN  := \033[0;36m
@@ -21,15 +26,12 @@ ok  = @printf "$(GREEN)[ok]$(NC) %s\n" $(1)
 #                then seeds the DB automatically once the API is ready.
 # ══════════════════════════════════════════════════════════════════════════════
 .PHONY: dev
-dev: install infra wait-db migrate api-build
-	$(call log,"Starting all services (API :3333 · web-ops :3003 · web-buyer :3001 · web-institutional :3002)...")
+dev: install infra wait-db migrate seed-db api-build
+	$(call log,"Starting all services (API :$(API_PORT) · web-ops :3000 · web-buyer :3001 · web-institutional :3002)...")
 	@trap 'kill 0' INT; \
-	pnpm dev & \
+	PORT=$(API_PORT) BA33_API_URL=$(API_URL) NEXT_PUBLIC_BA33_API_URL=$(API_URL)/api/v1 NEXT_PUBLIC_API_URL=$(API_URL)/api/v1 pnpm dev & \
 	printf "$(GRAY)[ba33] Waiting for API on $(API_URL)...$(NC)\n"; \
 	until curl -sf $(API_URL)/api > /dev/null 2>&1; do sleep 3; done; \
-	curl -sf -X POST $(API_URL)/seed > /dev/null 2>&1 \
-	  && printf "$(GREEN)[ok]$(NC) Database seeded.\n" \
-	  || printf "$(GRAY)[ba33] Seed skipped (already seeded or returned an error).$(NC)\n"; \
 	wait
 
 # ── API first build (creates dist/ so nest --watch can start) ─────────────────
@@ -51,7 +53,7 @@ install:
 .PHONY: infra
 infra:
 	$(call log,"Starting Docker services (Postgres + Redis)...")
-	@$(COMPOSE) up -d
+	@$(COMPOSE) up -d postgres redis
 	$(ok,"Docker services started")
 
 .PHONY: wait-db
@@ -66,15 +68,19 @@ wait-db:
 .PHONY: migrate
 migrate:
 	$(call log,"Running database migrations...")
-	@pnpm --filter @ba33/api drizzle-kit migrate
+	@pnpm --filter @ba33/api db:migrate
 	$(ok,"Migrations applied")
+
+.PHONY: seed-db
+seed-db:
+	$(call log,"Seeding full demo database...")
+	@pnpm --filter @ba33/api db:seed
+	$(ok,"Demo database seeded")
 
 .PHONY: seed
 seed:
-	$(call log,"Waiting for API on $(API_URL)...")
-	@until curl -sf $(API_URL)/api > /dev/null 2>&1; do sleep 3; done
-	$(call log,"Seeding database...")
-	@curl -s -X POST $(API_URL)/seed | python3 -m json.tool
+	$(call log,"Seeding full demo database...")
+	@pnpm --filter @ba33/api db:seed
 	$(ok,"Seed complete")
 
 .PHONY: studio

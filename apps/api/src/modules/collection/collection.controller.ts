@@ -48,8 +48,11 @@ export class CollectionController {
   @ApiOperation({
     summary: 'Shepherd declaration — auto-creates source if needed',
   })
-  async declareWool(@Body() dto: DeclareWoolDto) {
-    return this.collectionService.declareWool(dto);
+  async declareWool(@Body() dto: DeclareWoolDto, @Request() req: any) {
+    return this.collectionService.declareWool({
+      ...dto,
+      userId: dto.userId ?? req.user.id,
+    });
   }
 
   @Post('pre-lots/declare-on-behalf')
@@ -57,8 +60,11 @@ export class CollectionController {
     summary:
       'Transporter/collector declares wool on behalf of a farmer — creates source + pre-lot',
   })
-  async declareWoolOnBehalf(@Body() dto: DeclareWoolOnBehalfDto) {
-    return this.collectionService.declareWoolOnBehalf(dto);
+  async declareWoolOnBehalf(@Body() dto: DeclareWoolOnBehalfDto, @Request() req: any) {
+    return this.collectionService.declareWoolOnBehalf({
+      ...dto,
+      declaringUserId: dto.declaringUserId ?? req.user.id,
+    });
   }
 
   @Post('pre-lots')
@@ -68,12 +74,13 @@ export class CollectionController {
   }
 
   @Get('pre-lots')
-  @Roles('collector', 'central_admin', 'regional_manager')
+  @Roles('shepherd', 'collector', 'central_admin', 'regional_manager')
   @ApiOperation({ summary: 'List pre-lots with optional filters' })
   @ApiQuery({ name: 'status', required: false })
   @ApiQuery({ name: 'assignedCollectorId', required: false })
   @ApiQuery({ name: 'regionId', required: false })
   async listPreLots(
+    @Request() req: any,
     @Query('status') status?: string,
     @Query('assignedCollectorId') assignedCollectorId?: string,
     @Query('regionId') regionId?: string,
@@ -82,6 +89,7 @@ export class CollectionController {
       status,
       assignedCollectorId,
       regionId,
+      registeredBy: req.user.type === 'shepherd' ? req.user.id : undefined,
     });
   }
 
@@ -251,6 +259,7 @@ export class CollectionController {
     return this.collectionService.listCollectionJobs({
       collectorId: req.user.id,
       status,
+      includeUnassignedOpen: true,
     });
   }
 

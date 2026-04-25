@@ -40,8 +40,8 @@ export class SalesController {
   }
 
   @Get('products/:id')
-  getProduct(@Param('id') id: string) {
-    const product = this.salesService.findProduct(id);
+  async getProduct(@Param('id') id: string) {
+    const product = await this.salesService.findProduct(id);
 
     if (!product) {
       throw new NotFoundException('Product not found');

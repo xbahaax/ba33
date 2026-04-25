@@ -299,14 +299,9 @@ export class TransportService {
       job.destinationType,
     );
 
-    // Update lot status to received_depot (mirrors loadLot → in_transit)
-    if (job.destinationType === 'depot') {
-      await this.lotsService.updateLotStatus(
-        lotId,
-        'received_depot',
-        job.transporterId ?? 'system',
-      );
-    }
+    // Keep the lot in transit until completeJob creates the depot reception.
+    // Setting received_depot here prevents DepotService.receiveLot from recording
+    // the actual handoff, weight, and workflow event.
 
     await this.eventsService.emit({
       eventType: 'transport.lot.delivered',

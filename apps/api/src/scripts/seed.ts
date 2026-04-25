@@ -1,4 +1,5 @@
 import { sql } from 'drizzle-orm';
+import { hashSync } from 'bcryptjs';
 import { db } from '../common/database/client';
 import {
   a1Alerts,
@@ -38,86 +39,89 @@ import {
 
 const ids = {
   regions: {
-    setif: '00000000-0000-0000-0000-000000000101',
-    alger: '00000000-0000-0000-0000-000000000102',
-    oran: '00000000-0000-0000-0000-000000000103',
-    setifVillage: '00000000-0000-0000-0000-000000000104',
+    setif: '00000000-0000-4000-8000-000000000101',
+    alger: '00000000-0000-4000-8000-000000000102',
+    oran: '00000000-0000-4000-8000-000000000103',
+    setifVillage: '00000000-0000-4000-8000-000000000104',
   },
   users: {
-    admin: '00000000-0000-0000-0000-000000000201',
-    collector: '00000000-0000-0000-0000-000000000202',
-    depot: '00000000-0000-0000-0000-000000000203',
-    laverie: '00000000-0000-0000-0000-000000000204',
-    transformer: '00000000-0000-0000-0000-000000000205',
-    sales: '00000000-0000-0000-0000-000000000206',
-    transporter: '00000000-0000-0000-0000-000000000207',
-    buyer: '00000000-0000-0000-0000-000000000208',
-    regional: '00000000-0000-0000-0000-000000000209',
+    admin: '00000000-0000-4000-8000-000000000201',
+    collector: '00000000-0000-4000-8000-000000000202',
+    depot: '00000000-0000-4000-8000-000000000203',
+    laverie: '00000000-0000-4000-8000-000000000204',
+    transformer: '00000000-0000-4000-8000-000000000205',
+    sales: '00000000-0000-4000-8000-000000000206',
+    transporter: '00000000-0000-4000-8000-000000000207',
+    buyer: '00000000-0000-4000-8000-000000000208',
+    regional: '00000000-0000-4000-8000-000000000209',
+    shepherd: '00000000-0000-4000-8000-000000000210',
   },
   sources: {
-    shepherd: '00000000-0000-0000-0000-000000000301',
-    slaughterhouse: '00000000-0000-0000-0000-000000000302',
-    aggregator: '00000000-0000-0000-0000-000000000303',
+    shepherd: '00000000-0000-4000-8000-000000000301',
+    slaughterhouse: '00000000-0000-4000-8000-000000000302',
+    aggregator: '00000000-0000-4000-8000-000000000303',
   },
   preLots: {
-    p1: '00000000-0000-0000-0000-000000000401',
-    p2: '00000000-0000-0000-0000-000000000402',
+    p1: '00000000-0000-4000-8000-000000000401',
+    p2: '00000000-0000-4000-8000-000000000402',
   },
   lots: {
-    transit: '00000000-0000-0000-0000-000000000501',
-    depotStored: '00000000-0000-0000-0000-000000000502',
-    depotReceived: '00000000-0000-0000-0000-000000000503',
-    washing: '00000000-0000-0000-0000-000000000504',
-    certified: '00000000-0000-0000-0000-000000000505',
-    sold: '00000000-0000-0000-0000-000000000506',
+    transit: '00000000-0000-4000-8000-000000000501',
+    depotStored: '00000000-0000-4000-8000-000000000502',
+    depotReceived: '00000000-0000-4000-8000-000000000503',
+    washing: '00000000-0000-4000-8000-000000000504',
+    certified: '00000000-0000-4000-8000-000000000505',
+    sold: '00000000-0000-4000-8000-000000000506',
   },
   depots: {
-    setif: '00000000-0000-0000-0000-000000000601',
-    alger: '00000000-0000-0000-0000-000000000602',
+    setif: '00000000-0000-4000-8000-000000000601',
+    alger: '00000000-0000-4000-8000-000000000602',
   },
   zones: {
-    urgent: '00000000-0000-0000-0000-000000000611',
-    ready: '00000000-0000-0000-0000-000000000612',
-    c3: '00000000-0000-0000-0000-000000000613',
+    urgent: '00000000-0000-4000-8000-000000000611',
+    ready: '00000000-0000-4000-8000-000000000612',
+    c3: '00000000-0000-4000-8000-000000000613',
   },
-  laverie: '00000000-0000-0000-0000-000000000701',
+  laverie: '00000000-0000-4000-8000-000000000701',
   transformer: {
-    d3: '00000000-0000-0000-0000-000000000801',
-    d4: '00000000-0000-0000-0000-000000000802',
+    d3: '00000000-0000-4000-8000-000000000801',
+    d4: '00000000-0000-4000-8000-000000000802',
   },
-  bom: '00000000-0000-0000-0000-000000000811',
+  bom: '00000000-0000-4000-8000-000000000811',
   runs: {
-    activeWash: '00000000-0000-0000-0000-000000000901',
-    completeWash: '00000000-0000-0000-0000-000000000902',
-    activeProd: '00000000-0000-0000-0000-000000000903',
-    completeProd: '00000000-0000-0000-0000-000000000904',
+    activeWash: '00000000-0000-4000-8000-000000000901',
+    completeWash: '00000000-0000-4000-8000-000000000902',
+    activeProd: '00000000-0000-4000-8000-000000000903',
+    completeProd: '00000000-0000-4000-8000-000000000904',
   },
   jobs: {
-    pending: '00000000-0000-0000-0000-000000001001',
-    active: '00000000-0000-0000-0000-000000001002',
-    delivered: '00000000-0000-0000-0000-000000001003',
+    pending: '00000000-0000-4000-8000-000000001001',
+    active: '00000000-0000-4000-8000-000000001002',
+    delivered: '00000000-0000-4000-8000-000000001003',
   },
   products: {
-    insulation: '00000000-0000-0000-0000-000000001101',
-    bio: '00000000-0000-0000-0000-000000001102',
-    sold: '00000000-0000-0000-0000-000000001103',
+    insulation: '00000000-0000-4000-8000-000000001101',
+    bio: '00000000-0000-4000-8000-000000001102',
+    sold: '00000000-0000-4000-8000-000000001103',
   },
   certs: {
-    pending: '00000000-0000-0000-0000-000000001201',
-    issued: '00000000-0000-0000-0000-000000001202',
-    revoked: '00000000-0000-0000-0000-000000001203',
+    pending: '00000000-0000-4000-8000-000000001201',
+    issued: '00000000-0000-4000-8000-000000001202',
+    revoked: '00000000-0000-4000-8000-000000001203',
   },
   orders: {
-    quote: '00000000-0000-0000-0000-000000001301',
-    preparing: '00000000-0000-0000-0000-000000001302',
-    delivered: '00000000-0000-0000-0000-000000001303',
+    quote: '00000000-0000-4000-8000-000000001301',
+    preparing: '00000000-0000-4000-8000-000000001302',
+    delivered: '00000000-0000-4000-8000-000000001303',
   },
   rules: {
-    a1: '00000000-0000-0000-0000-000000001401',
-    dispatch: '00000000-0000-0000-0000-000000001402',
-    pricing: '00000000-0000-0000-0000-000000001403',
+    a1: '00000000-0000-4000-8000-000000001401',
+    dispatch: '00000000-0000-4000-8000-000000001402',
+    pricing: '00000000-0000-4000-8000-000000001403',
   },
 };
+
+const DEV_PASSWORD = 'password123';
 
 async function truncateAll() {
   await db.execute(sql`
@@ -159,8 +163,9 @@ async function truncateAll() {
   `);
 }
 
-async function seed() {
+export async function seedDemoData() {
   await truncateAll();
+  const passwordHash = hashSync(DEV_PASSWORD, 10);
 
   await db.insert(regions).values([
     {
@@ -202,9 +207,9 @@ async function seed() {
     {
       id: ids.users.admin,
       email: 'admin@ba33.local',
-      passwordHash: 'dev_hash',
+      passwordHash,
       fullName: 'Yacine Admin',
-      phone: '+213550000001',
+      phone: '0555000001',
       userType: 'central_admin',
       status: 'active',
       regionId: ids.regions.alger,
@@ -213,9 +218,9 @@ async function seed() {
     {
       id: ids.users.collector,
       email: 'collector@ba33.local',
-      passwordHash: 'dev_hash',
+      passwordHash,
       fullName: 'Amina Collecte',
-      phone: '+213550000002',
+      phone: '0555000002',
       userType: 'collector',
       status: 'active',
       regionId: ids.regions.setif,
@@ -224,9 +229,9 @@ async function seed() {
     {
       id: ids.users.depot,
       email: 'depot@ba33.local',
-      passwordHash: 'dev_hash',
+      passwordHash,
       fullName: 'Karim Depot',
-      phone: '+213550000003',
+      phone: '0555000003',
       userType: 'depot_manager',
       status: 'active',
       regionId: ids.regions.setif,
@@ -235,9 +240,9 @@ async function seed() {
     {
       id: ids.users.laverie,
       email: 'laverie@ba33.local',
-      passwordHash: 'dev_hash',
+      passwordHash,
       fullName: 'Sofia Laverie',
-      phone: '+213550000004',
+      phone: '0555000004',
       userType: 'laverie_operator',
       status: 'active',
       regionId: ids.regions.setif,
@@ -246,9 +251,9 @@ async function seed() {
     {
       id: ids.users.transformer,
       email: 'transformer@ba33.local',
-      passwordHash: 'dev_hash',
+      passwordHash,
       fullName: 'Nadir Transformation',
-      phone: '+213550000005',
+      phone: '0555000005',
       userType: 'transformer_operator',
       status: 'active',
       regionId: ids.regions.oran,
@@ -257,9 +262,9 @@ async function seed() {
     {
       id: ids.users.sales,
       email: 'sales@ba33.local',
-      passwordHash: 'dev_hash',
+      passwordHash,
       fullName: 'Meriem Sales',
-      phone: '+213550000006',
+      phone: '0555000006',
       userType: 'sales_agent',
       status: 'active',
       regionId: ids.regions.alger,
@@ -268,10 +273,10 @@ async function seed() {
     {
       id: ids.users.transporter,
       email: 'transport@ba33.local',
-      passwordHash: 'dev_hash',
+      passwordHash,
       fullName: 'Samir Transport',
-      phone: '+213550000007',
-      userType: 'regional_manager',
+      phone: '0555000007',
+      userType: 'transporter',
       status: 'active',
       regionId: ids.regions.setif,
       lastLoginAt: new Date('2026-04-23T06:45:00Z'),
@@ -279,9 +284,9 @@ async function seed() {
     {
       id: ids.users.buyer,
       email: 'buyer@ba33.local',
-      passwordHash: 'dev_hash',
+      passwordHash,
       fullName: 'SARL EcoTex',
-      phone: '+213550000008',
+      phone: '0555000008',
       userType: 'buyer',
       status: 'active',
       regionId: ids.regions.alger,
@@ -290,13 +295,24 @@ async function seed() {
     {
       id: ids.users.regional,
       email: 'regional@ba33.local',
-      passwordHash: 'dev_hash',
+      passwordHash,
       fullName: 'Rania Région',
-      phone: '+213550000009',
+      phone: '0555000009',
       userType: 'regional_manager',
       status: 'suspended',
       regionId: ids.regions.oran,
       lastLoginAt: new Date('2026-04-18T15:00:00Z'),
+    },
+    {
+      id: ids.users.shepherd,
+      email: 'shepherd@ba33.local',
+      passwordHash,
+      fullName: 'Omar Berger',
+      phone: '0555000010',
+      userType: 'shepherd',
+      status: 'active',
+      regionId: ids.regions.setif,
+      lastLoginAt: new Date('2026-04-23T06:15:00Z'),
     },
   ]);
 
@@ -341,7 +357,7 @@ async function seed() {
       longitude: '5.3134700',
       address: 'Aïn Arnat, Sétif',
       status: 'active',
-      registeredBy: ids.users.admin,
+      registeredBy: ids.users.shepherd,
     },
     {
       id: ids.sources.slaughterhouse,
@@ -1164,13 +1180,30 @@ async function seed() {
   ]);
 
   console.log('Seed completed successfully.');
+  return {
+    message: 'Seed completed successfully.',
+    password: DEV_PASSWORD,
+    users: {
+      admin: 'admin@ba33.local',
+      collector: 'collector@ba33.local',
+      shepherd: 'shepherd@ba33.local',
+      transporter: 'transport@ba33.local',
+      depot: 'depot@ba33.local',
+      laverie: 'laverie@ba33.local',
+      transformer: 'transformer@ba33.local',
+      sales: 'sales@ba33.local',
+      buyer: 'buyer@ba33.local',
+    },
+  };
 }
 
-seed()
-  .catch((error) => {
-    console.error('Seed failed:', error);
-    process.exit(1);
-  })
-  .finally(async () => {
-    process.exit(0);
-  });
+if (require.main === module) {
+  seedDemoData()
+    .catch((error) => {
+      console.error('Seed failed:', error);
+      process.exit(1);
+    })
+    .finally(async () => {
+      process.exit(0);
+    });
+}

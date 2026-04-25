@@ -2,9 +2,10 @@ import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsString, IsOptional, IsUUID, IsNumberString, IsIn } from 'class-validator';
 
 export class DeclareWoolDto {
-  @ApiProperty({ description: 'User ID of the wool source' })
+  @ApiPropertyOptional({ description: 'User ID of the wool source. Defaults to authenticated user.' })
+  @IsOptional()
   @IsUUID()
-  userId: string;
+  userId?: string;
 
   @ApiProperty({ description: 'Estimated weight in kg' })
   @IsNumberString()

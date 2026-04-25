@@ -15,23 +15,50 @@ export class EventsController {
   @Post()
   @ApiOperation({ summary: 'Post a batch of events from mobile (offline sync)' })
   async postEvents(
-    @Body() body: Array<{
+    @Body() body: {
+      events?: Array<{
+        eventType: string;
+        aggregateType?: string;
+        aggregateId?: string;
+        jobId?: string;
+        actorId?: string;
+        actorType?: string;
+        payload?: Record<string, any>;
+        occurredAt?: string;
+        recordedAt?: string;
+        version?: number;
+      }>;
+    } | Array<{
       eventType: string;
-      jobId: string;
-      payload: Record<string, any>;
-      recordedAt: string;
+      aggregateType?: string;
+      aggregateId?: string;
+      jobId?: string;
+      actorId?: string;
+      actorType?: string;
+      payload?: Record<string, any>;
+      occurredAt?: string;
+      recordedAt?: string;
+      version?: number;
     }>,
   ) {
+    const incomingEvents = Array.isArray(body) ? body : body.events ?? [];
     const results = [];
-    for (const evt of body) {
+    for (const evt of incomingEvents) {
+      const aggregateId = evt.aggregateId ?? evt.jobId;
+
+      if (!aggregateId) {
+        throw new BadRequestException('Each event must include aggregateId or jobId');
+      }
+
       const result = await this.eventsService.emit({
         eventType: evt.eventType,
-        aggregateType: 'transport_job',
-        aggregateId: evt.jobId,
-        actorType: 'transporter',
-        payload: evt.payload,
-        occurredAt: new Date(evt.recordedAt),
-        version: 1,
+        aggregateType: evt.aggregateType ?? 'transport_job',
+        aggregateId,
+        actorId: evt.actorId,
+        actorType: evt.actorType ?? 'mobile',
+        payload: evt.payload ?? {},
+        occurredAt: new Date(evt.occurredAt ?? evt.recordedAt ?? Date.now()),
+        version: evt.version ?? 1,
         syncSource: 'mobile',
       });
       results.push(result);

@@ -39,7 +39,7 @@ export class TransportController {
 
   // ── Jobs ──────────────────────────────────────────────────
 
-  @Roles('collector', 'depot_manager', 'central_admin')
+  @Roles('transporter', 'collector', 'depot_manager', 'central_admin')
   @Post('jobs')
   @ApiOperation({ summary: 'Create a transport job' })
   async createJob(@Body() dto: CreateJobDto) {
@@ -49,7 +49,7 @@ export class TransportController {
     });
   }
 
-  @Roles('collector', 'depot_manager', 'central_admin')
+  @Roles('transporter', 'collector', 'depot_manager', 'central_admin')
   @Get('jobs')
   @ApiOperation({ summary: 'List transport jobs with filters' })
   @ApiQuery({ name: 'transporterId', required: false })
@@ -63,7 +63,7 @@ export class TransportController {
     return this.transportService.listJobs({ transporterId, status, lane });
   }
 
-  @Roles('collector', 'depot_manager', 'central_admin')
+  @Roles('transporter', 'collector', 'depot_manager', 'central_admin')
   @Get('jobs/:id')
   @ApiOperation({ summary: 'Get a transport job with lots' })
   @ApiParam({ name: 'id', description: 'Job UUID' })
@@ -71,7 +71,7 @@ export class TransportController {
     return this.transportService.getJob(id);
   }
 
-  @Roles('collector', 'depot_manager', 'central_admin')
+  @Roles('transporter', 'collector', 'depot_manager', 'central_admin')
   @Patch('jobs/:id/accept')
   @ApiOperation({ summary: 'Accept a transport job' })
   @ApiParam({ name: 'id', description: 'Job UUID' })
@@ -79,7 +79,7 @@ export class TransportController {
     return this.transportService.acceptJob(id, dto.transporterId);
   }
 
-  @Roles('collector', 'depot_manager', 'central_admin')
+  @Roles('transporter', 'collector', 'depot_manager', 'central_admin')
   @Patch('jobs/:id/start')
   @ApiOperation({ summary: 'Start a transport job' })
   @ApiParam({ name: 'id', description: 'Job UUID' })
@@ -87,7 +87,7 @@ export class TransportController {
     return this.transportService.startJob(id);
   }
 
-  @Roles('collector', 'depot_manager', 'central_admin')
+  @Roles('transporter', 'collector', 'depot_manager', 'central_admin')
   @Post('jobs/:id/lots/:lotId/load')
   @ApiOperation({ summary: 'Weigh-in: load a lot onto the transport' })
   @ApiParam({ name: 'id', description: 'Job UUID' })
@@ -100,7 +100,7 @@ export class TransportController {
     return this.transportService.loadLot(id, lotId, dto.weight);
   }
 
-  @Roles('collector', 'depot_manager', 'central_admin')
+  @Roles('transporter', 'collector', 'depot_manager', 'central_admin')
   @Post('jobs/:id/lots/:lotId/deliver')
   @ApiOperation({ summary: 'Weigh-out: deliver a lot' })
   @ApiParam({ name: 'id', description: 'Job UUID' })
@@ -113,7 +113,7 @@ export class TransportController {
     return this.transportService.deliverLot(id, lotId, dto.weight);
   }
 
-  @Roles('collector', 'depot_manager', 'central_admin')
+  @Roles('transporter', 'collector', 'depot_manager', 'central_admin')
   @Post('jobs/:id/confirm-pickup')
   @ApiOperation({ summary: 'Confirm pickup: converts pre-lot to lot with auto QR + weigh-in' })
   @ApiParam({ name: 'id', description: 'Job UUID' })
@@ -124,7 +124,7 @@ export class TransportController {
     return this.transportService.confirmPickup(id, dto);
   }
 
-  @Roles('collector', 'depot_manager', 'central_admin')
+  @Roles('transporter', 'collector', 'depot_manager', 'central_admin')
   @Patch('jobs/:id/complete')
   @ApiOperation({ summary: 'Complete a transport job (mark delivered)' })
   @ApiParam({ name: 'id', description: 'Job UUID' })
@@ -134,7 +134,7 @@ export class TransportController {
 
   // ── GPS ───────────────────────────────────────────────────
 
-  @Roles('collector', 'depot_manager', 'central_admin')
+  @Roles('transporter', 'collector', 'depot_manager', 'central_admin')
   @Post('jobs/:id/gps')
   @ApiOperation({ summary: 'Add a GPS point to a transport job' })
   @ApiParam({ name: 'id', description: 'Job UUID' })
@@ -150,7 +150,7 @@ export class TransportController {
     );
   }
 
-  @Roles('collector', 'depot_manager', 'central_admin')
+  @Roles('transporter', 'collector', 'depot_manager', 'central_admin')
   @Get('jobs/:id/gps')
   @ApiOperation({ summary: 'Get GPS trail for a transport job' })
   @ApiParam({ name: 'id', description: 'Job UUID' })

@@ -4,7 +4,7 @@ import type { Address, Complaint, ComplaintType, Order } from "@/lib/types/order
 import type { TraceabilityChain } from "@/lib/types/traceability";
 
 export const AUTH_COOKIE_NAME = "ba33_buyer_token";
-const API_BASE_URL = process.env.NEXT_PUBLIC_BA33_API_URL ?? process.env.BA33_API_URL ?? "http://localhost:3000/api/v1";
+const API_BASE_URL = process.env.NEXT_PUBLIC_BA33_API_URL ?? process.env.BA33_API_URL ?? "http://localhost:3100/api/v1";
 
 export interface SessionUser {
   id: string;

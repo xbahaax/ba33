@@ -55,7 +55,8 @@ export class DeclareWoolOnBehalfDto {
   @IsUUID()
   photoId?: string;
 
-  @ApiProperty({ description: 'ID of the transporter/collector making the declaration' })
+  @ApiPropertyOptional({ description: 'ID of the transporter/collector making the declaration. Defaults to authenticated user.' })
+  @IsOptional()
   @IsUUID()
-  declaringUserId: string;
+  declaringUserId?: string;
 }

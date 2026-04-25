@@ -11,7 +11,8 @@
     "typecheck": "tsc --noEmit",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
-    "db:seed": "ts-node -r tsconfig-paths/register src/scripts/seed-buyer.ts"
+    "db:seed": "ts-node -r tsconfig-paths/register src/scripts/seed.ts && ts-node -r tsconfig-paths/register src/scripts/seed-buyer.ts",
+    "db:seed:buyer": "ts-node -r tsconfig-paths/register src/scripts/seed-buyer.ts"
   },
   "dependencies": {
     "@nestjs/bullmq": "^10.2.0",

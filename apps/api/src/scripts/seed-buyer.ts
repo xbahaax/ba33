@@ -287,7 +287,7 @@ async function seedNotifications() {
   }
 }
 
-async function main() {
+export async function seedBuyerDemoData() {
   await seedBuyerAccount();
   await seedCatalog();
   await seedOrders();
@@ -295,11 +295,17 @@ async function main() {
   await seedNotifications();
 
   console.log(`Seed complete. Login with ${TEST_EMAIL} / ${TEST_PASSWORD}`);
+  return {
+    email: TEST_EMAIL,
+    password: TEST_PASSWORD,
+  };
 }
 
-main()
-  .then(() => process.exit(0))
-  .catch((error) => {
-    console.error(error);
-    process.exit(1);
-  });
+if (require.main === module) {
+  seedBuyerDemoData()
+    .then(() => process.exit(0))
+    .catch((error) => {
+      console.error(error);
+      process.exit(1);
+    });
+}

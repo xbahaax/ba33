@@ -9,6 +9,7 @@ import { DATABASE_TOKEN } from '../../common/database/database.module';
 import type { Database } from '../../common/database/client';
 import {
   certifications,
+  buyerCatalogProducts,
   lots,
   products,
   productionRunLots,
@@ -126,6 +127,72 @@ export class CertificationRepository {
         })
         .where(eq(products.id, certification.productId));
 
+      const [product] = await tx
+        .select({
+          id: products.id,
+          productCode: products.productCode,
+          track: products.track,
+          weightKg: products.weightKg,
+          createdAt: products.createdAt,
+        })
+        .from(products)
+        .where(eq(products.id, certification.productId))
+        .limit(1);
+
+      if (product) {
+        const productType = product.track === 'd4_bio' ? 'P2' : 'P1';
+        const availableQuantityKg = Number(product.weightKg ?? 0);
+        const traceability = buildCatalogTraceability({
+          certifiedAt: issuedAt,
+          productCode: product.productCode,
+          productType,
+          signature,
+          weightKg: availableQuantityKg,
+        });
+
+        await tx
+          .insert(buyerCatalogProducts)
+          .values({
+            id: product.id,
+            code: product.productCode,
+            name: productType === 'P2' ? 'Amendement organique NFN' : 'Produit laine certifie NFN',
+            type: productType,
+            grade: 'A',
+            region: 'Algerie',
+            availableQuantityKg: availableQuantityKg.toFixed(2),
+            pricePerKgDzd: productType === 'P2' ? '850.00' : '1200.00',
+            pricePerKgEur: productType === 'P2' ? '5.50' : '7.80',
+            nfnSealStatus: 'certified',
+            nfnSealCode: signature,
+            nfnCertifiedAt: issuedAt,
+            description: 'Produit certifie NFN publie automatiquement depuis la chaine de transformation ba33.',
+            images: [],
+            qualityParameters: {
+              fiberLengthMm: 0,
+              fiberDiameterMicrons: 0,
+              moisturePercent: 0,
+              washingYieldR1Percent: 0,
+              cleanlinessScore: 5,
+              colorDescription: 'non renseigne',
+              sourceLotId: product.id,
+            },
+            traceability,
+            createdAt: product.createdAt,
+            updatedAt: issuedAt,
+          })
+          .onConflictDoUpdate({
+            target: buyerCatalogProducts.id,
+            set: {
+              availableQuantityKg: availableQuantityKg.toFixed(2),
+              nfnSealStatus: 'certified',
+              nfnSealCode: signature,
+              nfnCertifiedAt: issuedAt,
+              traceability,
+              updatedAt: issuedAt,
+            },
+          });
+      }
+
       const lotRows = await tx
         .select({
           lotId: productionRunLots.lotId,
@@ -228,6 +295,14 @@ export class CertificationRepository {
         })
         .where(eq(products.id, certification.productId));
 
+      await tx
+        .update(buyerCatalogProducts)
+        .set({
+          nfnSealStatus: 'revoked',
+          updatedAt: revokedAt,
+        })
+        .where(eq(buyerCatalogProducts.code, certification.productCode));
+
       await appendWorkflowEvent(tx, {
         aggregateId: certificationId,
         aggregateType: 'certification',
@@ -262,4 +337,58 @@ export class CertificationRepository {
       return updatedCertification;
     });
   }
+}
+
+function buildCatalogTraceability(input: {
+  certifiedAt: Date;
+  productCode: string;
+  productType: 'P1' | 'P2';
+  signature: string;
+  weightKg: number;
+}) {
+  const iso = input.certifiedAt.toISOString();
+
+  return {
+    collectionEvent: {
+      sourceType: 'C1',
+      region: 'Algerie',
+      commune: 'ba33',
+      collectedAt: iso,
+      declaredWeightKg: input.weightKg,
+    },
+    depotD1Event: {
+      receivedAt: iso,
+      weighedWeightKg: input.weightKg,
+      varianceKg: 0,
+      siteName: 'Depot ba33',
+    },
+    transportEvent: {
+      departedAt: iso,
+      arrivedAt: iso,
+      distanceKm: 0,
+      coldChainRequired: false,
+      origin: 'Collecte ba33',
+      destination: 'Transformation ba33',
+    },
+    laverieD2Event: {
+      processedAt: iso,
+      dirtyWeightKg: input.weightKg,
+      cleanWeightKg: input.weightKg,
+      yieldPercent: 100,
+      assignedGrade: 'A',
+      siteName: 'Laverie ba33',
+    },
+    transformationEvent: {
+      processedAt: iso,
+      siteName: input.productType === 'P2' ? 'Transformation D4' : 'Transformation D3',
+      batchNumber: input.productCode,
+      inputWeightKg: input.weightKg,
+      outputWeightKg: input.weightKg,
+    },
+    certificationEvent: {
+      certifiedAt: iso,
+      sealCode: input.signature,
+      signatureSnippet: input.signature.slice(-12),
+    },
+  };
 }

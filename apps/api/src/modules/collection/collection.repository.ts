@@ -14,7 +14,7 @@ import {
   collectionJobs,
   collectionJobGpsPoints,
 } from '../../common/database/schema';
-import { eq, and, desc, lt, inArray, asc, sql } from 'drizzle-orm';
+import { eq, and, desc, lt, inArray, asc, sql, or, isNull } from 'drizzle-orm';
 
 @Injectable()
 export class CollectionRepository {
@@ -181,6 +181,7 @@ export class CollectionRepository {
     status?: string;
     assignedCollectorId?: string;
     regionId?: string;
+    registeredBy?: string;
   }) {
     const conditions = [];
     if (filters?.status) {
@@ -193,6 +194,18 @@ export class CollectionRepository {
     }
     if (filters?.regionId) {
       conditions.push(eq(preLots.regionId, filters.regionId));
+    }
+    if (filters?.registeredBy) {
+      const sourceRows = await this.db
+        .select({ id: sources.id })
+        .from(sources)
+        .where(eq(sources.registeredBy, filters.registeredBy));
+
+      if (sourceRows.length === 0) {
+        return [];
+      }
+
+      conditions.push(inArray(preLots.sourceId, sourceRows.map((source) => source.id)));
     }
 
     return this.db
@@ -477,6 +490,7 @@ export class CollectionRepository {
     collectorId?: string;
     depotId?: string;
     sourceId?: string;
+    includeUnassignedOpen?: boolean;
   }) {
     const conditions = [];
     if (filters?.status) {
@@ -487,7 +501,17 @@ export class CollectionRepository {
       }
     }
     if (filters?.collectorId) {
-      conditions.push(eq(collectionJobs.collectorId, filters.collectorId));
+      conditions.push(
+        filters.includeUnassignedOpen
+          ? or(
+              eq(collectionJobs.collectorId, filters.collectorId),
+              and(
+                isNull(collectionJobs.collectorId),
+                inArray(collectionJobs.status, ['pending', 'assigned'] as any),
+              ),
+            )
+          : eq(collectionJobs.collectorId, filters.collectorId),
+      );
     }
     if (filters?.depotId) {
       conditions.push(eq(collectionJobs.destinationDepotId, filters.depotId));

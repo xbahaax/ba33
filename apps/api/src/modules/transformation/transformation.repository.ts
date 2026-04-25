@@ -363,7 +363,7 @@ export class TransformationRepository {
           gatesPassed: {
             traceability: true,
             qualification: true,
-            packaging: false,
+            packaging: true,
           },
           qrCodeUrl: `https://example.local/cert/${product.id}`,
           createdAt: completedAt,

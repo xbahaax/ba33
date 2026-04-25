@@ -65,6 +65,7 @@ export class CollectionService {
         [
           data.surnom ? `surnom: ${data.surnom}` : null,
           data.mazraa ? `mazraa: ${data.mazraa}` : null,
+          data.photoId ? `photoId: ${data.photoId}` : null,
           data.notes,
         ]
           .filter(Boolean)
@@ -331,6 +332,7 @@ export class CollectionService {
     status?: string;
     assignedCollectorId?: string;
     regionId?: string;
+    registeredBy?: string;
   }) {
     return this.collectionRepository.findPreLots(filters);
   }
@@ -539,6 +541,7 @@ export class CollectionService {
     collectorId?: string;
     depotId?: string;
     sourceId?: string;
+    includeUnassignedOpen?: boolean;
   }) {
     const jobs = await this.collectionRepository.findCollectionJobs(filters);
     // Enrich with source + pre-lot info — the collector needs this on the list
