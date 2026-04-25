@@ -6,6 +6,7 @@ import '../features/declaration/view/declaration_form_screen.dart';
 import '../features/declaration/view/declaration_screen.dart';
 import '../features/declaration/view/declaration_success_screen.dart';
 import '../features/home/view/home_shell.dart';
+import '../features/onboarding/view/profession_picker_screen.dart';
 import '../features/profile/view/profile_screen.dart';
 import '../features/receipts/view/receipts_screen.dart';
 
@@ -13,14 +14,26 @@ final _rootNavigatorKey = GlobalKey<NavigatorState>();
 
 /// Main application router.
 /// Auth-gated: unauthenticated users see the login screen.
-GoRouter createRouter({required bool isAuthenticated}) {
+/// Onboarding-gated: authenticated users without a profession set are sent
+/// to the profession picker before they can declare wool.
+GoRouter createRouter({
+  required bool isAuthenticated,
+  required bool hasProfession,
+}) {
   return GoRouter(
     navigatorKey: _rootNavigatorKey,
     initialLocation: '/',
     redirect: (context, state) {
       final loggingIn = state.matchedLocation == '/login';
+      final picking = state.matchedLocation == '/onboarding/profession';
+
       if (!isAuthenticated && !loggingIn) return '/login';
-      if (isAuthenticated && loggingIn) return '/';
+      if (isAuthenticated && loggingIn) {
+        return hasProfession ? '/' : '/onboarding/profession';
+      }
+      if (isAuthenticated && !hasProfession && !picking) {
+        return '/onboarding/profession';
+      }
       return null;
     },
     routes: [
@@ -28,6 +41,17 @@ GoRouter createRouter({required bool isAuthenticated}) {
         path: '/login',
         name: 'login',
         builder: (context, state) => const LoginScreen(),
+      ),
+      GoRoute(
+        path: '/onboarding/profession',
+        name: 'profession',
+        builder: (context, state) => const ProfessionPickerScreen(),
+      ),
+      GoRoute(
+        path: '/profile/profession',
+        name: 'profile-profession',
+        builder: (context, state) =>
+            const ProfessionPickerScreen(allowSkip: true),
       ),
       StatefulShellRoute.indexedStack(
         builder: (context, state, navigationShell) =>

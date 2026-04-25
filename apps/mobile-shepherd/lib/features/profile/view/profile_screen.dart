@@ -1,8 +1,10 @@
 import 'package:ba33_ui/ba33_ui.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../shared/providers/auth_provider.dart';
+import '../../../shared/providers/profession_provider.dart';
 
 /// Simple profile / settings screen.
 class ProfileScreen extends ConsumerWidget {
@@ -12,6 +14,7 @@ class ProfileScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final colors = Theme.of(context).ba33;
     final user = ref.watch(authProvider);
+    final profession = ref.watch(professionProvider).value;
 
     return Scaffold(
       appBar: AppBar(
@@ -53,6 +56,14 @@ class ProfileScreen extends ConsumerWidget {
               style: TextStyle(color: colors.mutedForeground),
             ),
             const SizedBox(height: Ba33Spacing.spacing8),
+            _SettingsTile(
+              icon: Icons.work_outline_rounded,
+              title: 'المهنة',
+              subtitle: profession?.labelArabic() ?? '— ما اخترتش',
+              colors: colors,
+              onTap: () => context.push('/profile/profession'),
+            ),
+            const SizedBox(height: Ba33Spacing.spacing3),
             _SettingsTile(
               icon: Icons.language,
               title: 'اللغة',

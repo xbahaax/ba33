@@ -83,4 +83,90 @@ class CollectionService {
         .get('/collection/routes', queryParameters: params);
     return response.data as List<dynamic>;
   }
+
+  // ── Collection Jobs ─────────────────────────────────────
+  // The two-actor model: depots/admin issue jobs, collectors execute them.
+
+  Future<List<dynamic>> listJobs({
+    String? status,
+    String? collectorId,
+    String? depotId,
+  }) async {
+    final params = <String, dynamic>{};
+    if (status != null) params['status'] = status;
+    if (collectorId != null) params['collectorId'] = collectorId;
+    if (depotId != null) params['depotId'] = depotId;
+    final response = await _client.dio
+        .get('/collection/jobs', queryParameters: params);
+    return response.data as List<dynamic>;
+  }
+
+  Future<List<dynamic>> listMyJobs({String? status}) async {
+    final params = <String, dynamic>{};
+    if (status != null) params['status'] = status;
+    final response = await _client.dio
+        .get('/collection/jobs/me', queryParameters: params);
+    return response.data as List<dynamic>;
+  }
+
+  Future<Map<String, dynamic>> getJob(String id) async {
+    final response = await _client.dio.get('/collection/jobs/$id');
+    return response.data as Map<String, dynamic>;
+  }
+
+  Future<Map<String, dynamic>> assignJob(
+      String id, String collectorId) async {
+    final response = await _client.dio.patch(
+      '/collection/jobs/$id/assign',
+      data: {'collectorId': collectorId},
+    );
+    return response.data as Map<String, dynamic>;
+  }
+
+  Future<Map<String, dynamic>> acceptJob(String id) async {
+    final response =
+        await _client.dio.patch('/collection/jobs/$id/accept');
+    return response.data as Map<String, dynamic>;
+  }
+
+  Future<Map<String, dynamic>> startJob(String id) async {
+    final response = await _client.dio.patch('/collection/jobs/$id/start');
+    return response.data as Map<String, dynamic>;
+  }
+
+  Future<Map<String, dynamic>> submitJobGps(
+      String id, List<Map<String, dynamic>> points) async {
+    final response = await _client.dio.post(
+      '/collection/jobs/$id/gps',
+      data: {'points': points},
+    );
+    return response.data as Map<String, dynamic>;
+  }
+
+  Future<Map<String, dynamic>> markJobArrived(
+      String id, {String? lat, String? lng}) async {
+    final body = <String, dynamic>{};
+    if (lat != null) body['lat'] = lat;
+    if (lng != null) body['lng'] = lng;
+    final response =
+        await _client.dio.patch('/collection/jobs/$id/arrive', data: body);
+    return response.data as Map<String, dynamic>;
+  }
+
+  /// Submits the arrival form. Server creates the lot, marks the pre-lot
+  /// collected, and completes the job. Returns `{job, lot}`.
+  Future<Map<String, dynamic>> completeJob(
+      String id, Map<String, dynamic> arrival) async {
+    final response = await _client.dio
+        .post('/collection/jobs/$id/complete', data: arrival);
+    return response.data as Map<String, dynamic>;
+  }
+
+  Future<Map<String, dynamic>> cancelJob(String id, {String? reason}) async {
+    final body = <String, dynamic>{};
+    if (reason != null) body['reason'] = reason;
+    final response = await _client.dio
+        .patch('/collection/jobs/$id/cancel', data: body);
+    return response.data as Map<String, dynamic>;
+  }
 }

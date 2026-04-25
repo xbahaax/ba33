@@ -30,6 +30,10 @@ import { UpdateRouteStopDto } from './dto/update-route-stop.dto';
 import { IssueBookletDto } from './dto/issue-booklet.dto';
 import { DeclareWoolDto } from './dto/declare-wool.dto';
 import { DeclareWoolOnBehalfDto } from './dto/declare-wool-on-behalf.dto';
+import { AssignCollectionJobDto } from './dto/assign-collection-job.dto';
+import { CompleteCollectionJobDto } from './dto/complete-collection-job.dto';
+import { SubmitCollectionJobGpsDto } from './dto/submit-collection-job-gps.dto';
+import { CancelPreLotDto as CancelJobDto } from './dto/cancel-pre-lot.dto';
 
 @ApiTags('collection')
 @ApiBearerAuth()
@@ -214,5 +218,138 @@ export class CollectionController {
       dto.serialStart,
       dto.serialEnd,
     );
+  }
+
+  // ── Collection Jobs ──────────────────────────────────────
+  // The two-actor model: depots/admin issue jobs, collectors execute them.
+
+  @Get('jobs')
+  @Roles('collector', 'central_admin', 'regional_manager', 'depot_manager')
+  @ApiOperation({ summary: 'List collection jobs with optional filters' })
+  @ApiQuery({ name: 'status', required: false })
+  @ApiQuery({ name: 'collectorId', required: false })
+  @ApiQuery({ name: 'depotId', required: false })
+  async listCollectionJobs(
+    @Query('status') status?: string,
+    @Query('collectorId') collectorId?: string,
+    @Query('depotId') depotId?: string,
+  ) {
+    return this.collectionService.listCollectionJobs({
+      status,
+      collectorId,
+      depotId,
+    });
+  }
+
+  @Get('jobs/me')
+  @Roles('collector')
+  @ApiOperation({ summary: 'List collection jobs assigned to or open for the current collector' })
+  async listMyCollectionJobs(
+    @Request() req: any,
+    @Query('status') status?: string,
+  ) {
+    return this.collectionService.listCollectionJobs({
+      collectorId: req.user.id,
+      status,
+    });
+  }
+
+  @Get('jobs/:id')
+  @Roles('collector', 'central_admin', 'regional_manager', 'depot_manager')
+  @ApiOperation({ summary: 'Get a collection job by ID' })
+  @ApiParam({ name: 'id' })
+  async getCollectionJob(@Param('id') id: string) {
+    return this.collectionService.getCollectionJob(id);
+  }
+
+  @Patch('jobs/:id/assign')
+  @Roles('central_admin', 'regional_manager', 'depot_manager')
+  @ApiOperation({ summary: 'Assign a collector to a job (depot/admin)' })
+  @ApiParam({ name: 'id' })
+  async assignCollectionJob(
+    @Param('id') id: string,
+    @Body() dto: AssignCollectionJobDto,
+    @Request() req: any,
+  ) {
+    return this.collectionService.assignCollectionJob(
+      id,
+      dto.collectorId,
+      req.user?.id,
+    );
+  }
+
+  @Patch('jobs/:id/accept')
+  @Roles('collector')
+  @ApiOperation({ summary: 'Collector accepts an assigned job' })
+  @ApiParam({ name: 'id' })
+  async acceptCollectionJob(@Param('id') id: string, @Request() req: any) {
+    return this.collectionService.acceptCollectionJob(id, req.user.id);
+  }
+
+  @Patch('jobs/:id/start')
+  @Roles('collector')
+  @ApiOperation({ summary: 'Collector starts the trip toward the source' })
+  @ApiParam({ name: 'id' })
+  async startCollectionJob(@Param('id') id: string, @Request() req: any) {
+    return this.collectionService.startCollectionJob(id, req.user.id);
+  }
+
+  @Post('jobs/:id/gps')
+  @Roles('collector')
+  @ApiOperation({ summary: 'Submit GPS points during the trip' })
+  @ApiParam({ name: 'id' })
+  async submitCollectionJobGps(
+    @Param('id') id: string,
+    @Body() dto: SubmitCollectionJobGpsDto,
+    @Request() req: any,
+  ) {
+    return this.collectionService.submitCollectionJobGps(
+      id,
+      req.user.id,
+      dto.points,
+    );
+  }
+
+  @Patch('jobs/:id/arrive')
+  @Roles('collector')
+  @ApiOperation({ summary: 'Mark arrival at the source (auto via GPS or manual)' })
+  @ApiParam({ name: 'id' })
+  async markCollectionJobArrived(
+    @Param('id') id: string,
+    @Body() body: { lat?: string; lng?: string },
+    @Request() req: any,
+  ) {
+    return this.collectionService.markCollectionJobArrived(
+      id,
+      req.user.id,
+      body.lat && body.lng ? { lat: body.lat, lng: body.lng } : undefined,
+    );
+  }
+
+  @Post('jobs/:id/complete')
+  @Roles('collector')
+  @ApiOperation({
+    summary:
+      'Submit the arrival form: creates the lot, marks the pre-lot collected, completes the job',
+  })
+  @ApiParam({ name: 'id' })
+  async completeCollectionJob(
+    @Param('id') id: string,
+    @Body() dto: CompleteCollectionJobDto,
+    @Request() req: any,
+  ) {
+    return this.collectionService.completeCollectionJob(id, req.user.id, dto);
+  }
+
+  @Patch('jobs/:id/cancel')
+  @Roles('collector', 'central_admin', 'depot_manager')
+  @ApiOperation({ summary: 'Cancel a collection job' })
+  @ApiParam({ name: 'id' })
+  async cancelCollectionJob(
+    @Param('id') id: string,
+    @Body() dto: CancelJobDto,
+    @Request() req: any,
+  ) {
+    return this.collectionService.cancelCollectionJob(id, dto.reason, req.user?.id);
   }
 }

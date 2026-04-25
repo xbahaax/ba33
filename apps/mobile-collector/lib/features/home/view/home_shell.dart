@@ -25,23 +25,17 @@ class HomeShell extends StatelessWidget {
         indicatorColor: colors.primary.withAlpha(30),
         destinations: [
           NavigationDestination(
-            icon: Icon(Icons.inventory_2_outlined,
-                color: colors.mutedForeground),
-            selectedIcon: Icon(Icons.inventory_2, color: colors.primary),
-            label: 'Lots',
-          ),
-          NavigationDestination(
             icon: Icon(Icons.assignment_outlined,
                 color: colors.mutedForeground),
             selectedIcon: Icon(Icons.assignment, color: colors.primary),
-            label: 'Pickups',
+            label: 'Collectes',
           ),
           NavigationDestination(
             icon: Icon(Icons.person_outline_rounded,
                 color: colors.mutedForeground),
             selectedIcon:
                 Icon(Icons.person_rounded, color: colors.primary),
-            label: 'Profile',
+            label: 'Profil',
           ),
         ],
       ),

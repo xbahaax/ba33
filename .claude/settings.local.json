@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(DATABASE_URL=\"postgresql://placeholder:placeholder@localhost:5432/placeholder\" npx drizzle-kit generate --name add_collection_jobs)",
+      "Bash(pnpm install *)",
+      "Bash(docker compose *)"
+    ]
+  }
+}

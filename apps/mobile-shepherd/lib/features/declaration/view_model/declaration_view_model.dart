@@ -3,6 +3,7 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../../../shared/providers/api_provider.dart';
 import '../../../shared/providers/auth_provider.dart';
+import '../../../shared/providers/profession_provider.dart';
 
 part 'declaration_view_model.g.dart';
 
@@ -158,6 +159,8 @@ class DeclarationViewModel extends _$DeclarationViewModel {
         }
       }
 
+      final profession = ref.read(professionProvider).value;
+
       await collectionService.declareWool({
         'userId': user.id,
         'estimatedWeightKg': _estimateWeight().toStringAsFixed(1),
@@ -168,6 +171,7 @@ class DeclarationViewModel extends _$DeclarationViewModel {
         if (state.notes.isNotEmpty) 'notes': state.notes,
         if (user.regionId.isNotEmpty) 'regionId': user.regionId,
         if (photoFileId != null) 'photoId': photoFileId,
+        if (profession != null) 'profession': profession.apiValue,
       });
 
       state = state.copyWith(isSubmitting: false, isSubmitted: true);

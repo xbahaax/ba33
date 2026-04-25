@@ -15,6 +15,13 @@
       "when": 1777071466677,
       "tag": "0001_curly_hammerhead",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1777920000000,
+      "tag": "0002_add_collection_jobs",
+      "breakpoints": true
     }
   ]
 }

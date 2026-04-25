@@ -1,8 +1,8 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsString, IsOptional, IsUUID, IsNumberString } from 'class-validator';
+import { IsString, IsOptional, IsUUID, IsNumberString, IsIn } from 'class-validator';
 
 export class DeclareWoolDto {
-  @ApiProperty({ description: 'User ID of the shepherd' })
+  @ApiProperty({ description: 'User ID of the wool source' })
   @IsUUID()
   userId: string;
 
@@ -25,15 +25,23 @@ export class DeclareWoolDto {
   @IsString()
   notes?: string;
 
-  @ApiPropertyOptional({ description: 'Shepherd surnom (nickname)' })
+  @ApiPropertyOptional({ description: 'Source nickname / personal name' })
   @IsOptional()
   @IsString()
   surnom?: string;
 
-  @ApiPropertyOptional({ description: 'Farm name (mazraa)' })
+  @ApiPropertyOptional({ description: 'Address / farm / shop name' })
   @IsOptional()
   @IsString()
   mazraa?: string;
+
+  @ApiPropertyOptional({
+    description: 'Profession of the wool source',
+    enum: ['shepherd', 'slaughterhouse', 'butcher', 'aggregator', 'other'],
+  })
+  @IsOptional()
+  @IsIn(['shepherd', 'slaughterhouse', 'butcher', 'aggregator', 'other'])
+  profession?: 'shepherd' | 'slaughterhouse' | 'butcher' | 'aggregator' | 'other';
 
   @ApiPropertyOptional({ description: 'Region ID' })
   @IsOptional()

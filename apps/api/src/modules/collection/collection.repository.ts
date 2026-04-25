@@ -11,6 +11,8 @@ import {
   shepherds,
   users,
   depots,
+  collectionJobs,
+  collectionJobGpsPoints,
 } from '../../common/database/schema';
 import { eq, and, desc, lt, inArray, asc, sql } from 'drizzle-orm';
 
@@ -39,6 +41,7 @@ export class CollectionRepository {
   async createSource(data: {
     id: string;
     sourceType: string;
+    profession?: string;
     name: string;
     contactPhone?: string;
     regionId: string;
@@ -53,6 +56,7 @@ export class CollectionRepository {
       .values({
         id: data.id,
         sourceType: data.sourceType as any,
+        profession: data.profession as any,
         name: data.name,
         contactPhone: data.contactPhone,
         regionId: data.regionId,
@@ -64,6 +68,33 @@ export class CollectionRepository {
       })
       .returning();
     return row;
+  }
+
+  async updateSource(
+    sourceId: string,
+    data: {
+      profession?: string;
+      name?: string;
+      contactPhone?: string;
+      latitude?: string;
+      longitude?: string;
+      address?: string;
+    },
+  ) {
+    const setValues: Record<string, any> = { updatedAt: new Date() };
+    if (data.profession !== undefined) setValues.profession = data.profession;
+    if (data.name !== undefined) setValues.name = data.name;
+    if (data.contactPhone !== undefined) setValues.contactPhone = data.contactPhone;
+    if (data.latitude !== undefined) setValues.latitude = data.latitude;
+    if (data.longitude !== undefined) setValues.longitude = data.longitude;
+    if (data.address !== undefined) setValues.address = data.address;
+
+    const [row] = await this.db
+      .update(sources)
+      .set(setValues)
+      .where(eq(sources.id, sourceId))
+      .returning();
+    return row ?? null;
   }
 
   async findSourceById(sourceId: string) {
@@ -208,6 +239,20 @@ export class CollectionRepository {
   }
 
   // ── Depots ──────────────────────────────────────────────
+
+  async findDepotById(depotId: string) {
+    const [depot] = await this.db
+      .select({
+        id: depots.id,
+        name: depots.name,
+        regionId: depots.regionId,
+        address: depots.address,
+      })
+      .from(depots)
+      .where(eq(depots.id, depotId))
+      .limit(1);
+    return depot ?? null;
+  }
 
   async findClosestDepot(
     regionId: string,
@@ -375,5 +420,140 @@ export class CollectionRepository {
       })
       .returning();
     return row;
+  }
+
+  // ── Collection Jobs ─────────────────────────────────────
+
+  async createCollectionJob(data: {
+    id: string;
+    preLotId: string;
+    sourceId: string;
+    destinationDepotId: string;
+    collectorId?: string;
+    urgency: 'normal' | 'urgent';
+    status: string;
+    originLat?: string;
+    originLng?: string;
+    destinationLat?: string;
+    destinationLng?: string;
+    slaDeadline?: Date;
+    notes?: string;
+    issuedBy?: string;
+  }) {
+    const [row] = await this.db
+      .insert(collectionJobs)
+      .values({
+        id: data.id,
+        preLotId: data.preLotId,
+        sourceId: data.sourceId,
+        destinationDepotId: data.destinationDepotId,
+        collectorId: data.collectorId,
+        urgency: data.urgency,
+        status: data.status as any,
+        originLat: data.originLat,
+        originLng: data.originLng,
+        destinationLat: data.destinationLat,
+        destinationLng: data.destinationLng,
+        slaDeadline: data.slaDeadline,
+        notes: data.notes,
+        issuedBy: data.issuedBy,
+        assignedAt: data.collectorId ? new Date() : null,
+      })
+      .returning();
+    return row;
+  }
+
+  async findCollectionJobById(jobId: string) {
+    const [row] = await this.db
+      .select()
+      .from(collectionJobs)
+      .where(eq(collectionJobs.id, jobId))
+      .limit(1);
+    return row ?? null;
+  }
+
+  async findCollectionJobs(filters?: {
+    status?: string | string[];
+    collectorId?: string;
+    depotId?: string;
+    sourceId?: string;
+  }) {
+    const conditions = [];
+    if (filters?.status) {
+      if (Array.isArray(filters.status)) {
+        conditions.push(inArray(collectionJobs.status, filters.status as any));
+      } else {
+        conditions.push(eq(collectionJobs.status, filters.status as any));
+      }
+    }
+    if (filters?.collectorId) {
+      conditions.push(eq(collectionJobs.collectorId, filters.collectorId));
+    }
+    if (filters?.depotId) {
+      conditions.push(eq(collectionJobs.destinationDepotId, filters.depotId));
+    }
+    if (filters?.sourceId) {
+      conditions.push(eq(collectionJobs.sourceId, filters.sourceId));
+    }
+
+    return this.db
+      .select()
+      .from(collectionJobs)
+      .where(conditions.length > 0 ? and(...conditions) : undefined)
+      .orderBy(desc(collectionJobs.createdAt));
+  }
+
+  async updateCollectionJob(
+    jobId: string,
+    data: {
+      status?: string;
+      collectorId?: string;
+      assignedAt?: Date;
+      acceptedAt?: Date;
+      startedAt?: Date;
+      arrivedAt?: Date;
+      completedAt?: Date;
+      cancelledAt?: Date;
+      cancelReason?: string;
+      lotId?: string;
+      urgency?: string;
+      notes?: string;
+    },
+  ) {
+    const setValues: Record<string, any> = { updatedAt: new Date() };
+    for (const [k, v] of Object.entries(data)) {
+      if (v !== undefined) setValues[k] = v;
+    }
+    const [row] = await this.db
+      .update(collectionJobs)
+      .set(setValues)
+      .where(eq(collectionJobs.id, jobId))
+      .returning();
+    return row ?? null;
+  }
+
+  async addCollectionJobGps(
+    jobId: string,
+    points: Array<{
+      lat: string;
+      lng: string;
+      speedMps?: string;
+      accuracy?: string;
+      recordedAt: Date;
+    }>,
+  ) {
+    if (points.length === 0) return [];
+    return this.db
+      .insert(collectionJobGpsPoints)
+      .values(points.map((p) => ({ jobId, ...p })))
+      .returning();
+  }
+
+  async findCollectionJobGps(jobId: string) {
+    return this.db
+      .select()
+      .from(collectionJobGpsPoints)
+      .where(eq(collectionJobGpsPoints.jobId, jobId))
+      .orderBy(asc(collectionJobGpsPoints.recordedAt));
   }
 }

@@ -9,6 +9,7 @@ export type NotificationType =
   | 'prelot_assigned'
   | 'prelot_collected'
   | 'transport_job_assigned'
+  | 'collection_job_assigned'
   | 'weight_mismatch'
   | 'tolerance_exceeded';
 
