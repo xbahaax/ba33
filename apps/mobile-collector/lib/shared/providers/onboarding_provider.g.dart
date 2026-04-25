@@ -6,8 +6,7 @@ part of 'onboarding_provider.dart';
 // RiverpodGenerator
 // **************************************************************************
 
-String _$onboardingSeenHash() =>
-    r'a1b2c3d4e5f60718293a4b5c6d7e8f9000000030';
+String _$onboardingSeenHash() => r'1396737278dc92ec6102195d938fe2f4ec6ade2c';
 
 /// Tracks whether the collector has dismissed the intro carousel. Used by the
 /// router to gate /onboarding before /login on first launch.
@@ -16,14 +15,14 @@ String _$onboardingSeenHash() =>
 @ProviderFor(OnboardingSeen)
 final onboardingSeenProvider =
     AsyncNotifierProvider<OnboardingSeen, bool>.internal(
-  OnboardingSeen.new,
-  name: r'onboardingSeenProvider',
-  debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
-      ? null
-      : _$onboardingSeenHash,
-  dependencies: null,
-  allTransitiveDependencies: null,
-);
+      OnboardingSeen.new,
+      name: r'onboardingSeenProvider',
+      debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
+          ? null
+          : _$onboardingSeenHash,
+      dependencies: null,
+      allTransitiveDependencies: null,
+    );
 
 typedef _$OnboardingSeen = AsyncNotifier<bool>;
 // ignore_for_file: type=lint
