@@ -1,5 +1,6 @@
 # Architecture
 
+
 ## 1. The shape
 
 **One backend, six clients, one event log.** The NestJS API at
