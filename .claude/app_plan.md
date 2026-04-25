@@ -253,7 +253,8 @@ MVP = steps 1–3 (a buyer can browse and verify). Step 4–6 turns it transacti
 
 ---
 
-## 6. `web-institutional` — the ministry/regulator portal
+## 6. `
+` — the ministry/regulator portal
 
 **What it is:** Secure read-only portal for Algerian ministries and regulators. The "Interface de Sécurité" from the NFN diagram. Used for oversight, statistics, compliance verification, and regulatory filings.
 

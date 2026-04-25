@@ -24,5 +24,7 @@ Thumbs.db
 
 # logs
 *.log
-
 .pnpm-store/*
+**/.dart_tool
+# Flutter iOS build artifacts
+**/ios/
