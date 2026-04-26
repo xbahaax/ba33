@@ -2,9 +2,9 @@
 
 NFN wool traceability platform for Algeria — track every kilogram from
 shepherd to certified product.
+[Demo](https://drive.google.com/drive/folders/1xVHQTM0rz2avRYF6d16PVcItHCbitaow)
 
-> Hackathon MVP · 55/55 e2e pipeline tests green · 6 client apps · 1 backend
-> · 137 endpoints.
+this is hakathon porject represent the power of supply chain 
 
 ---
 
